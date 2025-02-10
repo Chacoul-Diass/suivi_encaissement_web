@@ -1,0 +1,15 @@
+{
+  "routes": [
+    {
+      "src": "/login",
+      "status": 200,
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "src": "/(defaults)/page_client-reference-manifest.js",
+      "status": 404
+    }
+  ]
+}

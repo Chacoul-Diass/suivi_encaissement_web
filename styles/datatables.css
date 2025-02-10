@@ -1,0 +1,266 @@
+table > thead > tr > th,
+table > tbody > tr > td {
+  @apply !px-4 !py-3 text-sm;
+}
+table > thead > tr > th.mantine-187dsit {
+  background-color: rgb(224 230 237 / 0.3);
+}
+.datatables table tbody tr {
+  @apply bg-white dark:!border-[#191e3a] dark:bg-black;
+}
+
+.datatables table tr.mantine-1ublbff.mantine-1ublbff {
+  @apply bg-transparent;
+}
+.datatables table tbody tr td {
+  @apply !border-0 !border-none;
+}
+table tr .mantine-Checkbox-root {
+  @apply flex;
+}
+.datatables table thead tr th {
+  @apply !border-b-0 !bg-white-light/30  text-black dark:!bg-[#1a2941] dark:!text-white-dark;
+}
+
+.datatables .table-bordered table thead tr th,
+.datatables .table-bordered table tbody tr td {
+  @apply !border !border-solid !border-[#f6f7fa] dark:!border-[#191e3a];
+}
+
+.datatables .table-compact table thead tr th,
+.datatables .table-compact table tbody tr td {
+  @apply !px-3 !py-2;
+}
+/* .datatables table thead tr th.text-center > div {
+    @apply text-center;
+} */
+.datatables .mantine-gzzjso,
+.datatables .mantine-lrzwoq {
+  @apply border-t-0 !bg-transparent !p-0 !pt-5;
+}
+.datatables.pagination-padding .mantine-gzzjso {
+  @apply !px-5;
+}
+[dir="rtl"] .datatables .mantine-ScrollArea-root.mantine-lvjyp7 {
+  direction: rtl;
+}
+.mantine-Table-root[data-hover] tbody tr:hover {
+  @apply !bg-[#e0e6ed33] dark:!bg-[#1a2941]/40;
+}
+.mantine-Table-root[data-striped] tbody tr:nth-of-type(odd) {
+  @apply bg-white-light/20 dark:!bg-[#1a2941]/40;
+}
+.datatables table {
+  @apply font-nunito !text-black dark:!text-white-dark;
+}
+.datatables .mantine-Text-root {
+  @apply flex-none !font-nunito text-sm font-medium;
+}
+
+.datatables thead tr th .mantine-Group-root.mantine-1d34tqu div > svg {
+  @apply dark:!text-[#888ea8]/30;
+}
+.datatables thead tr th .mantine-Group-root.mantine-1d34tqu {
+  @apply justify-start;
+}
+.datatables thead tr th .mantine-Group-root.mantine-1d34tqu .mantine-oqxib5 {
+  @apply flex-grow-0;
+}
+.mantine-Group-root > .mantine-Text-root {
+  @apply hidden;
+}
+.mantine-Group-root .mantine-UnstyledButton-root {
+  @apply hover:bg-inherit dark:!border-[#191e3a] dark:text-white-dark;
+}
+
+.mantine-Table-root th.text-right .mantine-Group-root {
+  @apply !justify-end;
+}
+.datatables .mantine-Group-root[role="navigation"] {
+  @apply flex-auto justify-end gap-1;
+}
+.mantine-Menu-dropdown {
+  @apply dark:!border-[#191e3a] dark:!bg-[#1a2941] dark:text-white-dark;
+}
+
+.mantine-Checkbox-body {
+  @apply grid h-5 w-5 place-content-center overflow-hidden rounded  border-0  bg-transparent text-primary;
+}
+.mantine-Checkbox-inner > .mantine-Checkbox-input {
+  @apply border-2 border-white-light bg-transparent dark:!border-[#253b5c];
+}
+.mantine-Checkbox-inner > .mantine-Checkbox-input:checked {
+  @apply !border-primary bg-primary;
+}
+
+.mantine-y4ntz3 {
+  @apply rounded border border-white-light outline-0 focus:ring-1 focus:ring-white-light/40;
+}
+.mantine-3xbgk5 .mantine-qo1k2 {
+  @apply p-2 text-sm;
+}
+.mantine-Pagination-item {
+  @apply h-9 w-9 rounded-full border-white-light !bg-white-light font-nunito text-sm !text-[#3b3f5c] hover:!bg-primary hover:!text-white dark:border-[#191e3a] dark:!bg-[#191e3a] dark:!text-white rtl:first:rotate-180 rtl:last:rotate-180;
+}
+.mantine-Pagination-item[data-active] {
+  @apply !bg-primary !text-white;
+}
+.mantine-Menu-item .mantine-Text-root {
+  @apply text-center font-nunito !text-sm;
+}
+.mantine-Menu-item {
+  @apply hover:bg-primary hover:text-white dark:text-white-dark dark:hover:text-white;
+}
+.mantine-Menu-arrow {
+  @apply dark:!border-[#191e3a];
+}
+.mantine-Menu-item:disabled {
+  @apply !text-[#adb5bd];
+}
+.mantine-ScrollArea-viewport > div:first-child > div {
+  @apply bg-none;
+}
+
+.datatables {
+  position: relative;
+  overflow-x: auto;
+}
+
+.datatables table td:last-child,
+.datatables table th:last-child {
+  position: sticky !important;
+  right: 0 !important;
+  background-color: white !important;
+  z-index: 10 !important;
+  min-width: 100px !important;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1) !important;
+  border-left: 1px solid #e5e7eb !important;
+}
+
+.datatables table th:last-child {
+  border-top: 1px solid #e5e7eb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.datatables table tbody tr td:last-child {
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* Mode sombre */
+.dark .datatables table td:last-child,
+.dark .datatables table th:last-child {
+  background-color: #1a2941 !important;
+  border-left: 1px solid #374151 !important;
+}
+
+.dark .datatables table th:last-child {
+  border-top: 1px solid #374151 !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.dark .datatables table tbody tr td:last-child {
+  border-bottom: 1px solid #374151 !important;
+}
+
+.datatables .mantine-ScrollArea-root {
+  overflow: visible !important;
+}
+
+.datatables .mantine-ScrollArea-viewport {
+  overflow-x: auto !important;
+}
+
+.datatables .mantine-ScrollArea-root.mantine-lvjyp7 {
+  overflow: visible !important;
+}
+
+.datatables .fixed-column {
+  position: absolute !important;
+  right: 0 !important;
+  top: auto !important;
+  background-color: white !important;
+  z-index: 2 !important;
+  box-shadow: -2px 0px 8px rgba(0, 0, 0, 0.1) !important;
+  width: 100px !important;
+  min-width: 100px !important;
+}
+
+.dark .datatables .fixed-column {
+  background-color: #1a2941 !important;
+}
+
+.datatables thead tr th.fixed-column {
+  position: absolute !important;
+  right: 0 !important;
+  top: 0 !important;
+  height: 100% !important;
+}
+
+.fixed-action-column {
+  position: sticky !important;
+  right: 0 !important;
+  min-width: 100px !important;
+  background: white !important;
+  z-index: 10 !important;
+}
+
+.dark .fixed-action-column {
+  background: #1e2024 !important;
+}
+
+.fixed-action-column::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 100%;
+  height: 100%;
+  width: 4px;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.05), transparent);
+}
+
+.dark .fixed-action-column::after {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.2), transparent);
+}
+
+.fixed-column {
+  position: sticky;
+  left: 0;
+  background-color: white; /* Changez la couleur si nécessaire */
+  z-index: 10; /* Assurez-vous qu'elle reste au-dessus des autres colonnes */
+}
+
+/* Assurer que le conteneur a un overflow-x approprié */
+
+/* Style pour la colonne Actions */
+.datatables table thead tr th:last-child,
+.datatables table tbody tr td:last-child {
+  background-color: #0E1726 !important;
+  color: white !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .datatables table thead tr th:last-child,
+.dark .datatables table tbody tr td:last-child {
+  background-color: #0E1726 !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Style des boutons d'action */
+.datatables table tbody tr td:last-child button {
+  color: #e7515a !important; /* Couleur primary (rouge) */
+}
+
+.datatables table tbody tr td:last-child button:hover {
+  background-color: rgba(231, 81, 90, 0.2) !important; /* Couleur primary avec transparence */
+  color: #e7515a !important;
+}
+
+/* Style des icônes dans les boutons d'action */
+.datatables table tbody tr td:last-child button svg {
+  stroke: #e7515a !important; /* Couleur primary pour les icônes SVG */
+  width: 20px !important;
+  height: 20px !important;
+}
