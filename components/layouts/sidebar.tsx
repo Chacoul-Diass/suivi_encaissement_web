@@ -35,6 +35,8 @@ const Sidebar = () => {
   const [habilitation, setHabilitation] = useState<any>(null);
   const themeConfig = useSelector((state: TRootState) => state.themeConfig);
 
+  console.log(habilitation, "habilitation12");
+
   const { initLocale } = getTranslation();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -148,12 +150,18 @@ const Sidebar = () => {
     }
   };
 
+  const hasAnyPermission = (item: any) => {
+    return item.CREER || item.LIRE || item.MODIFIER || item.SUPPRIMER;
+  };
+
   const renderMenu = (section: string) => {
     return habilitation
-      ?.filter((item: { name: string; LIRE: any }) => {
+      ?.filter((item: { name: string; LIRE: boolean; CREER: boolean; MODIFIER: boolean; SUPPRIMER: boolean }) => {
         const menu = allowedMenus.find(
           (menu) =>
-            menu.name === item.name && menu.section === section && item.LIRE
+            menu.name === item.name && 
+            menu.section === section && 
+            hasAnyPermission(item)
         );
         return !!menu;
       })
@@ -189,6 +197,18 @@ const Sidebar = () => {
           )
         );
       });
+  };
+
+  const hasMenuInSection = (section: string) => {
+    return habilitation?.some((item: any) => {
+      const menu = allowedMenus.find(
+        (menu) =>
+          menu.name === item.name &&
+          menu.section === section &&
+          hasAnyPermission(item)
+      );
+      return !!menu;
+    });
   };
 
   useEffect(() => {
@@ -264,37 +284,43 @@ const Sidebar = () => {
               <PerfectScrollbar className="relative -mr-4 h-full pr-4">
                 <div className="space-y-6">
                   {/* Section Statistiques */}
-                  <div className="rounded-xl bg-black p-4">
-                    <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase text-white">
-                      <IconMinus className="h-4 w-4" />
-                      <span>{t("Statistiques")}</span>
-                    </h2>
-                    <ul className="space-y-1 px-2">
-                      {renderMenu("Tableau de bord")}
-                    </ul>
-                  </div>
+                  {hasMenuInSection("Tableau de bord") && (
+                    <div className="rounded-xl bg-black p-4">
+                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase text-white">
+                        <IconMinus className="h-4 w-4" />
+                        <span>{t("Statistiques")}</span>
+                      </h2>
+                      <ul className="space-y-1 px-2">
+                        {renderMenu("Tableau de bord")}
+                      </ul>
+                    </div>
+                  )}
 
                   {/* Section Gestion des Encaissements */}
-                  <div className="rounded-xl bg-black p-4">
-                    <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase text-white">
-                      <IconMinus className="h-4 w-4" />
-                      <span>{t("Gestion des Encaissements")}</span>
-                    </h2>
-                    <ul className="space-y-1 px-2">
-                      {renderMenu("Encaissements")}
-                    </ul>
-                  </div>
+                  {hasMenuInSection("Encaissements") && (
+                    <div className="rounded-xl bg-black p-4">
+                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase text-white">
+                        <IconMinus className="h-4 w-4" />
+                        <span>{t("Gestion des Encaissements")}</span>
+                      </h2>
+                      <ul className="space-y-1 px-2">
+                        {renderMenu("Encaissements")}
+                      </ul>
+                    </div>
+                  )}
 
                   {/* Section Administration */}
-                  <div className="rounded-xl bg-black p-4">
-                    <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase text-white">
-                      <IconMinus className="h-4 w-4" />
-                      <span>{t("Administration")}</span>
-                    </h2>
-                    <ul className="space-y-1 px-2">
-                      {renderMenu("Administration")}
-                    </ul>
-                  </div>
+                  {hasMenuInSection("Administration") && (
+                    <div className="rounded-xl bg-black p-4">
+                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase text-white">
+                        <IconMinus className="h-4 w-4" />
+                        <span>{t("Administration")}</span>
+                      </h2>
+                      <ul className="space-y-1 px-2">
+                        {renderMenu("Administration")}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </PerfectScrollbar>
             </div>

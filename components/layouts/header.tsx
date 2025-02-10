@@ -26,10 +26,13 @@ import IconSettings from "../icon/icon-settings";
 import IconSquareRotated from "../icon/icon-square-rotated";
 import IconUser from "../icon/icon-user";
 import { useClientSide, safeDOM } from "@/hooks/useClientSide";
+import getUserHabilitation from "@/utils/getHabilitation";
 
 const Header = () => {
   const router = useRouter();
   const user = useSelector((state: TRootState) => state.auth?.user);
+  const habilitation = getUserHabilitation();
+  console.log(habilitation, " habilitation");
 
   const pathname = usePathname();
   const dispatch = useDispatch();

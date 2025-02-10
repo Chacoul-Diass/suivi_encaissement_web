@@ -71,6 +71,15 @@ const config: Config = {
         "3xl":
           "0 2px 2px rgb(224 230 237 / 46%), 1px 6px 7px rgb(224 230 237 / 46%)",
       },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        }
+      },
+      animation: {
+        float: 'float 3s ease-in-out infinite',
+      },
       typography: (theme: any) => ({
         DEFAULT: {
           css: {

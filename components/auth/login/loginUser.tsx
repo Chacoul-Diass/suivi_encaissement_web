@@ -13,6 +13,9 @@ import { TRootState, useAppDispatch } from "@/store";
 import { Toastify } from "@/utils/toast";
 import { useSelector } from "react-redux";
 import IconUserCheck from "@/components/icon/icon-user-check";
+import DraggableButtons from "../components/DraggableButtons";
+import { getFirstAccessibleRoute } from "@/utils/getFirstAccessibleRoute";
+import getUserHabilitation from "@/utils/getHabilitation";
 
 const ComponentsAuthLoginForm = () => {
   const router = useRouter();
@@ -82,26 +85,44 @@ const ComponentsAuthLoginForm = () => {
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    // if (!credential || !password) {
-    //   Toastify(
-    //     "error",
-    //     "Veuillez entrer un email ou un matricule et un mot de passe."
-    //   );
-    //   return;
-    // }
-
     setIsAnimating(true);
 
-    const result = await dispatch(login({ credential, password }));
-    if (login.fulfilled.match(result)) {
-      Toastify(
-        "success",
-        `Félicitation ${firstname} ${lastname} vous êtes connecté avec succès`
-      );
-      router.push("/dashboard");
-    } else {
+    try {
+      const result = await dispatch(login({ credential, password }));
+      
+      if (login.fulfilled.match(result)) {
+        // Attendre un peu pour s'assurer que le token est bien enregistré
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const habilitation = getUserHabilitation();
+        if (!habilitation) {
+          Toastify("error", "Erreur lors de la récupération des permissions");
+          setIsAnimating(false);
+          return;
+        }
+
+        const redirectPath = getFirstAccessibleRoute(habilitation);
+        if (redirectPath === "/login") {
+          Toastify("error", "Vous n'avez accès à aucune section de l'application");
+          setIsAnimating(false);
+          return;
+        }
+
+        Toastify(
+          "success",
+          `Félicitation ${firstname} ${lastname} vous êtes connecté avec succès`
+        );
+
+        // Utiliser replace au lieu de push pour éviter les retours en arrière
+        router.replace(redirectPath);
+      } else {
+        setIsAnimating(false);
+        Toastify("error", "Échec de la connexion. Vérifiez vos identifiants.");
+      }
+    } catch (error) {
       setIsAnimating(false);
-      Toastify("error", "Échec de la connexion. Vérifiez vos identifiants.");
+      Toastify("error", "Une erreur est survenue lors de la connexion");
+      console.error("Erreur de connexion:", error);
     }
   };
 
@@ -116,42 +137,11 @@ const ComponentsAuthLoginForm = () => {
       }}
     >
       {/* Boutons flottants pour uploader et réinitialiser l'image */}
-      <div className="fixed bottom-8 right-8 z-30 flex flex-col items-end gap-3">
-        {/* Bouton d'upload */}
-        <label
-          htmlFor="file-upload"
-          className="group relative flex cursor-pointer items-center gap-3 rounded-full bg-white/95 px-6 py-3 shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-primary/10 hover:shadow-xl"
-        >
-          <IconDownload className="h-5 w-5 text-primary transition-all duration-300 group-hover:rotate-12 group-hover:scale-110" />
-          <span className="text-sm font-medium text-primary">
-            Changer le Fond d'écran
-          </span>
-          <div className="absolute inset-0 rounded-full bg-primary/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        </label>
-        <input
-          type="file"
-          name="file-upload"
-          id="file-upload"
-          className="hidden"
-          accept="image/*"
-          onChange={handleFileChange}
-        />
-
-        {/* Bouton de réinitialisation */}
-        {isCustomBackground && (
-          <button
-            type="button"
-            onClick={resetBackground}
-            className="group relative flex items-center gap-3 rounded-full bg-white/95 px-6 py-3 shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-red-50 hover:shadow-xl"
-          >
-            <IconTrashLines className="h-5 w-5 text-red-500 transition-all duration-300 group-hover:-rotate-12 group-hover:scale-110" />
-            <span className="text-sm font-medium text-red-500">
-              Réinitialiser
-            </span>
-            <div className="absolute inset-0 rounded-full bg-red-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-          </button>
-        )}
-      </div>
+      <DraggableButtons
+        handleFileChange={handleFileChange}
+        resetBackground={resetBackground}
+        isCustomBackground={isCustomBackground}
+      />
 
       {/* Affichage du fond et autres éléments */}
       {!isCustomBackground && (
