@@ -23,10 +23,12 @@ import IconBellBing from "../icon/icon-bell-bing";
 import IconLink from "../icon/icon-link";
 import IconUsersGroup from "../icon/icon-users-group";
 import IconMinus from "@/components/icon/icon-minus";
+// import IconHistory from "@/components/icon/icon-history";
 import getUserHabilitation from "@/utils/getHabilitation";
 import { TRootState } from "@/store";
 import { safeLocalStorage } from "@/hooks/useLocalStorage";
 import IconCaretsDown from "@/components/icon/icon-carets-down";
+import IconHistory from "../icon/icon-history";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
@@ -34,14 +36,25 @@ const Sidebar = () => {
   const pathname = usePathname();
   const [habilitation, setHabilitation] = useState<any>(null);
   const themeConfig = useSelector((state: TRootState) => state.themeConfig);
+  const auth = useSelector((state: TRootState) => state.auth);
 
   const { initLocale } = getTranslation();
   const [isLoading, setIsLoading] = useState(true);
 
   // Get habilitation on client side only
   useEffect(() => {
-    setHabilitation(getUserHabilitation());
-  }, []);
+    if (auth?.user) {
+      setHabilitation(getUserHabilitation());
+    }
+  }, [auth?.user]);
+
+  useEffect(() => {
+    if (!isLoading && !auth?.user) {
+      // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié
+      window.location.href = "/auth/login";
+      return;
+    }
+  }, [isLoading, auth?.user]);
 
   const allowedMenus = [
     {
@@ -84,6 +97,13 @@ const Sidebar = () => {
       name: "UTILISATEURS",
       icon: <IconUsersGroup />,
       path: "/user",
+      section: "Administration",
+    },
+    {
+      id: 6,
+      name: "HISTORIQUE CONNEXIONS",
+      icon: <IconHistory />,
+      path: "/historique",
       section: "Administration",
     },
   ];
@@ -143,6 +163,8 @@ const Sidebar = () => {
         return t("Habilitations");
       case "UTILISATEURS":
         return t("Utilisateurs");
+      case "HISTORIQUE CONNEXIONS":
+        return t("Historique ");
       default:
         return t(name);
     }
@@ -153,8 +175,10 @@ const Sidebar = () => {
   };
 
   const renderMenu = (section: string) => {
+    if (!habilitation) return null;
+
     return habilitation
-      ?.filter(
+      .filter(
         (item: {
           name: string;
           LIRE: boolean;
@@ -173,41 +197,43 @@ const Sidebar = () => {
       )
       .map((item: { name: string; id: Key | null | undefined }) => {
         const menu = allowedMenus.find((menu) => menu.name === item.name);
+        if (!menu) return null;
+
         return (
-          menu && (
-            <li key={menu.id} className="nav-item">
-              <Link
-                href={menu.path}
-                className={`group relative flex items-center rounded-xl px-4 py-2.5 text-sm transition-all duration-500 hover:bg-white/10 ${
-                  pathname === menu.path
-                    ? "bg-primary/20 text-white"
-                    : "text-white/80 hover:text-white"
-                }`}
-              >
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/20 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-                <div className="relative flex items-center gap-3">
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-500 ${
-                      pathname === menu.path
-                        ? "bg-primary/20 text-primary"
-                        : "bg-black/20 text-white group-hover:bg-black/40 group-hover:text-white group-hover:shadow-lg group-hover:shadow-primary/20"
-                    }`}
-                  >
-                    {menu.icon}
-                  </div>
-                  <span className="font-medium tracking-wide transition-all duration-500 group-hover:translate-x-1">
-                    {translateMenuName(menu.name)}
-                  </span>
+          <li key={item.id || menu.id} className="nav-item">
+            <Link
+              href={menu.path}
+              className={`group relative flex items-center rounded-xl px-4 py-2.5 text-sm transition-all duration-500 hover:bg-white/10 ${
+                pathname === menu.path
+                  ? "bg-primary/20 text-white"
+                  : "text-white/80 hover:text-white"
+              }`}
+            >
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/20 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+              <div className="relative flex items-center gap-3">
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-500 ${
+                    pathname === menu.path
+                      ? "bg-primary/20 text-primary"
+                      : "bg-black/20 text-white group-hover:bg-black/40 group-hover:text-white group-hover:shadow-lg group-hover:shadow-primary/20"
+                  }`}
+                >
+                  {menu.icon}
                 </div>
-              </Link>
-            </li>
-          )
+                <span className="font-medium tracking-wide text-white transition-all duration-500 group-hover:translate-x-1">
+                  {translateMenuName(menu.name)}
+                </span>
+              </div>
+            </Link>
+          </li>
         );
       });
   };
 
   const hasMenuInSection = (section: string) => {
-    return habilitation?.some((item: any) => {
+    if (!habilitation) return false;
+
+    return habilitation.some((item: any) => {
       const menu = allowedMenus.find(
         (menu) =>
           menu.name === item.name &&

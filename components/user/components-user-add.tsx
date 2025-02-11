@@ -55,7 +55,7 @@ const ComponentsAppsInvoiceAdd = () => {
   });
 
   const [profils, setProfils] = useState<Option[]>([]);
-  const [drSecteurs, setDrSecteurs] = useState<{ [key: string]: Option[] }>({});
+
   const [availableDirections, setAvailableDirections] = useState<Option[]>([]);
   const [availableSecteurs, setAvailableSecteurs] = useState<Option[]>([]);
 
@@ -90,7 +90,6 @@ const ComponentsAppsInvoiceAdd = () => {
   useEffect(() => {
     dispatch(fetchDirectionRegionales());
     dispatch(fetchProfile());
-    dispatch(fetchDirectionRegionales());
   }, [dispatch]);
 
   useEffect(() => {

@@ -85,7 +85,6 @@ const ComponentsDashboardValider = () => {
   const [limit, setLimit] = useState(5);
 
   const handlePageChange = (page: number) => {
-    console.log("handlePageChange", page);
     if (page > 0 && page <= paginate.totalPages) {
       setPage(page);
     }

@@ -56,13 +56,17 @@ const menuItems: MenuItem[] = [
 const hasAnyPermission = (permission: Permission): boolean => {
   if (!permission) return false;
 
-  const result = permission.CREER || permission.LIRE || permission.MODIFIER || permission.SUPPRIMER;
+  const result =
+    permission.CREER ||
+    permission.LIRE ||
+    permission.MODIFIER ||
+    permission.SUPPRIMER;
   console.log(`Vérification des permissions pour ${permission.name}:`, {
     CREER: permission.CREER,
     LIRE: permission.LIRE,
     MODIFIER: permission.MODIFIER,
     SUPPRIMER: permission.SUPPRIMER,
-    hasPermission: result
+    hasPermission: result,
   });
   return result;
 };
@@ -73,17 +77,17 @@ export const getFirstAccessibleRoute = (habilitation: Permission[]): string => {
     return "/login";
   }
 
-  console.log("Vérification des habilitations:", habilitation);
-
   // Parcourir les menus dans l'ordre de priorité
   for (const menuItem of menuItems) {
-    const permission = habilitation.find(h => 
-      h && typeof h === 'object' && h.name === menuItem.name
+    const permission = habilitation.find(
+      (h) => h && typeof h === "object" && h.name === menuItem.name
     );
 
     if (permission) {
       if (hasAnyPermission(permission)) {
-        console.log(`Accès autorisé pour ${menuItem.name}, redirection vers ${menuItem.path}`);
+        console.log(
+          `Accès autorisé pour ${menuItem.name}, redirection vers ${menuItem.path}`
+        );
         return menuItem.path;
       } else {
         console.log(`Aucune permission active pour ${menuItem.name}`);

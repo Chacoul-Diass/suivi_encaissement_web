@@ -2,7 +2,7 @@
 import { PropsWithChildren, useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import AuthGuard from "./components/auth/AuthGuard";
+import "./styles/global.css";
 import GlobalLoader from "./components/common/GlobalLoader";
 import ConnectionStatus from "./components/common/ConnectionStatus";
 import { usePathname } from "next/navigation";
@@ -21,13 +21,13 @@ function App({ children }: PropsWithChildren) {
   }, []);
 
   if (isLoading) {
-    return <GlobalLoader type="default" message="Chargement en cours..." />;
+    return <GlobalLoader />;
   }
 
   return (
     <div className="min-h-screen">
       <ConnectionStatus />
-      {isAuthPage ? children : <AuthGuard>{children}</AuthGuard>}
+      {children}
       <ToastContainer
         position="top-right"
         autoClose={3000}

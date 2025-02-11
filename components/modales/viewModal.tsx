@@ -41,8 +41,8 @@ interface ViewModalProps {
   setImages2: any;
   images2: any;
   onChange2: any;
-  observationReclamation : any;
-setObservationReclamation : any;
+  observationReclamation: any;
+  setObservationReclamation: any;
 }
 
 export default function ViewModal({
@@ -81,7 +81,7 @@ export default function ViewModal({
   images2,
   onChange2,
   observationReclamation,
-setObservationReclamation,
+  setObservationReclamation,
 }: ViewModalProps) {
   const [askToRequestModalOpen, setAskToRequestModalOpen] = useState(false);
   useEffect(() => {
@@ -121,7 +121,6 @@ setObservationReclamation,
           label: "Rejeter",
           className: "btn btn-danger w-full",
           onClick: () => {
-            console.log("🚀 Bouton Rejeter cliqué pour ID :", selectedRow.id);
             showAlertRejete(selectedRow.id);
           },
         },
@@ -336,7 +335,8 @@ setObservationReclamation,
               </div>
 
               {/* Observation Caisse */}
-              {statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ? null : (
+              {statutValidation ===
+              EStatutEncaissement.RECLAMATION_REVERSES ? null : (
                 <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
@@ -423,7 +423,8 @@ setObservationReclamation,
               </div>
 
               {/* Observation Banque */}
-              {statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ? null : (
+              {statutValidation ===
+              EStatutEncaissement.RECLAMATION_REVERSES ? null : (
                 <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
@@ -490,7 +491,10 @@ setObservationReclamation,
           setParams={setParams}
           setImages2={setImages2}
           images2={images2}
-          onChange2={onChange2} observationReclamation={observationReclamation} setObservationReclamation={setObservationReclamation}        />
+          onChange2={onChange2}
+          observationReclamation={observationReclamation}
+          setObservationReclamation={setObservationReclamation}
+        />
       )}
     </>
   );

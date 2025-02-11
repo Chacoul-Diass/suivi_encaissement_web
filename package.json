@@ -23,6 +23,7 @@
     "@mui/material": "^6.0.2",
     "@mui/styled-engine-sc": "^6.0.2",
     "@reduxjs/toolkit": "^2.2.7",
+    "@tabler/icons-react": "^3.30.0",
     "@tippyjs/react": "^4.2.6",
     "@types/jspdf": "^2.0.0",
     "@types/node": "18.11.18",

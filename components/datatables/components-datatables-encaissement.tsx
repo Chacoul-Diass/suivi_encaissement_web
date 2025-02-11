@@ -642,7 +642,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
             observationReclamation: userInput, // Observation saisie dans le textarea
             statutValidation: EStatutEncaissement.RECLAMATION_REVERSES, // Statut Rejeté
           };
-          console.log(payload);
 
           // Appel à la fonction Redux ou autre logique de soumission
           dispatch(submitEncaissementValidation(payload))
@@ -1165,8 +1164,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
       const files = images2.map((image: { file: File }) => image.file);
       payload.files = files;
     }
-
-    console.log("🚀 Payload envoyé :", payload);
 
     // ✅ Envoi de la requête
     dispatch(submitEncaissementValidation(payload))

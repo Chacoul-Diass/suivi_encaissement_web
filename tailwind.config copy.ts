@@ -71,30 +71,6 @@ const config: Config = {
         "3xl":
           "0 2px 2px rgb(224 230 237 / 46%), 1px 6px 7px rgb(224 230 237 / 46%)",
       },
-      keyframes: {
-        float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-10px)" },
-        },
-        slideIn: {
-          "0%": { transform: "translateX(-100%)" },
-          "100%": { transform: "translateX(0)" },
-        },
-        slideRight: {
-          "0%": { transform: "translateX(-10px)", opacity: "0" },
-          "100%": { transform: "translateX(0)", opacity: "1" },
-        },
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
-      },
-      animation: {
-        float: "float 3s ease-in-out infinite",
-        slideIn: "slideIn 0.5s ease-out",
-        slideRight: "slideRight 0.5s ease-out",
-        fadeIn: "fadeIn 0.5s ease-out",
-      },
       typography: (theme: any) => ({
         DEFAULT: {
           css: {

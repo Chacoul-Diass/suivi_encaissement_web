@@ -37,7 +37,7 @@ export default function GlobalFiltre({
   statutValidation,
 }: GlobalFiltreProps) {
   const dispatch = useDispatch<TAppDispatch>();
-  console.log(drData);
+
   // Dates sélectionnées (vide par défaut => pas de date initiale)
   const [dateRange, setDateRange] = useState<Date[]>(NO_DATES_SELECTED);
   const [dateRangeKey, setDateRangeKey] = useState(Date.now());
@@ -52,7 +52,7 @@ export default function GlobalFiltre({
   });
 
   const [selectedDRIds, setSelectedDRIds] = useState<number[]>([]);
-  console.log(selectedDRIds);
+
   const [selectedSecteurIds, setSelectedSecteurIds] = useState<number[]>([]);
   const [selectedItems, setSelectedItems] = useState<{
     banques: { libelle: string }[];
@@ -91,13 +91,22 @@ export default function GlobalFiltre({
 
   // Charger les secteurs en fonction des DR sélectionnées
   useEffect(() => {
-    if (selectedDRIds.length > 0) {
-      dispatch(fetchSecteurs(selectedDRIds));
+    // Reset sectors when no DRs are selected
+    if (!selectedDRIds || selectedDRIds.length === 0) {
+      setSelectedSecteurIds([]);
+      return;
+    }
+
+    // Only fetch sectors if we have valid DR IDs
+    const validDrIds = selectedDRIds.filter(id => id != null);
+    if (validDrIds.length > 0) {
+      dispatch(fetchSecteurs(validDrIds));
     }
   }, [selectedDRIds, dispatch]);
 
+  // Reset selected sectors when DR selection changes
   useEffect(() => {
-    setSelectedSecteurIds([]); // Réinitialiser les exploitations
+    setSelectedSecteurIds([]);
   }, [selectedDRIds]);
 
   // Ajout/suppression d’un item (banque, caisse, mode)
@@ -146,7 +155,7 @@ export default function GlobalFiltre({
       const newSelectedDRs = isAllSelected
         ? []
         : items.map((item: any) => item.id);
-      console.log(newSelectedDRs);
+
       setSelectedDRIds(newSelectedDRs);
 
       // ⚠️ Si aucune DR sélectionnée, vider les exploitations

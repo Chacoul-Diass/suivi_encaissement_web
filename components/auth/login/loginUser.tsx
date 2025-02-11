@@ -13,7 +13,6 @@ import { TRootState, useAppDispatch } from "@/store";
 import { Toastify } from "@/utils/toast";
 import { useSelector } from "react-redux";
 import IconUserCheck from "@/components/icon/icon-user-check";
-import DraggableButtons from "../components/DraggableButtons";
 import { getFirstAccessibleRoute } from "@/utils/getFirstAccessibleRoute";
 import getUserHabilitation from "@/utils/getHabilitation";
 import { API_AUTH_SUIVI } from "@/config/constants";
@@ -71,19 +70,26 @@ const ComponentsAuthLoginForm = () => {
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files ? e.target.files[0] : null;
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target?.result as string;
-        setBackground(base64);
-        setIsCustomBackground(true);
-        localStorage.setItem("userBackground", base64); // Sauvegarde l'image dans le localStorage
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setBackground(reader.result);
+          setIsCustomBackground(true);
+        }
       };
       reader.readAsDataURL(file);
-      setSelectedImageName(file.name);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (isCustomBackground && background !== defaultBackground) {
+        URL.revokeObjectURL(background);
+      }
+    };
+  }, [background, isCustomBackground]);
 
   const resetBackground = () => {
     if (
@@ -231,7 +237,6 @@ const ComponentsAuthLoginForm = () => {
 
         // Décoder le token pour obtenir les informations utilisateur
         const decodedUser = decodeTokens(result.payload);
-        console.log("Decoded user:", decodedUser);
 
         if (decodedUser?.isFirstLogin === 0) {
           setShowFirstLoginModal(true);
@@ -275,31 +280,72 @@ const ComponentsAuthLoginForm = () => {
   };
 
   return (
-    <div
-      className="relative flex h-screen items-center justify-center overflow-hidden"
-      style={{
-        backgroundImage: `url(${background})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      {/* Boutons flottants pour uploader et réinitialiser l'image */}
-      <DraggableButtons
-        handleFileChange={handleFileChange}
-        resetBackground={resetBackground}
-        isCustomBackground={isCustomBackground}
-      />
+    <div className="relative flex h-screen items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <Image
+          src={background}
+          alt="Background"
+          fill
+          style={{ objectFit: "cover" }}
+          priority
+          quality={75}
+        />
+      </div>
+      {/* Boutons fixes pour changer le fond d'écran */}
+      <div className="fixed right-6 top-6 z-20 flex items-center gap-3">
+        <label className="group flex cursor-pointer items-center gap-2 rounded-xl bg-white/10 px-5 py-3 backdrop-blur-md transition-all duration-300 hover:bg-white/20">
+          <div className="relative">
+            <div className="absolute -inset-1 animate-pulse rounded-full bg-primary/20 blur-sm group-hover:bg-primary/30"></div>
+            <IconDownload className="relative h-5 w-5 text-white transition-transform duration-300 group-hover:scale-110" />
+          </div>
+          <span className="text-sm font-medium text-white">
+            Changer le fond d'ecran
+          </span>
+          <input
+            type="file"
+            onChange={handleFileChange}
+            className="hidden"
+            accept="image/*"
+          />
+        </label>
+        {isCustomBackground && (
+          <button
+            onClick={resetBackground}
+            className="group flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 backdrop-blur-md transition-all duration-300 hover:bg-white/20"
+          >
+            <div className="relative">
+              <div className="absolute -inset-1 animate-pulse rounded-full bg-red-500/20 blur-sm group-hover:bg-red-500/30"></div>
+              <IconTrashLines className="relative h-5 w-5 text-white transition-transform duration-300 group-hover:scale-110" />
+            </div>
+            <span className="text-sm font-medium text-white">
+              Réinitialiser
+            </span>
+          </button>
+        )}
+      </div>
 
       {/* Affichage du fond et autres éléments */}
       {!isCustomBackground && (
         <>
           <div className="absolute inset-0 flex">
-            <div className="w-1/2 border-r-4 border-white bg-gradient-to-br from-[#FFDFBD] to-[#FFE8CF] transition-all duration-500" />
-            <div className="w-1/2 border-l-4 border-white bg-gradient-to-tl from-[#F07D00] to-[#FF9B2B] transition-all duration-500" />
+            <div className="w-1/2 border-r-4 border-white bg-[#FFDFBD]" />
+            <div className="w-1/2 border-l-4 border-white bg-[#F07D00]" />
           </div>
 
-          <div className="absolute inset-0 bg-gradient-to-r from-black/5 to-white/5" />
+          <Image
+            src="/assets/images/auth/electric-circuit-white.svg"
+            alt="Thunder Left"
+            className="absolute bottom-0 left-0 h-[600px] w-auto rotate-90 opacity-90"
+            width={181}
+            height={82}
+          />
+          <Image
+            src="/assets/images/auth/electric-circuit-white.svg"
+            alt="Thunder Right"
+            className="absolute right-0 top-0 h-[600px] w-auto -rotate-90 opacity-90"
+            width={181}
+            height={82}
+          />
         </>
       )}
 
@@ -336,33 +382,36 @@ const ComponentsAuthLoginForm = () => {
         } ${isSmallScreen ? "mx-4" : ""}`}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/20" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
         <div className="relative">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-10 flex items-center justify-between">
             <div className="relative">
-              <div className="absolute -left-2 -top-2 h-12 w-12 rounded-full bg-primary/10" />
+              <div className="absolute -left-3 -top-3 h-16 w-16 animate-pulse rounded-full bg-primary/10 blur-lg" />
+              <div className="absolute -left-2 -top-2 h-14 w-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/5" />
               <div className="relative">
-                <h2 className="mb-2 text-3xl font-bold text-gray-900">
+                <h2 className="mb-3 text-4xl font-bold tracking-tight text-gray-900">
                   Connexion
                 </h2>
-                <p className="text-lg font-medium text-primary">
+                <p className="text-lg font-medium text-primary/90">
                   Bienvenue à Suivi Encaissement !
                 </p>
               </div>
             </div>
-            <div className="group relative h-[100px] w-[100px] overflow-hidden rounded-2xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="group relative h-[110px] w-[110px] overflow-hidden ">
+              <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="absolute -inset-1 animate-pulse transition-opacity duration-300 group-hover:opacity-100" />
               <Image
                 src="/assets/images/suivi.png"
                 alt="Logo"
                 layout="fill"
                 objectFit="contain"
-                className="transition-transform duration-300 group-hover:scale-110"
+                className="p-2 transition-transform duration-300 group-hover:scale-110"
               />
             </div>
           </div>
 
-          <form className="space-y-6" onSubmit={submitForm}>
-            <div className="space-y-2">
+          <form className="space-y-7" onSubmit={submitForm}>
+            <div className="space-y-2.5">
               <label
                 htmlFor="Credential"
                 className="block text-base font-semibold text-gray-800"
@@ -370,23 +419,27 @@ const ComponentsAuthLoginForm = () => {
                 Email ou Matricule
               </label>
               <div className="group relative transform transition-all duration-300 hover:scale-[1.01]">
-                <input
-                  id="Credential"
-                  type="text"
-                  placeholder="Entrez votre email ou matricule"
-                  className="relative z-10 w-full rounded-xl border-2 border-gray-200 bg-white/80 px-5 py-4 text-base transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
-                  value={credential}
-                  onChange={(e) => setCredential(e.target.value)}
-                  required
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <IconUserCheck className="pointer-events-none h-6 w-6 text-gray-400 transition-all duration-300 group-focus-within:scale-110 group-focus-within:text-primary group-hover:text-primary/70" />
+                <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/50 to-primary/30 opacity-0 blur transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="relative">
+                  <input
+                    id="Credential"
+                    type="text"
+                    placeholder="Entrez votre email ou matricule"
+                    className="relative w-full rounded-xl border-2 border-gray-200 bg-white/90 px-5 py-4 text-base transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
+                    value={credential}
+                    onChange={(e) => setCredential(e.target.value)}
+                    required
+                  />
+                  <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-all duration-300 group-focus-within:bg-primary/10 group-focus-within:text-primary group-hover:bg-primary/10 group-hover:text-primary">
+                      <IconUserCheck className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+                    </div>
+                  </div>
                 </div>
-                <div className="absolute inset-0 rounded-xl bg-primary/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <label
                 htmlFor="Password"
                 className="block text-base font-semibold text-gray-800"
@@ -394,47 +447,62 @@ const ComponentsAuthLoginForm = () => {
                 Mot de passe
               </label>
               <div className="group relative transform transition-all duration-300 hover:scale-[1.01]">
-                <input
-                  id="Password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Entrez votre mot de passe"
-                  className="relative z-10 w-full rounded-xl border-2 border-gray-200 bg-white/80 px-5 py-4 text-base transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  className="absolute right-4 top-1/2 z-20 -translate-y-1/2 cursor-pointer transition-transform duration-300 hover:scale-110"
-                  onClick={togglePasswordVisibility}
-                >
-                  {showPassword ? (
-                    <IconEyeOff className="h-6 w-6 text-gray-500 transition-colors duration-300 hover:text-primary" />
-                  ) : (
-                    <IconEye className="h-6 w-6 text-gray-500 transition-colors duration-300 hover:text-primary" />
-                  )}
-                </button>
-                <div className="absolute inset-0 rounded-xl bg-primary/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/50 to-primary/30 opacity-0 blur transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="relative">
+                  <input
+                    id="Password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Entrez votre mot de passe"
+                    className="relative w-full rounded-xl border-2 border-gray-200 bg-white/90 px-5 py-4 text-base transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-4 top-1/2 -translate-y-1/2"
+                    onClick={togglePasswordVisibility}
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-all duration-300 hover:bg-primary/10 hover:text-primary">
+                      {showPassword ? (
+                        <IconEyeOff className="h-5 w-5 transition-transform duration-300 hover:scale-110" />
+                      ) : (
+                        <IconEye className="h-5 w-5 transition-transform duration-300 hover:scale-110" />
+                      )}
+                    </div>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-1">
               <button
                 type="button"
                 className="group relative text-sm font-medium text-gray-600 transition-all duration-300 hover:text-primary"
                 onClick={() => setIsModalOpen(true)}
               >
-                Mot de passe oublié?
+                Mot de passe oublié ?
                 <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full" />
               </button>
             </div>
 
             <button
               type="submit"
-              className="group relative w-full transform overflow-hidden rounded-xl bg-gradient-to-r from-primary to-primary/90 px-8 py-4 text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/30 focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-[0.98]"
+              disabled={isAnimating}
+              className="group relative w-full transform overflow-hidden rounded-xl bg-gradient-to-r from-primary to-primary/90 px-8 py-4 text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/30 focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <span className="relative z-10 text-base font-semibold tracking-wide">
-                Se connecter
+                {isAnimating ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    <span>Connexion en cours...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <IconUserCheck className="h-5 w-5" />
+                    <span>Se connecter</span>
+                  </div>
+                )}
               </span>
               <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 transition-transform duration-700 group-hover:translate-x-full" />
               <div className="absolute inset-0 h-full w-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />

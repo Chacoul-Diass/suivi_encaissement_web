@@ -16,6 +16,7 @@ interface AuthState {
   user: any | null; // Stocke les informations utilisateur décodées
   loading: boolean;
   error: string | null;
+  success: boolean;
 }
 
 const initialState: AuthState = {
@@ -24,6 +25,7 @@ const initialState: AuthState = {
   user: null,
   loading: false,
   error: null,
+  success: false,
 };
 
 // Nouvelle interface pour credentials acceptant un champ "credential" et "password"
@@ -74,8 +76,12 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.user = null; // Réinitialise les données utilisateur
       state.error = null;
+      state.success = false;
       deleteCookie("accessToken");
       deleteCookie("refresh_token");
+    },
+    clearError: (state) => {
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -87,6 +93,7 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action: PayloadAction<string>) => {
         state.accessToken = action.payload;
         state.loading = false;
+        state.success = true;
 
         // Décoder le token pour extraire les informations utilisateur
         const decodedUser = decodeTokens(action.payload);
@@ -112,6 +119,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, clearError } = authSlice.actions;
 
 export default authSlice.reducer;

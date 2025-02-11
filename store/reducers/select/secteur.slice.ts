@@ -5,10 +5,22 @@ import { API_AUTH_SUIVI } from "@/config/constants";
 // Thunk pour récupérer les secteurs
 export const fetchSecteurs = createAsyncThunk(
   "secteurs/fetchSecteurs",
-  async (drIds: any, { rejectWithValue }) => {
+  async (drIds: number[], { rejectWithValue }) => {
     try {
+      // Only make the API call if there are valid drIds
+      if (!drIds || drIds.length === 0) {
+        return [];
+      }
+
+      // Filter out any null or undefined values
+      const validDrIds = drIds.filter((id) => id != null);
+
+      if (validDrIds.length === 0) {
+        return [];
+      }
+
       const response = await axiosInstance.get(
-        `${API_AUTH_SUIVI}/secteur?drIds=${JSON.stringify(drIds)}`
+        `${API_AUTH_SUIVI}/secteur?drIds=${JSON.stringify(validDrIds)}`
       );
       return response.data;
     } catch (error: any) {

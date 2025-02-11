@@ -37,8 +37,6 @@ const AskToRequestModal = ({
 }: AskToRequestModalProps) => {
   const maxNumber = 69;
 
-  console.log("params", params);
-
   return (
     <Transition appear show={askToRequestModalOpen} as={Fragment}>
       <Dialog

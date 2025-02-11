@@ -60,8 +60,6 @@ export default function Profil() {
     profile = { name: "" },
   } = user || {};
 
-  console.log(id, "id");
-
   useEffect(() => {
     setMounted(true);
     setEditedUser({
@@ -98,8 +96,6 @@ export default function Profil() {
         }
       );
 
-      console.log(response?.statusCode, "response2");
-
       // Vérifier si la mise à jour a réussi
       if (response?.error === false && response?.statusCode === 200) {
         // Fermer le modal et réinitialiser le loading
@@ -127,8 +123,8 @@ export default function Profil() {
               <div className="flex items-center gap-2">
                 <span className="text-blue-800">⚠️</span>
                 <p className="text-sm font-medium text-blue-800">
-                  Pour voir les modifications, veuillez vous déconnecter et vous
-                  reconnecter.
+                  Vous allez être déconnecté dans quelques instants pour
+                  appliquer les modifications...
                 </p>
               </div>
             </div>
@@ -150,6 +146,13 @@ export default function Profil() {
             },
           }
         );
+
+        // Déconnexion après 3 secondes
+        setTimeout(() => {
+          localStorage.clear();
+          window.location.href = "/login";
+        }, 5000);
+
         return;
       }
 

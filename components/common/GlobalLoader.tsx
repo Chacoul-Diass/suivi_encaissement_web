@@ -27,7 +27,7 @@ const GlobalLoader: React.FC<GlobalLoaderProps> = ({
           <div className={baseClasses}>
             <div className="relative mb-8 h-16 w-16">
               <Image
-                src="/assets/images/auth/suivi.png"
+                src="/assets/images/suivi.png"
                 alt="Logo"
                 layout="fill"
                 className="animate-pulse object-contain"
