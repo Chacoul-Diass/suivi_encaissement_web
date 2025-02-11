@@ -1136,6 +1136,12 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const files: any = imageList.map((image) => image.file);
   };
 
+  const [observationReclamation, setObservationReclamation] = useState("");
+  const stripHtml = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.body.textContent || "";
+  };
+
   const handleSubmit = (updatedRow: any) => {
     if (!selectedRow?.id) {
       console.warn("Aucune ligne sélectionnée pour validation.");
@@ -1149,8 +1155,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
       observationReleve: rasChecked2 ? "RAS" : observationBanque,
       montantReleve: updatedRow.montantReleve,
       ecartReleve: updatedRow.ecartReleve,
-      statutValidation: updatedRow.statutValidation,
-      observationReclamation: updatedRow.observationReclamation || "",
+      statutValidation: EStatutEncaissement.RECLAMATION_TRAITES,
+      observationReclamation: stripHtml(observationReclamation) || "",
       observationRejete: updatedRow.observationRejete || "",
     };
 
@@ -1543,6 +1549,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   setImages2={setImages2}
                   images2={images2}
                   onChange2={onChange2}
+                  observationReclamation={observationReclamation}
+                  setObservationReclamation={setObservationReclamation}
                 />
               )}
             </div>

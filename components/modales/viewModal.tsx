@@ -41,6 +41,8 @@ interface ViewModalProps {
   setImages2: any;
   images2: any;
   onChange2: any;
+  observationReclamation : any;
+setObservationReclamation : any;
 }
 
 export default function ViewModal({
@@ -78,6 +80,8 @@ export default function ViewModal({
   setImages2,
   images2,
   onChange2,
+  observationReclamation,
+setObservationReclamation,
 }: ViewModalProps) {
   const [askToRequestModalOpen, setAskToRequestModalOpen] = useState(false);
   useEffect(() => {
@@ -486,8 +490,7 @@ export default function ViewModal({
           setParams={setParams}
           setImages2={setImages2}
           images2={images2}
-          onChange2={onChange2}
-        />
+          onChange2={onChange2} observationReclamation={observationReclamation} setObservationReclamation={setObservationReclamation}        />
       )}
     </>
   );
