@@ -14,6 +14,8 @@ interface AskToRequestModalProps {
   handleMultipleFileUpload: any;
   uploadedFiles: any;
   removeFile: any;
+  observationReclamation: any;
+  setObservationReclamation: any;
   params: any;
   setParams: any;
   setImages2: any;
@@ -25,9 +27,8 @@ const AskToRequestModal = ({
   askToRequestModalOpen,
   setAskToRequestModalOpen,
   handleAskToRequest,
-  handleMultipleFileUpload,
-  uploadedFiles,
-  removeFile,
+  observationReclamation,
+  setObservationReclamation,
   params,
   setParams,
   setImages2,
@@ -35,6 +36,8 @@ const AskToRequestModal = ({
   onChange2,
 }: AskToRequestModalProps) => {
   const maxNumber = 69;
+
+  console.log("params", params);
 
   return (
     <Transition appear show={askToRequestModalOpen} as={Fragment}>
@@ -70,23 +73,29 @@ const AskToRequestModal = ({
                 <div className="mb-8 rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
                   <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
                     <div className="flex items-center gap-2">
-                      <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      <svg
+                        className="h-4 w-4 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
                       </svg>
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">Message</h3>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                        Message
+                      </h3>
                     </div>
                   </div>
                   <div className="p-4">
                     <ReactQuill
                       theme="snow"
-                      value={params.observationRejete || ""}
-                      defaultValue={params.observationRejete || ""}
-                      onChange={(content, delta, source, editor) => {
-                        setParams({
-                          ...params,
-                          observationRejete: content,
-                        });
-                      }}
+                      value={observationReclamation} // Utilisation du state ici
+                      onChange={(content) => setObservationReclamation(content)} // Mise à jour du state
                       className="min-h-[200px]"
                     />
                   </div>
@@ -97,7 +106,9 @@ const AskToRequestModal = ({
                   <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
                     <div className="flex items-center gap-2">
                       <IconPaperclip className="h-4 w-4 text-gray-500" />
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">Documents justificatifs</h3>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                        Documents justificatifs
+                      </h3>
                     </div>
                   </div>
                   <div className="p-4">
@@ -123,9 +134,11 @@ const AskToRequestModal = ({
                             {...dragProps}
                           >
                             <IconPaperclip className="h-5 w-5" />
-                            <span className="text-sm">Cliquez ou glissez-déposez vos documents ici</span>
+                            <span className="text-sm">
+                              Cliquez ou glissez-déposez vos documents ici
+                            </span>
                           </button>
-                          
+
                           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             {imageList.map((image, index) => (
                               <div
@@ -178,8 +191,18 @@ const AskToRequestModal = ({
                   onClick={handleAskToRequest}
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary/90 hover:shadow-md active:scale-95"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                    />
                   </svg>
                   Envoyer la réponse
                 </button>
