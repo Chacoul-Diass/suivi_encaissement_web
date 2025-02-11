@@ -19,6 +19,7 @@ import getUserPermission from "@/utils/user-info";
 import { fetchSecteurs } from "@/store/reducers/select/secteur.slice";
 import IconRefresh from "../icon/icon-refresh";
 import { fetchDirectionRegionales } from "@/store/reducers/select/dr.slice";
+import IconFilter from "../icon/icon-filter";
 
 const ComponentsDashboardSales = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -346,24 +347,25 @@ const ComponentsDashboardSales = () => {
                 />
               </div>
 
-              <button
-                className={`rounded-md px-4 py-2 font-semibold text-white transition-all ${
-                  selectedDRIds?.length === 0
-                    ? "cursor-not-allowed bg-success/60"
-                    : "bg-success hover:bg-success/90"
-                }`}
-                onClick={handleApplyFilters}
-                disabled={selectedDRIds?.length === 0}
-              >
-                Appliquer le filtre
-              </button>
-
-              <button
-                className="rounded-md bg-primary px-4 py-2 font-semibold text-white transition-all hover:bg-primary/90"
-                onClick={handleResetFilters}
-              >
-                Réinitialiser
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="group flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                >
+                  <IconRefresh className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
+                  Réinitialiser
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyFilters}
+                  disabled={selectedDRIds?.length === 0}
+                  className="group flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-primary/90 hover:shadow-sm disabled:cursor-not-allowed disabled:bg-primary/60"
+                >
+                  <IconFilter className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                  Appliquer
+                </button>
+              </div>
             </div>
           </div>
         </div>

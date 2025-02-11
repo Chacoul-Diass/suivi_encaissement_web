@@ -16,16 +16,36 @@ import IconUserCheck from "@/components/icon/icon-user-check";
 import DraggableButtons from "../components/DraggableButtons";
 import { getFirstAccessibleRoute } from "@/utils/getFirstAccessibleRoute";
 import getUserHabilitation from "@/utils/getHabilitation";
+import { API_AUTH_SUIVI } from "@/config/constants";
+import axiosInstance from "@/utils/axios";
+import { decodeTokens } from "@/utils/tokendecod";
 
 const ComponentsAuthLoginForm = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const user = useSelector((state: TRootState) => state.auth?.user);
   const [showPassword, setShowPassword] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [credential, setCredential] = useState("");
   const [password, setPassword] = useState("");
+  const [showFirstLoginModal, setShowFirstLoginModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    password: "",
+    confirmPassword: "",
+  });
+  const [passwordErrors, setPasswordErrors] = useState({
+    password: "",
+    confirmPassword: "",
+  });
+  const [passwordStrength, setPasswordStrength] = useState({
+    hasMinLength: false,
+    hasUpperCase: false,
+    hasNumber: false,
+    matches: false,
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const defaultBackground = "/assets/images/auth/default-bg.jpg";
   const [background, setBackground] = useState(defaultBackground);
@@ -78,22 +98,91 @@ const ComponentsAuthLoginForm = () => {
     }
   };
 
-  const user = useSelector((state: TRootState) => state.auth?.user);
-
   const { firstname = "", lastname = "" } = user || {};
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
-  const submitForm = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsAnimating(true);
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (name === "password") {
+      setPasswordStrength({
+        hasMinLength: value.length >= 8,
+        hasUpperCase: /[A-Z]/.test(value),
+        hasNumber: /[0-9]/.test(value),
+        matches: value === passwordForm.confirmPassword && value !== "",
+      });
+    } else if (name === "confirmPassword") {
+      setPasswordStrength((prev) => ({
+        ...prev,
+        matches: value === passwordForm.password && value !== "",
+      }));
+    }
+  };
+
+  const validatePasswordForm = () => {
+    const errors = {
+      password: "",
+      confirmPassword: "",
+    };
+    let isValid = true;
+
+    if (!passwordForm.password) {
+      errors.password = "Le mot de passe est requis";
+      isValid = false;
+    } else {
+      if (passwordForm.password.length < 5) {
+        errors.password = "Le mot de passe doit contenir au moins 5 caractères";
+        isValid = false;
+      }
+      if (!/[A-Z]/.test(passwordForm.password)) {
+        errors.password =
+          "Le mot de passe doit contenir au moins une majuscule";
+        isValid = false;
+      }
+      if (!/[0-9]/.test(passwordForm.password)) {
+        errors.password = "Le mot de passe doit contenir au moins un chiffre";
+        isValid = false;
+      }
+    }
+
+    if (!passwordForm.confirmPassword) {
+      errors.confirmPassword = "La confirmation du mot de passe est requise";
+      isValid = false;
+    } else if (passwordForm.password !== passwordForm.confirmPassword) {
+      errors.confirmPassword = "Les mots de passe ne correspondent pas";
+      isValid = false;
+    }
+
+    setPasswordErrors(errors);
+    return isValid;
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!validatePasswordForm()) return;
 
     try {
-      const result = await dispatch(login({ credential, password }));
-      
-      if (login.fulfilled.match(result)) {
-        // Attendre un peu pour s'assurer que le token est bien enregistré
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
+      setIsLoading(true);
+      const response = await axiosInstance.post(
+        `${API_AUTH_SUIVI}/auth/change-password`,
+        {
+          email: credential,
+          password: passwordForm.password,
+          confirmPassword: passwordForm.confirmPassword,
+        }
+      );
+
+      if (response?.data?.error === false) {
+        setIsLoading(false);
+        setShowFirstLoginModal(false);
+
+        Toastify("success", "Mot de passe modifié avec succès !");
+
+        // Continuer avec la connexion normale
         const habilitation = getUserHabilitation();
         if (!habilitation) {
           Toastify("error", "Erreur lors de la récupération des permissions");
@@ -103,7 +192,66 @@ const ComponentsAuthLoginForm = () => {
 
         const redirectPath = getFirstAccessibleRoute(habilitation);
         if (redirectPath === "/login") {
-          Toastify("error", "Vous n'avez accès à aucune section de l'application");
+          Toastify(
+            "error",
+            "Vous n'avez accès à aucune section de l'application"
+          );
+          setIsAnimating(false);
+          return;
+        }
+
+        Toastify(
+          "success",
+          `Félicitation ${firstname} ${lastname} vous êtes connecté avec succès`
+        );
+
+        // Utiliser replace au lieu de push pour éviter les retours en arrière
+        router.replace(redirectPath);
+      }
+    } catch (error: any) {
+      setIsLoading(false);
+      Toastify(
+        "error",
+        error.response?.data?.message ||
+          "Erreur lors du changement de mot de passe"
+      );
+    }
+  };
+
+  const submitForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAnimating(true);
+
+    try {
+      const result = await dispatch(login({ credential, password }));
+
+      if (login.fulfilled.match(result)) {
+        // Attendre un peu pour s'assurer que le token est bien enregistré
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Décoder le token pour obtenir les informations utilisateur
+        const decodedUser = decodeTokens(result.payload);
+        console.log("Decoded user:", decodedUser);
+
+        if (decodedUser?.isFirstLogin === 0) {
+          setShowFirstLoginModal(true);
+          setIsAnimating(false);
+          return;
+        }
+
+        const habilitation = getUserHabilitation();
+        if (!habilitation) {
+          Toastify("error", "Erreur lors de la récupération des permissions");
+          setIsAnimating(false);
+          return;
+        }
+
+        const redirectPath = getFirstAccessibleRoute(habilitation);
+        if (redirectPath === "/login") {
+          Toastify(
+            "error",
+            "Vous n'avez accès à aucune section de l'application"
+          );
           setIsAnimating(false);
           return;
         }
@@ -272,7 +420,7 @@ const ComponentsAuthLoginForm = () => {
                 />
                 <button
                   type="button"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer z-20"
+                  className="absolute right-4 top-1/2 z-20 -translate-y-1/2 cursor-pointer"
                   onClick={togglePasswordVisibility}
                 >
                   {showPassword ? (
@@ -312,6 +460,210 @@ const ComponentsAuthLoginForm = () => {
 
       {isModalOpen && (
         <ForgotPasswordModal closeModal={() => setIsModalOpen(false)} />
+      )}
+
+      {showFirstLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Changement de mot de passe requis
+              </h3>
+            </div>
+            <p className="mb-6 text-sm text-gray-600">
+              Pour des raisons de sécurité, vous devez changer votre mot de
+              passe lors de votre première connexion.
+            </p>
+            <div className="space-y-4">
+              {/* Nouveau mot de passe */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Nouveau mot de passe
+                </label>
+                <div className="group relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={passwordForm.password}
+                    onChange={handlePasswordChange}
+                    className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 pr-12 text-gray-700 transition-all duration-200 focus:border-primary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 ${
+                      passwordErrors.password
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="Votre nouveau mot de passe"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? (
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {/* Indicateurs de force du mot de passe */}
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        passwordStrength.hasMinLength
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                      }`}
+                    ></div>
+                    <span
+                      className={`text-xs ${
+                        passwordStrength.hasMinLength
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Au moins 8 caractères
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        passwordStrength.hasUpperCase
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                      }`}
+                    ></div>
+                    <span
+                      className={`text-xs ${
+                        passwordStrength.hasUpperCase
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Au moins une majuscule
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        passwordStrength.hasNumber
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                      }`}
+                    ></div>
+                    <span
+                      className={`text-xs ${
+                        passwordStrength.hasNumber
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Au moins un chiffre
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Confirmation du mot de passe */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Confirmer le mot de passe
+                </label>
+                <div className="group relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={passwordForm.confirmPassword}
+                    onChange={handlePasswordChange}
+                    className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 pr-12 text-gray-700 transition-all duration-200 focus:border-primary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 ${
+                      passwordErrors.confirmPassword
+                        ? "border-red-300"
+                        : passwordStrength.matches
+                        ? "border-green-300"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="Confirmez votre nouveau mot de passe"
+                  />
+                </div>
+                {passwordErrors.confirmPassword ? (
+                  <p className="mt-1 text-sm text-red-500">
+                    {passwordErrors.confirmPassword}
+                  </p>
+                ) : (
+                  passwordStrength.matches && (
+                    <p className="mt-1 text-sm text-green-500">
+                      Les mots de passe correspondent
+                    </p>
+                  )
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={handlePasswordSubmit}
+                disabled={isLoading}
+                className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-primary/90 focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <svg
+                    className="h-5 w-5 animate-spin text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                ) : (
+                  "Changer le mot de passe"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

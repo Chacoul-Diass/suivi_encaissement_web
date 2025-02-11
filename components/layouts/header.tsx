@@ -32,7 +32,11 @@ const Header = () => {
   const router = useRouter();
   const user = useSelector((state: TRootState) => state.auth?.user);
   const habilitation = getUserHabilitation();
-  console.log(habilitation, " habilitation");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const pathname = usePathname();
   const dispatch = useDispatch();
@@ -44,6 +48,8 @@ const Header = () => {
     firstname = "",
     lastname = "",
   } = user || {};
+
+  const displayName = mounted ? `${firstname} ${lastname}`.trim() : "";
 
   const profile = user?.profile?.name;
   const [displayProfile, setDisplayProfile] = useState("");
@@ -112,173 +118,101 @@ const Header = () => {
   };
 
   return (
-    <header
-      className={`z-40 ${
-        themeConfig.semidark && themeConfig.menu === "horizontal" ? "dark" : ""
-      }`}
-    >
-      <div className="shadow-sm">
-        <div className="relative flex w-full items-center bg-white px-5 py-2.5 dark:bg-black">
-          <div className="horizontal-logo flex items-center justify-between lg:hidden ltr:mr-2 rtl:ml-2">
-            <button
-              type="button"
-              className="collapse-icon flex flex-none rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:text-[#d0d2d6] dark:hover:bg-dark/60 dark:hover:text-primary lg:hidden ltr:ml-2 rtl:mr-2"
-              onClick={() => dispatch(toggleSidebar())}
-            >
-              <IconMenu className="h-5 w-5" />
-            </button>
-            <Link
-              href="/dashboard"
-              className="main-logo ml-5 flex shrink-0 items-center"
-            >
-              <Image
-                className="inline w-10 align-top ltr:-ml-1 rtl:-mr-1"
-                src="/assets/images/logo.png"
-                alt="logo"
-                width={50}
-                height={50}
-              />
-              <span className="textl hidden align-middle font-light text-[#C7493D] transition-all duration-300 md:inline ltr:ml-1.5 rtl:mr-1.5">
-                Suivi encaissement
-              </span>
-            </Link>
+    <header className="z-40">
+      <div className="shadow-sm bg-white">
+        <div className="relative flex w-full items-center justify-between px-5 py-2.5">
+          <div className="flex items-center ml-8">
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                Suivi des Encaissements
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                <span className="text-sm text-gray-500">Système de gestion</span>
+              </div>
+            </div>
           </div>
 
-          <p className="ml-6 flex items-center text-success">
-            <button
-              type="button"
-              className={`flex h-10 cursor-default items-center rounded-md font-medium text-success duration-300`}
-            >
-              <IconSquareRotated className="shrink-0 fill-success" />
-            </button>
-            <span className="ml-2">{isClient ? displayProfile : ""}</span>
-          </p>
-
-          <div className="flex items-center space-x-1.5 dark:text-[#d0d2d6] sm:flex-1 lg:space-x-2 ltr:ml-auto ltr:sm:ml-0 rtl:mr-auto rtl:space-x-reverse sm:rtl:mr-0">
-            <div className="sm:ltr:mr-auto sm:rtl:ml-auto">
-              <form
-                className={`${
-                  search && "!block"
-                } absolute inset-x-0 top-1/2 z-10 mx-4 hidden -translate-y-1/2 sm:relative sm:top-0 sm:mx-0 sm:block sm:translate-y-0`}
-                onSubmit={() => setSearch(false)}
-              ></form>
-            </div>
-
-            <div className="dropdown right-4 flex shrink-0">
+          <div className="flex items-center">
+            <div className="relative">
               <Dropdown
-                offset={[0, 8]}
-                placement={`${isRtl ? "bottom-start" : "bottom-end"}`}
-                btnClassName="relative group block "
+                offset={[0, 12]}
+                placement={"bottom-end"}
+                btnClassName="relative group"
                 button={
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <div className="font-bold text-gray-800">{`${lastname} ${firstname}`}</div>
+                  <div className="flex items-center gap-3 p-2.5 px-4 rounded-lg bg-white hover:bg-gray-50 transition-all duration-300 cursor-pointer border border-gray-100 hover:border-gray-200 hover:shadow-sm">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 ring-2 ring-white">
+                      <IconUser className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-900">
-                      <IconUser className="h-4.5 w-4.5 shrink-0 justify-center" />
+                    <div className="flex flex-col items-start">
+                      <div className="font-medium text-sm text-gray-900">{displayName}</div>
+                      <div className="text-xs text-gray-500 flex items-center gap-2">
+                        <span>{profile || 'Utilisateur'}</span>
+                        <span className="inline-block h-1 w-1 rounded-full bg-gray-300"></span>
+                        <span>{matricule}</span>
+                      </div>
                     </div>
-                    <IconArrowDown className="absolute -right-5 top-2 h-5 w-5 " />
+                    <IconArrowDown className="h-4 w-4 text-gray-400 transition-transform duration-300 group-hover:rotate-180" />
                   </div>
                 }
               >
-                <ul className="w-[430px] !py-0 font-semibold text-dark dark:text-white-dark dark:text-white-light/90">
-                  <li>
-                    <div className="flex items-center px-4 py-4">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#ff6c17]">
-                        <IconUser className="h-6 w-6 text-white" />
+                <ul className="w-[320px] !py-2 font-medium text-gray-600 bg-white rounded-xl shadow-xl border border-gray-100/50 divide-y divide-gray-100">
+                  <li className="px-4 pb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-shrink-0">
+                        <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <IconUser className="h-8 w-8 text-primary" />
+                        </div>
                       </div>
-
-                      <div className="truncate ltr:pl-4 rtl:pr-4">
-                        <h4 className="text-base">
-                          {`${lastname} ${firstname}`}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-base font-semibold text-gray-900 truncate">
+                          {displayName}
                         </h4>
-                        <div className="flex gap-2">
-                          <span className="text-sm font-thin text-black hover:text-primary dark:text-dark-light/60 dark:hover:text-white">
-                            {email}
+                        <p className="text-sm text-gray-500 truncate mt-0.5">{email}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                            {profile || 'Utilisateur'}
                           </span>
-                          <span className="rounded bg-success-light px-1 text-xs text-success ">
-                            {isClient ? displayProfile : ""}
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            {matricule}
                           </span>
                         </div>
                       </div>
                     </div>
                   </li>
-
-                  <li className="border-t border-white-light dark:border-white-light/10">
-                    <Link href="/change" className="!py-3 text-primary">
-                      <IconSettings className="h-4.5 w-4.5 shrink-0 rotate-90 ltr:mr-2 rtl:ml-2" />
-                      Changer de mot de passe
+                  <li>
+                    <Link
+                      href="/profil"
+                      className="flex items-center px-4 py-3 text-sm hover:bg-gray-50 transition-all duration-300 gap-3 group"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors duration-300">
+                        <IconSettings className="h-4.5 w-4.5 text-gray-600" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-700">Paramètres du profil</span>
+                        <span className="text-xs text-gray-500">Gérer vos préférences</span>
+                      </div>
                     </Link>
                   </li>
-
-                  <li className="border-t border-white-light hover:bg-[#e7515a] hover:bg-opacity-30 dark:border-white-light/10">
+                  <li>
                     <button
+                      className="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-all duration-300 gap-3 group"
                       onClick={handleLogout}
-                      className="flex w-full items-center space-x-2 !py-3 !text-[#e7515a]"
                     >
-                      <IconLogout className="h-4.5 w-4.5 rotate-90" />
-                      <span>Deconnexion</span>
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 group-hover:bg-red-200 transition-colors duration-300">
+                        <IconLogout className="h-4.5 w-4.5 text-red-600" />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">Se déconnecter</span>
+                        <span className="text-xs text-red-500">Terminer la session</span>
+                      </div>
                     </button>
                   </li>
                 </ul>
               </Dropdown>
             </div>
-
-            {/* <UserProfile /> */}
           </div>
         </div>
-
-        {/* horizontal menu */}
-        <ul className="horizontal-menu border-top hidden border-[#ebedf2] bg-white px-6 py-1.5 font-semibold text-black dark:border-[#191e3a] dark:bg-black dark:text-white-dark lg:space-x-1.5 xl:space-x-8 rtl:space-x-reverse">
-          <li className="menu nav-item relative">
-            <button type="button" className="nav-link">
-              <div className="flex items-center">
-                <IconMenuDashboard className="shrink-0" />
-                <span className="px-1">{t("dashboard")}</span>
-              </div>
-              <div className="right_arrow">
-                <IconCaretDown />
-              </div>
-            </button>
-          </li>
-          <li className="menu nav-item relative">
-            <button type="button" className="nav-link">
-              <div className="flex items-center">
-                <IconMenuApps className="shrink-0" />
-                <span className="px-1">{t("apps")}</span>
-              </div>
-              <div className="right_arrow">
-                <IconCaretDown />
-              </div>
-            </button>
-            <ul className="sub-menu">
-              <li>
-                <button type="button">
-                  {t("invoice")}
-                  <div className="-rotate-90 ltr:ml-auto rtl:mr-auto rtl:rotate-90">
-                    <IconCaretDown />
-                  </div>
-                </button>
-                <ul className="absolute top-0 z-[10] hidden min-w-[180px] rounded bg-white p-0 py-2 text-dark shadow dark:bg-[#1b2e4b] dark:text-white-dark ltr:left-[95%] rtl:right-[95%]">
-                  <li>
-                    <Link href="/encaissement">{t("Encaissement")}</Link>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-          <li className="menu nav-item relative">
-            <button type="button" className="nav-link">
-              <div className="flex items-center">
-                <IconMenuComponents className="shrink-0" />
-                <span className="px-1">{t("components")}</span>
-              </div>
-              <div className="right_arrow">
-                <IconCaretDown />
-              </div>
-            </button>
-          </li>
-        </ul>
       </div>
     </header>
   );

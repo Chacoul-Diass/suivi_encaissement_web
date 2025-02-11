@@ -11,7 +11,7 @@ const getUserHabilitation = (): any => {
   // Récupérer les données persistées
   const persistData = safeLocalStorage.getItem("persist:suivi-encaissement");
   console.log("getUserHabilitation: Données persistées:", persistData);
-  
+
   if (persistData) {
     try {
       // Parser les données JSON
@@ -28,9 +28,12 @@ const getUserHabilitation = (): any => {
         // Décoder le token
         const tokenData: any = decodeToken(token);
         console.log("getUserHabilitation: Données du token:", tokenData);
-        
+
         if (tokenData && tokenData.permissions) {
-          console.log("getUserHabilitation: Permissions trouvées:", tokenData.permissions);
+          console.log(
+            "getUserHabilitation: Permissions trouvées:",
+            tokenData.permissions
+          );
           return tokenData.permissions;
         }
       }

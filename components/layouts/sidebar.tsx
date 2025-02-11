@@ -35,8 +35,6 @@ const Sidebar = () => {
   const [habilitation, setHabilitation] = useState<any>(null);
   const themeConfig = useSelector((state: TRootState) => state.themeConfig);
 
-  console.log(habilitation, "habilitation12");
-
   const { initLocale } = getTranslation();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -156,15 +154,23 @@ const Sidebar = () => {
 
   const renderMenu = (section: string) => {
     return habilitation
-      ?.filter((item: { name: string; LIRE: boolean; CREER: boolean; MODIFIER: boolean; SUPPRIMER: boolean }) => {
-        const menu = allowedMenus.find(
-          (menu) =>
-            menu.name === item.name && 
-            menu.section === section && 
-            hasAnyPermission(item)
-        );
-        return !!menu;
-      })
+      ?.filter(
+        (item: {
+          name: string;
+          LIRE: boolean;
+          CREER: boolean;
+          MODIFIER: boolean;
+          SUPPRIMER: boolean;
+        }) => {
+          const menu = allowedMenus.find(
+            (menu) =>
+              menu.name === item.name &&
+              menu.section === section &&
+              hasAnyPermission(item)
+          );
+          return !!menu;
+        }
+      )
       .map((item: { name: string; id: Key | null | undefined }) => {
         const menu = allowedMenus.find((menu) => menu.name === item.name);
         return (
