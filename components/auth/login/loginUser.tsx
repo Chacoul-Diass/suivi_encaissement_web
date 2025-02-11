@@ -300,21 +300,6 @@ const ComponentsAuthLoginForm = () => {
           </div>
 
           <div className="absolute inset-0 bg-gradient-to-r from-black/5 to-white/5" />
-
-          {/* <Image
-            src="/assets/images/auth/electric-circuit-white.svg"
-            alt="Thunder Left"
-            className="absolute bottom-0 left-0 h-[600px] w-auto rotate-90 opacity-90 transition-transform duration-700 hover:scale-105"
-            width={181}
-            height={82}
-          />
-          <Image
-            src="/assets/images/auth/electric-circuit-white.svg"
-            alt="Thunder Right"
-            className="absolute right-0 top-0 h-[600px] w-auto -rotate-90 opacity-90 transition-transform duration-700 hover:scale-105"
-            width={181}
-            height={82}
-          /> */}
         </>
       )}
 
