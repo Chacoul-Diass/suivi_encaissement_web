@@ -1217,86 +1217,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
     }
   };
 
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [isConnectionWeak, setIsConnectionWeak] = useState(false);
-
-  const checkConnectionQuality = () => {
-    if ("connection" in navigator) {
-      const connection = (navigator as any).connection || {};
-      const { downlink, effectiveType } = connection;
-
-      if (downlink && downlink < 0.5) {
-        setIsConnectionWeak(true);
-        Swal.fire({
-          title: "Connexion faible",
-          text: "Votre connexion Internet est très lente. Cela pourrait affecter les performances.",
-          icon: "warning",
-          confirmButtonText: "OK",
-          timer: 5000,
-        });
-      } else if (
-        effectiveType &&
-        (effectiveType === "2g" || effectiveType === "slow-2g")
-      ) {
-        setIsConnectionWeak(true);
-        Swal.fire({
-          title: "Connexion faible",
-          text: "Vous êtes connecté avec un réseau 2G. La navigation pourrait être lente.",
-          icon: "warning",
-          confirmButtonText: "OK",
-          timer: 5000,
-        });
-      } else {
-        setIsConnectionWeak(false);
-      }
-    }
-  };
-
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOffline(false);
-      checkConnectionQuality();
-      Swal.close();
-    };
-
-    const handleOffline = () => {
-      setIsOffline(true);
-      Swal.fire({
-        title: "Connexion perdue",
-        text: "Votre connexion Internet est perdue.",
-        icon: "error",
-        confirmButtonText: "OK",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        backdrop: true,
-      });
-    };
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    if ("connection" in navigator) {
-      const connection = (navigator as any).connection;
-      connection.addEventListener("change", checkConnectionQuality);
-    }
-
-    if (!navigator.onLine) {
-      handleOffline();
-    } else {
-      checkConnectionQuality();
-    }
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-
-      if ("connection" in navigator) {
-        const connection = (navigator as any).connection;
-        connection.removeEventListener("change", checkConnectionQuality);
-      }
-    };
-  }, []);
-
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
 
   const confirmClose = () => {
@@ -1330,24 +1250,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
   return (
     <>
-      {/* Logique de connexion */}
-      {isOffline && (
-        <div className="fixed left-0 top-[50px] w-full bg-gradient-to-r from-red-500 to-red-700 py-4 text-white shadow-lg">
-          <div className="flex items-center justify-center space-x-4">
-            <span className="text-xl font-bold drop-shadow-md">
-              Vous êtes hors ligne. Veuillez vérifier votre connexion.
-            </span>
-          </div>
-        </div>
-      )}
-      {isConnectionWeak && !isOffline && (
-        <div className="fixed left-0 top-12 flex w-full justify-center">
-          <div className="bg-red-500 px-4 py-2 text-center text-black">
-            Votre connexion Internet est faible. Certaines fonctionnalités
-            pourraient être affectées.
-          </div>
-        </div>
-      )}
       {/* Contenu de la page */}
       <div className=" mt-9">
         {/* 10 Encaissements connus */}

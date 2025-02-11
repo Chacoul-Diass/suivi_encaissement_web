@@ -332,54 +332,45 @@ const Table = () => {
         </div>
       </div>
       <div className="datatables mt-3">
-        <DataTable
-          className="table-bordered whitespace-nowrap"
-          records={data}
-          columns={[
-            { accessor: "Libelle", title: "Libelle" },
-            { accessor: "Janvier", title: "Janvier" },
-            { accessor: "Février", title: "Février" },
-            { accessor: "Mars", title: "Mars" },
-            { accessor: "Avril", title: "Avril" },
-            { accessor: "Mai", title: "Mai" },
-            { accessor: "Juin", title: "Juin" },
-            { accessor: "Juillet", title: "Juillet" },
-            { accessor: "Août", title: "Août" },
-            { accessor: "Septembre", title: "Septembre" },
-            { accessor: "Octobre", title: "Octobre" },
-            { accessor: "Novembre", title: "Novembre" },
-            { accessor: "Décembre", title: "Décembre" },
-            { accessor: "Total", title: "Total" },
-          ]}
-          minHeight={200}
-          withBorder={true}
-          borderRadius={10}
-          noRecordsText={
-            loading
-              ? ((
-                  <>
-                    <span className="delay-800 mt-2 animate-pulse text-black">
-                      Chargement en cours
-                    </span>
-                    <div className="mt-2 flex items-center justify-center space-x-2">
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                    </div>
-                  </>
-                ) as unknown as string)
-              : ("Aucune donnée disponible" as string)
-          }
-        />
+        {loading ? (
+          <div className="min-h-[400px] flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="animate-spin">
+                <IconSquareRotated className="w-8 h-8 text-primary" />
+              </div>
+              <p className="text-gray-500 font-medium">Chargement des données...</p>
+            </div>
+          </div>
+        ) : (
+          <DataTable
+            noRecordsText="Aucun enregistrement trouvé"
+            highlightOnHover
+            className="whitespace-nowrap table-hover"
+            records={data}
+            columns={[
+              { accessor: "Libelle", title: "Libellé", width: 200 },
+              { accessor: "Janvier", title: "Janvier" },
+              { accessor: "Février", title: "Février" },
+              { accessor: "Mars", title: "Mars" },
+              { accessor: "Avril", title: "Avril" },
+              { accessor: "Mai", title: "Mai" },
+              { accessor: "Juin", title: "Juin" },
+              { accessor: "Juillet", title: "Juillet" },
+              { accessor: "Août", title: "Août" },
+              { accessor: "Septembre", title: "Septembre" },
+              { accessor: "Octobre", title: "Octobre" },
+              { accessor: "Novembre", title: "Novembre" },
+              { accessor: "Décembre", title: "Décembre" },
+              { accessor: "Total", title: "Total" },
+            ]}
+          />
+        )}
       </div>
     </div>
   );
 
   return (
-    <div>
+    <div className="space-y-6">
       {renderTable(tableDataCHQ, "Montants Chèques")}
       {renderTable(tableDataESP, "Montants Espèces")}
       {/* Vous pouvez avoir d'autres données similaires (Prépayé, etc.) */}

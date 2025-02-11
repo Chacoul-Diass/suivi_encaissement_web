@@ -29,7 +29,7 @@ const ComponentsDashboardSales = () => {
   );
 
   const loadingDashboard: any = useSelector(
-    (state: TRootState) => state.dashboard.loading
+    (state: TRootState) => state?.dashboard.loading
   );
 
   useEffect(() => {

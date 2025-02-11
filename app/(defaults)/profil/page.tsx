@@ -215,7 +215,7 @@ export default function Profil() {
     // Mettre à jour la force du mot de passe
     if (name === "password") {
       setPasswordStrength({
-        hasMinLength: value.length >= 8,
+        hasMinLength: value.length >= 5,
         hasUpperCase: /[A-Z]/.test(value),
         hasNumber: /[0-9]/.test(value),
         matches: value === passwordForm.confirmPassword && value !== "",
@@ -528,7 +528,9 @@ export default function Profil() {
                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                       />
                     </svg>
-                    <h4 className="font-semibold text-gray-800">Statistiques</h4>
+                    <h4 className="font-semibold text-gray-800">
+                      Statistiques
+                    </h4>
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -546,9 +548,13 @@ export default function Profil() {
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        <span className="text-gray-600">Dernière connexion</span>
+                        <span className="text-gray-600">
+                          Dernière connexion
+                        </span>
                       </div>
-                      <span className="font-medium text-gray-800">Aujourd'hui</span>
+                      <span className="font-medium text-gray-800">
+                        Aujourd'hui
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -922,7 +928,7 @@ export default function Profil() {
                               : "text-gray-500"
                           }`}
                         >
-                          Au moins 8 caractères
+                          Au moins 5 caractères
                         </span>
                       </div>
                       <div className="flex items-center gap-2">

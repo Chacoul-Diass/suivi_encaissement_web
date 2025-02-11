@@ -148,89 +148,81 @@ const Table = () => {
   // Pour factoriser l'affichage
   const renderTable = (data: MontantData[], title: string) => (
     <div className="panel mt-5">
-      <div className="flex w-full">
-        <div className="flex w-full items-center text-success">
+      <div className="flex w-full items-center justify-between mb-4">
+        <div className="flex items-center text-success">
           <button
             type="button"
             className="flex h-10 cursor-default items-center rounded-md font-medium text-success duration-300"
           >
             <IconSquareRotated className="shrink-0 fill-success" />
           </button>
-          <span className="ml-2">{title}</span>
+          <span className="ml-2 text-lg font-semibold">{title}</span>
         </div>
-        <div className="flex items-center justify-center lg:justify-end">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            className="mr-1"
+            className="btn btn-outline-primary btn-sm"
             onClick={() => exportToExcel(data, title)}
           >
-            <IconExcel />
+            <IconExcel className="w-5 h-5" />
           </button>
           <button
             type="button"
-            className="text-white"
+            className="btn btn-outline-primary btn-sm"
             onClick={() => exportToCSV(data, title)}
           >
-            <Csv />
+            <Csv className="w-5 h-5" />
           </button>
           <button
             type="button"
-            className="mr-7"
+            className="btn btn-outline-primary btn-sm"
             onClick={() => exportToPDF(data, title)}
           >
-            <Pdf />
+            <Pdf className="w-5 h-5" />
           </button>
         </div>
       </div>
-      <div className="datatables mt-3">
-        <DataTable
-          className="table-bordered whitespace-nowrap"
-          records={data}
-          columns={[
-            { accessor: "Libelle", title: "Libelle" },
-            { accessor: "Janvier", title: "Janvier" },
-            { accessor: "Février", title: "Février" },
-            { accessor: "Mars", title: "Mars" },
-            { accessor: "Avril", title: "Avril" },
-            { accessor: "Mai", title: "Mai" },
-            { accessor: "Juin", title: "Juin" },
-            { accessor: "Juillet", title: "Juillet" },
-            { accessor: "Août", title: "Août" },
-            { accessor: "Septembre", title: "Septembre" },
-            { accessor: "Octobre", title: "Octobre" },
-            { accessor: "Novembre", title: "Novembre" },
-            { accessor: "Décembre", title: "Décembre" },
-            { accessor: "Total", title: "Total" },
-          ]}
-          minHeight={200}
-          withBorder
-          borderRadius={10}
-          noRecordsText={
-            loading
-              ? ((
-                  <>
-                    <span className="delay-800 mt-2 animate-pulse text-black">
-                      Chargement en cours
-                    </span>
-                    <div className="mt-2 flex items-center justify-center space-x-2">
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                    </div>
-                  </>
-                ) as unknown as string)
-              : "Aucune donnée disponible"
-          }
-        />
-      </div>
+
+      {loading ? (
+        <div className="min-h-[400px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin">
+              <IconSquareRotated className="w-8 h-8 text-primary" />
+            </div>
+            <p className="text-gray-500 font-medium">Chargement des données...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="datatables">
+          <DataTable
+            noRecordsText="Aucun enregistrement trouvé"
+            highlightOnHover
+            className="whitespace-nowrap table-hover"
+            records={data}
+            columns={[
+              { accessor: "Libelle", title: "Libellé", width: 200 },
+              { accessor: "Janvier", title: "Janvier" },
+              { accessor: "Février", title: "Février" },
+              { accessor: "Mars", title: "Mars" },
+              { accessor: "Avril", title: "Avril" },
+              { accessor: "Mai", title: "Mai" },
+              { accessor: "Juin", title: "Juin" },
+              { accessor: "Juillet", title: "Juillet" },
+              { accessor: "Août", title: "Août" },
+              { accessor: "Septembre", title: "Septembre" },
+              { accessor: "Octobre", title: "Octobre" },
+              { accessor: "Novembre", title: "Novembre" },
+              { accessor: "Décembre", title: "Décembre" },
+              { accessor: "Total", title: "Total" },
+            ]}
+          />
+        </div>
+      )}
     </div>
   );
 
   return (
-    <div>
+    <div className="space-y-6">
       {renderTable(tableDataV2, "Montants Timbres V2")}
       {renderTable(tableDataV3, "Montants Timbres V3")}
       {renderTable(tableDataPrepaye, "Montants Timbres Prépayé")}

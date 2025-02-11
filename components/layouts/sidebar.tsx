@@ -76,7 +76,7 @@ const Sidebar = () => {
       id: 5,
       name: "HABILITATIONS",
       icon: <IconMenuCharts />,
-      path: "/profil",
+      path: "/habilitation",
       section: "Administration",
     },
     {
@@ -178,23 +178,24 @@ const Sidebar = () => {
             <li key={menu.id} className="nav-item">
               <Link
                 href={menu.path}
-                className={`group flex items-center rounded-lg px-3 py-2.5 text-sm transition-all duration-300 hover:bg-white/5 ${
+                className={`group relative flex items-center rounded-xl px-4 py-2.5 text-sm transition-all duration-500 hover:bg-white/10 ${
                   pathname === menu.path
                     ? "bg-primary/20 text-white"
-                    : "text-white hover:text-white"
+                    : "text-white/80 hover:text-white"
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/20 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+                <div className="relative flex items-center gap-3">
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300 ${
+                    className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-500 ${
                       pathname === menu.path
                         ? "bg-primary/20 text-primary"
-                        : "text-white"
+                        : "bg-black/20 text-white group-hover:bg-black/40 group-hover:text-white group-hover:shadow-lg group-hover:shadow-primary/20"
                     }`}
                   >
                     {menu.icon}
                   </div>
-                  <span className="font-medium text-white">
+                  <span className="font-medium tracking-wide transition-all duration-500 group-hover:translate-x-1">
                     {translateMenuName(menu.name)}
                   </span>
                 </div>
@@ -269,15 +270,16 @@ const Sidebar = () => {
     >
       <div className="dark">
         <nav
-          className={`sidebar fixed bottom-0 top-0 z-50 h-full min-h-screen w-[280px] bg-gradient-to-b from-[#0E1726] to-[#1a2941] text-white-dark shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] transition-all duration-300`}
+          className={`sidebar fixed bottom-0 top-0 z-50 h-full min-h-screen w-[280px] animate-slideIn bg-gradient-to-br from-[#0E1726] via-[#162236] to-[#1a2941] text-white-dark shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] backdrop-blur-sm transition-all duration-500 ease-in-out`}
         >
           <div className="h-full">
-            {/* Header de la sidebar avec effet glassmorphism */}
-            <div className="relative border-b border-white/20 bg-gradient-to-r from-[#1a2941] to-[#0E1726] px-4 py-4 shadow-lg">
+            {/* Header avec effet glassmorphism amélioré et animation */}
+            <div className="relative border-b border-white/10 bg-gradient-to-r from-[#1a2941]/80 to-[#0E1726]/80 px-6 py-5 backdrop-blur-md">
               <div className="flex items-center justify-center">
-                <div className="rounded-xl bg-white/10 p-2">
+                <div className="group relative rounded-2xl bg-white/5 p-3 transition-all duration-500 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/20">
+                  <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-primary/50 to-[#1a2941]/50 opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
                   <img
-                    className="h-[60px] w-auto drop-shadow-lg"
+                    className="relative h-[50px] w-auto transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
                     src="/assets/images/suivi.png"
                     alt="logo"
                   />
@@ -285,18 +287,20 @@ const Sidebar = () => {
               </div>
             </div>
 
-            {/* Contenu de la sidebar avec effet glassmorphism */}
+            {/* Contenu avec animations améliorées */}
             <div className="flex h-[calc(100%-88px)] flex-col justify-between p-4">
               <PerfectScrollbar className="relative -mr-4 h-full pr-4">
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {/* Section Statistiques */}
                   {hasMenuInSection("Tableau de bord") && (
-                    <div className="rounded-xl bg-black p-4">
-                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase text-white">
-                        <IconMinus className="h-4 w-4" />
-                        <span>{t("Statistiques")}</span>
+                    <div className="animate-fadeIn overflow-hidden rounded-2xl bg-black/20 p-4 backdrop-blur-sm transition-all duration-300 hover:bg-black/30 hover:shadow-lg hover:shadow-primary/10">
+                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase tracking-wider text-white/90">
+                        <IconMinus className="h-4 w-4 text-primary/80" />
+                        <span className="animate-slideRight">
+                          {t("Statistiques")}
+                        </span>
                       </h2>
-                      <ul className="space-y-1 px-2">
+                      <ul className="space-y-2 px-2">
                         {renderMenu("Tableau de bord")}
                       </ul>
                     </div>
@@ -304,12 +308,14 @@ const Sidebar = () => {
 
                   {/* Section Gestion des Encaissements */}
                   {hasMenuInSection("Encaissements") && (
-                    <div className="rounded-xl bg-black p-4">
-                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase text-white">
-                        <IconMinus className="h-4 w-4" />
-                        <span>{t("Gestion des Encaissements")}</span>
+                    <div className="animate-fadeIn overflow-hidden rounded-2xl bg-black/20 p-4 backdrop-blur-sm transition-all duration-300 hover:bg-black/30 hover:shadow-lg hover:shadow-primary/10">
+                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase tracking-wider text-white/90">
+                        <IconMinus className="h-4 w-4 text-primary/80" />
+                        <span className="animate-slideRight">
+                          {t("Gestion des Encaissements")}
+                        </span>
                       </h2>
-                      <ul className="space-y-1 px-2">
+                      <ul className="space-y-2 px-2">
                         {renderMenu("Encaissements")}
                       </ul>
                     </div>
@@ -317,12 +323,14 @@ const Sidebar = () => {
 
                   {/* Section Administration */}
                   {hasMenuInSection("Administration") && (
-                    <div className="rounded-xl bg-black p-4">
-                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase text-white">
-                        <IconMinus className="h-4 w-4" />
-                        <span>{t("Administration")}</span>
+                    <div className="animate-fadeIn overflow-hidden rounded-2xl bg-black/20 p-4 backdrop-blur-sm transition-all duration-300 hover:bg-black/30 hover:shadow-lg hover:shadow-primary/10">
+                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase tracking-wider text-white/90">
+                        <IconMinus className="h-4 w-4 text-primary/80" />
+                        <span className="animate-slideRight">
+                          {t("Administration")}
+                        </span>
                       </h2>
-                      <ul className="space-y-1 px-2">
+                      <ul className="space-y-2 px-2">
                         {renderMenu("Administration")}
                       </ul>
                     </div>

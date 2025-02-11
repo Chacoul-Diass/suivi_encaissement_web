@@ -380,78 +380,78 @@ const ComponentsAuthLoginForm = () => {
             <div className="space-y-2">
               <label
                 htmlFor="Credential"
-                className="block text-sm font-semibold text-gray-700"
+                className="block text-base font-semibold text-gray-800"
               >
                 Email ou Matricule
               </label>
-              <div className="group relative">
+              <div className="group relative transform transition-all duration-300 hover:scale-[1.01]">
                 <input
                   id="Credential"
                   type="text"
                   placeholder="Entrez votre email ou matricule"
-                  className="relative z-10 w-full rounded-lg border-2 border-gray-200 bg-gray-50/30 px-4 py-3.5 transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 group-hover:border-primary/50"
+                  className="relative z-10 w-full rounded-xl border-2 border-gray-200 bg-white/80 px-5 py-4 text-base transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
                   value={credential}
                   onChange={(e) => setCredential(e.target.value)}
                   required
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <IconUserCheck className="pointer-events-none h-5 w-5 text-gray-400 transition-all duration-300 group-focus-within:scale-110 group-focus-within:text-primary group-hover:scale-110 group-hover:text-primary/70" />
+                  <IconUserCheck className="pointer-events-none h-6 w-6 text-gray-400 transition-all duration-300 group-focus-within:scale-110 group-focus-within:text-primary group-hover:text-primary/70" />
                 </div>
-                <div className="absolute inset-0 rounded-lg bg-primary/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="absolute inset-0 rounded-xl bg-primary/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               </div>
             </div>
 
             <div className="space-y-2">
               <label
                 htmlFor="Password"
-                className="block text-sm font-semibold text-gray-700"
+                className="block text-base font-semibold text-gray-800"
               >
                 Mot de passe
               </label>
-              <div className="group relative">
+              <div className="group relative transform transition-all duration-300 hover:scale-[1.01]">
                 <input
                   id="Password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Entrez votre mot de passe"
-                  className="relative z-10 w-full rounded-lg border-2 border-gray-200 bg-gray-50/30 px-4 py-3.5 transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 group-hover:border-primary/50"
+                  className="relative z-10 w-full rounded-xl border-2 border-gray-200 bg-white/80 px-5 py-4 text-base transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <button
                   type="button"
-                  className="absolute right-4 top-1/2 z-20 -translate-y-1/2 cursor-pointer"
+                  className="absolute right-4 top-1/2 z-20 -translate-y-1/2 cursor-pointer transition-transform duration-300 hover:scale-110"
                   onClick={togglePasswordVisibility}
                 >
                   {showPassword ? (
-                    <IconEyeOff className="h-5 w-5 text-gray-500" />
+                    <IconEyeOff className="h-6 w-6 text-gray-500 transition-colors duration-300 hover:text-primary" />
                   ) : (
-                    <IconEye className="h-5 w-5 text-gray-500" />
+                    <IconEye className="h-6 w-6 text-gray-500 transition-colors duration-300 hover:text-primary" />
                   )}
                 </button>
-                <div className="absolute inset-0 rounded-lg bg-primary/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="absolute inset-0 rounded-xl bg-primary/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               </div>
             </div>
 
             <div className="flex justify-end">
               <button
                 type="button"
-                className="relative text-sm font-medium text-gray-500 transition-all duration-300 hover:text-primary"
+                className="group relative text-sm font-medium text-gray-600 transition-all duration-300 hover:text-primary"
                 onClick={() => setIsModalOpen(true)}
               >
                 Mot de passe oublié?
-                <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 bg-primary transition-all duration-300 hover:w-full" />
+                <span className="absolute -bottom-0.5 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full" />
               </button>
             </div>
 
             <button
               type="submit"
-              className="group relative w-full overflow-hidden rounded-lg bg-primary px-8 py-4 text-white shadow-lg transition-all duration-300 hover:bg-primary/90 hover:shadow-primary/30 focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-[0.98]"
+              className="group relative w-full transform overflow-hidden rounded-xl bg-gradient-to-r from-primary to-primary/90 px-8 py-4 text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/30 focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-[0.98]"
             >
-              <span className="relative z-10 text-base font-semibold">
+              <span className="relative z-10 text-base font-semibold tracking-wide">
                 Se connecter
               </span>
-              <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-primary/0 via-white/20 to-primary/0 transition-transform duration-700 group-hover:translate-x-full" />
+              <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 transition-transform duration-700 group-hover:translate-x-full" />
               <div className="absolute inset-0 h-full w-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             </button>
           </form>
@@ -463,154 +463,67 @@ const ComponentsAuthLoginForm = () => {
       )}
 
       {showFirstLoginModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md transform rounded-2xl bg-white p-8 shadow-2xl transition-all duration-300">
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">
                 Changement de mot de passe requis
               </h3>
             </div>
-            <p className="mb-6 text-sm text-gray-600">
+            <p className="mb-6 text-base text-gray-600">
               Pour des raisons de sécurité, vous devez changer votre mot de
               passe lors de votre première connexion.
             </p>
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* Nouveau mot de passe */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-base font-semibold text-gray-800">
                   Nouveau mot de passe
                 </label>
-                <div className="group relative">
+                <div className="group relative transform transition-all duration-300 hover:scale-[1.01]">
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
                     value={passwordForm.password}
                     onChange={handlePasswordChange}
-                    className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 pr-12 text-gray-700 transition-all duration-200 focus:border-primary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 ${
+                    className={`w-full rounded-xl border-2 bg-white/80 px-5 py-4 text-base text-gray-700 transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60 ${
                       passwordErrors.password
                         ? "border-red-300"
-                        : "border-gray-300"
+                        : "border-gray-200"
                     }`}
                     placeholder="Votre nouveau mot de passe"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-all duration-300 hover:scale-110 hover:text-primary"
                   >
                     {showPassword ? (
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                      </svg>
+                      <IconEyeOff className="h-6 w-6 text-gray-500 transition-colors duration-300 hover:text-primary" />
                     ) : (
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                        />
-                      </svg>
+                      <IconEye className="h-6 w-6 text-gray-500 transition-colors duration-300 hover:text-primary" />
                     )}
                   </button>
-                </div>
-                {/* Indicateurs de force du mot de passe */}
-                <div className="mt-2 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        passwordStrength.hasMinLength
-                          ? "bg-green-500"
-                          : "bg-gray-300"
-                      }`}
-                    ></div>
-                    <span
-                      className={`text-xs ${
-                        passwordStrength.hasMinLength
-                          ? "text-green-600"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      Au moins 8 caractères
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        passwordStrength.hasUpperCase
-                          ? "bg-green-500"
-                          : "bg-gray-300"
-                      }`}
-                    ></div>
-                    <span
-                      className={`text-xs ${
-                        passwordStrength.hasUpperCase
-                          ? "text-green-600"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      Au moins une majuscule
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        passwordStrength.hasNumber
-                          ? "bg-green-500"
-                          : "bg-gray-300"
-                      }`}
-                    ></div>
-                    <span
-                      className={`text-xs ${
-                        passwordStrength.hasNumber
-                          ? "text-green-600"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      Au moins un chiffre
-                    </span>
-                  </div>
                 </div>
               </div>
 
               {/* Confirmation du mot de passe */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-base font-semibold text-gray-800">
                   Confirmer le mot de passe
                 </label>
-                <div className="group relative">
+                <div className="group relative transform transition-all duration-300 hover:scale-[1.01]">
                   <input
                     type={showPassword ? "text" : "password"}
                     name="confirmPassword"
                     value={passwordForm.confirmPassword}
                     onChange={handlePasswordChange}
-                    className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 pr-12 text-gray-700 transition-all duration-200 focus:border-primary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 ${
+                    className={`w-full rounded-xl border-2 bg-white/80 px-5 py-4 text-base text-gray-700 transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60 ${
                       passwordErrors.confirmPassword
                         ? "border-red-300"
                         : passwordStrength.matches
                         ? "border-green-300"
-                        : "border-gray-300"
+                        : "border-gray-200"
                     }`}
                     placeholder="Confirmez votre nouveau mot de passe"
                   />
