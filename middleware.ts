@@ -15,9 +15,7 @@ export function middleware(request: NextRequest) {
 
   // Si l'utilisateur n'est pas authentifié et essaie d'accéder à une route protégée
   if (!authToken && !isPublicPath) {
-    const url = new URL("/login", request.url);
-    url.searchParams.set("redirect", path);
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Si l'utilisateur est authentifié et essaie d'accéder à une route publique
