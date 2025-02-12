@@ -218,8 +218,8 @@ const ComponentsAuthLoginForm = () => {
           `Félicitation ${firstname} ${lastname} vous êtes connecté avec succès`
         );
 
-        // Utiliser replace au lieu de push pour éviter les retours en arrière
-        router.replace(redirectPath);
+        // Utiliser push avec options pour éviter les requêtes RSC
+        router.push(redirectPath, { scroll: false });
       }
     } catch (error: any) {
       setIsLoading(false);
@@ -284,7 +284,8 @@ const ComponentsAuthLoginForm = () => {
           `Félicitation ${firstname} ${lastname} vous êtes connecté avec succès`
         );
 
-        router.replace(redirectPath);
+        // Utiliser push avec options pour éviter les requêtes RSC
+        router.push(redirectPath, { scroll: false });
       } else {
         setIsAnimating(false);
         Toastify("error", "Échec de la connexion. Vérifiez vos identifiants.");
