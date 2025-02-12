@@ -4,6 +4,7 @@ import IconMenu from "@/components/icon/icon-menu";
 import { getTranslation } from "@/i18n";
 import { TRootState } from "@/store";
 import { toggleSidebar } from "@/store/themeConfigSlice";
+import { logout } from "@/store/reducers/auth/user.slice";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -107,14 +108,23 @@ const Header = () => {
       );
 
       if (response.statusCode === 201) {
-        // localStorage.removeItem("persist:suivi-encaissement");
-        // localStorage.removeItem("refresh_token");
+        // Dispatch l'action logout du reducer
+        dispatch(logout());
+        // Supprimer le cookie
+        document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+        // Nettoyer le localStorage
         localStorage.clear();
-        router.push("/login");
+        // Rediriger vers la page de login
+        router.replace("/login");
       }
     } catch (error: any) {
       const errorMessage = handleApiError(error);
       toast.error(errorMessage);
+      // En cas d'erreur, on déconnecte quand même l'utilisateur
+      dispatch(logout());
+      document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+      localStorage.clear();
+      router.replace("/login");
     }
   };
 

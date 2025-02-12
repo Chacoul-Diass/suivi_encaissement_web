@@ -239,6 +239,9 @@ const ComponentsAuthLoginForm = () => {
       const result = await dispatch(login({ credential, password }));
 
       if (login.fulfilled.match(result)) {
+        // Stocker le token dans les cookies
+        document.cookie = `accessToken=${result.payload}; path=/; secure; samesite=strict`;
+        
         // Attendre un peu pour s'assurer que le token est bien enregistré
         await new Promise((resolve) => setTimeout(resolve, 2000));
 

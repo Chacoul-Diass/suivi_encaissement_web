@@ -74,11 +74,12 @@ const authSlice = createSlice({
   reducers: {
     logout: (state) => {
       state.accessToken = null;
-      state.user = null; // Réinitialise les données utilisateur
+      state.refresh_token = null;
+      state.user = null;
       state.error = null;
       state.success = false;
-      deleteCookie("accessToken");
-      deleteCookie("refresh_token");
+      state.loading = false;
+      // Les cookies seront gérés dans le composant
     },
     clearError: (state) => {
       state.error = null;
