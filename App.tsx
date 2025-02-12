@@ -10,7 +10,6 @@ import { usePathname } from "next/navigation";
 function App({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname === "/forgot-password";
 
   useEffect(() => {
     const timer = setTimeout(() => {

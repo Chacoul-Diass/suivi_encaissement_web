@@ -251,15 +251,15 @@ const ComponentsAuthLoginForm = () => {
           return;
         }
 
-        const redirectPath = getFirstAccessibleRoute(habilitation);
-        if (redirectPath === "/login") {
-          Toastify(
-            "error",
-            "Vous n'avez accès à aucune section de l'application"
-          );
-          setIsAnimating(false);
-          return;
-        }
+        // const redirectPath = getFirstAccessibleRoute(habilitation);
+        // if (redirectPath === "/login") {
+        //   Toastify(
+        //     "error",
+        //     "Vous n'avez accès à aucune section de l'application"
+        //   );
+        //   setIsAnimating(false);
+        //   return;
+        // }
 
         Toastify(
           "success",
@@ -267,7 +267,7 @@ const ComponentsAuthLoginForm = () => {
         );
 
         // Utiliser replace au lieu de push pour éviter les retours en arrière
-        router.replace(redirectPath);
+        router.replace("dashboard");
       } else {
         setIsAnimating(false);
         Toastify("error", "Échec de la connexion. Vérifiez vos identifiants.");
