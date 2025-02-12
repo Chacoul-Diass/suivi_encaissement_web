@@ -190,13 +190,20 @@ const ComponentsAuthLoginForm = () => {
 
         // Continuer avec la connexion normale
         const habilitation = getUserHabilitation();
+        console.log("Habilitations récupérées:", habilitation);
+
         if (!habilitation) {
+          console.error("Échec de la récupération des habilitations:", {
+            persistData: localStorage.getItem("persist:suivi-encaissement"),
+          });
           Toastify("error", "Erreur lors de la récupération des permissions");
           setIsAnimating(false);
           return;
         }
 
         const redirectPath = getFirstAccessibleRoute(habilitation);
+        console.log("Chemin de redirection:", redirectPath);
+
         if (redirectPath === "/login") {
           Toastify(
             "error",
@@ -233,7 +240,7 @@ const ComponentsAuthLoginForm = () => {
 
       if (login.fulfilled.match(result)) {
         // Attendre un peu pour s'assurer que le token est bien enregistré
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         // Décoder le token pour obtenir les informations utilisateur
         const decodedUser = decodeTokens(result.payload);
@@ -245,29 +252,36 @@ const ComponentsAuthLoginForm = () => {
         }
 
         const habilitation = getUserHabilitation();
+        console.log("Habilitations récupérées:", habilitation);
+
         if (!habilitation) {
+          console.error("Échec de la récupération des habilitations:", {
+            persistData: localStorage.getItem("persist:suivi-encaissement"),
+            decodedUser,
+          });
           Toastify("error", "Erreur lors de la récupération des permissions");
           setIsAnimating(false);
           return;
         }
 
-        // const redirectPath = getFirstAccessibleRoute(habilitation);
-        // if (redirectPath === "/login") {
-        //   Toastify(
-        //     "error",
-        //     "Vous n'avez accès à aucune section de l'application"
-        //   );
-        //   setIsAnimating(false);
-        //   return;
-        // }
+        const redirectPath = getFirstAccessibleRoute(habilitation);
+        console.log("Chemin de redirection:", redirectPath);
+
+        if (redirectPath === "/login") {
+          Toastify(
+            "error",
+            "Vous n'avez accès à aucune section de l'application"
+          );
+          setIsAnimating(false);
+          return;
+        }
 
         Toastify(
           "success",
           `Félicitation ${firstname} ${lastname} vous êtes connecté avec succès`
         );
 
-        // Utiliser replace au lieu de push pour éviter les retours en arrière
-        router.replace("dashboard");
+        router.replace(redirectPath);
       } else {
         setIsAnimating(false);
         Toastify("error", "Échec de la connexion. Vérifiez vos identifiants.");

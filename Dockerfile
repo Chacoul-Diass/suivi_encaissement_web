@@ -39,6 +39,10 @@ COPY --from=builder /app/components ./components
 COPY --from=builder /app/styles ./styles      
 COPY --from=builder /app/utils ./utils      
 COPY --from=builder /app/store ./store          
+COPY --from=builder /app/store ./hooks          
+COPY --from=builder /app/store ./config          
+COPY --from=builder /app/store ./i18n          
+COPY --from=builder /app/store ./types          
 
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
 
