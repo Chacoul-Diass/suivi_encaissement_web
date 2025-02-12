@@ -1154,7 +1154,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
       observationReleve: rasChecked2 ? "RAS" : observationBanque,
       montantReleve: updatedRow.montantReleve,
       ecartReleve: updatedRow.ecartReleve,
-      statutValidation: EStatutEncaissement.RECLAMATION_TRAITES,
+      statutValidation: EStatutEncaissement.TRAITE,
       observationReclamation: stripHtml(observationReclamation) || "",
       observationRejete: updatedRow.observationRejete || "",
     };

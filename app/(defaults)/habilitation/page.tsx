@@ -1,11 +1,7 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
-const ComponentsDragndropSortable = dynamic(
-  () => import("@/components/dragndrop/components-dragndrop-sortable"),
-  { ssr: false }
-);
+import ComponentsDragndropSortable from "@/components/dragndrop/components-dragndrop-sortable";
+import React from "react";
 
 export default function Profil() {
   return (

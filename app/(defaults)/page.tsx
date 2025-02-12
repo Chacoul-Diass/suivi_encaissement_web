@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  redirect("/auth/login");
+  redirect("/login");
 
   return null;
 }
