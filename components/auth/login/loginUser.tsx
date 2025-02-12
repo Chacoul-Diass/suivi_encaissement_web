@@ -233,7 +233,7 @@ const ComponentsAuthLoginForm = () => {
 
       if (login.fulfilled.match(result)) {
         // Attendre un peu pour s'assurer que le token est bien enregistré
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 5000));
 
         // Décoder le token pour obtenir les informations utilisateur
         const decodedUser = decodeTokens(result.payload);
