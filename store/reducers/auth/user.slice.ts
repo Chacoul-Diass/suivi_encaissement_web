@@ -50,13 +50,11 @@ export const login = createAsyncThunk(
       );
 
       if (response.data.data && response.data.data.acces_token) {
-        localStorage.setItem("accessToken", response.data.data.acces_token);
+        // Store token in Redux state only
+        const token = response.data.data.acces_token;
+        return token;
       }
-      if (response.data.data && response.data.data.refresh_token) {
-        localStorage.setItem("refresh_token", response.data.data.refresh_token);
-      }
-
-      return response.data.data.acces_token;
+      throw new Error("Token non reçu du serveur");
     } catch (error: any) {
       console.error("Erreur lors de la connexion :", error);
       console.log(error);
@@ -79,7 +77,9 @@ const authSlice = createSlice({
       state.error = null;
       state.success = false;
       state.loading = false;
-      // Les cookies seront gérés dans le composant
+
+      // Clear cookies with correct path
+      document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     },
     clearError: (state) => {
       state.error = null;

@@ -115,7 +115,7 @@ const Header = () => {
         // Nettoyer le localStorage
         localStorage.clear();
         // Rediriger vers la page de login
-        router.replace("/login");
+        window.location.href = "/login";
       }
     } catch (error: any) {
       const errorMessage = handleApiError(error);
@@ -124,7 +124,7 @@ const Header = () => {
       dispatch(logout());
       document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
       localStorage.clear();
-      router.replace("/login");
+      window.location.href = "/login";
     }
   };
 

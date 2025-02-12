@@ -218,8 +218,11 @@ const ComponentsAuthLoginForm = () => {
           `Félicitation ${firstname} ${lastname} vous êtes connecté avec succès`
         );
 
-        // Utiliser push avec options pour éviter les requêtes RSC
-        router.push(redirectPath, { scroll: false });
+        // Ensure we navigate without trailing slash
+        const cleanPath = redirectPath.replace(/\/$/, "");
+        router.push(cleanPath, {
+          scroll: false,
+        });
       }
     } catch (error: any) {
       setIsLoading(false);
@@ -239,11 +242,8 @@ const ComponentsAuthLoginForm = () => {
       const result = await dispatch(login({ credential, password }));
 
       if (login.fulfilled.match(result)) {
-        // Stocker le token dans les cookies
+        // Stocker le token dans les cookies avec le bon path
         document.cookie = `accessToken=${result.payload}; path=/; secure; samesite=strict`;
-        
-        // Attendre un peu pour s'assurer que le token est bien enregistré
-        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         // Décoder le token pour obtenir les informations utilisateur
         const decodedUser = decodeTokens(result.payload);
@@ -281,11 +281,13 @@ const ComponentsAuthLoginForm = () => {
 
         Toastify(
           "success",
-          `Félicitation ${firstname} ${lastname} vous êtes connecté avec succès`
+          `Félicitation ${firstname} ${lastname}, vous êtes connecté avec succès`
         );
 
-        // Utiliser push avec options pour éviter les requêtes RSC
-        router.push(redirectPath, { scroll: false });
+        // Ajouter un délai avant la redirection pour s'assurer que le cookie est bien défini
+        setTimeout(() => {
+          window.location.replace(redirectPath);
+        }, 100);
       } else {
         setIsAnimating(false);
         Toastify("error", "Échec de la connexion. Vérifiez vos identifiants.");
@@ -369,7 +371,7 @@ const ComponentsAuthLoginForm = () => {
 
       <div className="absolute left-5 top-5 z-10">
         <div className="group relative overflow-hidden rounded-lg p-1">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 opacity-0 blur transition-opacity duration-500 group-hover:opacity-100" />
           <Image
             src="/assets/images/auth/logo.png"
             alt="Logo"
@@ -400,7 +402,7 @@ const ComponentsAuthLoginForm = () => {
         } ${isSmallScreen ? "mx-4" : ""}`}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/20" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
         <div className="relative">
           <div className="mb-10 flex items-center justify-between">
             <div className="relative">
