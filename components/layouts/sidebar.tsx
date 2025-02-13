@@ -364,7 +364,7 @@ const Sidebar = () => {
                   )}
                 </div>
               </PerfectScrollbar>
-              <IconMenu2 />
+
             </div>
           </div>
         </nav>
