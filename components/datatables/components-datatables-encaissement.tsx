@@ -1293,27 +1293,36 @@ const ComponentsDatatablesColumnChooser: React.FC<
             {getStatutLibelle(statutValidation, totalUnvalidatedRecords)}
           </h5>
         </div>
-        <GlobalFiltre
-          drData={drData}
-          showHideColumns={showHideColumns}
-          onApplyFilters={handleApplyFilters}
-          statutValidation={statutValidation}
-        />
+
+        <div id="filtre">
+          <GlobalFiltre
+            drData={drData}
+            showHideColumns={showHideColumns}
+            onApplyFilters={handleApplyFilters}
+            statutValidation={statutValidation}
+          />
+        </div>
 
         <div className="panel datatables">
           <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
             {/* Actualisation */}
-            <RefreshBtn
-              isRefreshing={isRefreshing}
-              handleRefresh={handleRefresh}
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <ExportBtn
-                filteredData={filteredData}
-                cols={cols}
-                hideCols={hideCols}
-                formatNumber={formatNumber}
+
+            <div id="refresh">
+              <RefreshBtn
+                isRefreshing={isRefreshing}
+                handleRefresh={handleRefresh}
               />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div id="export">
+                <ExportBtn
+                  filteredData={filteredData}
+                  cols={cols}
+                  hideCols={hideCols}
+                  formatNumber={formatNumber}
+                />
+              </div>
 
               {/* Search Input with Icon */}
               <div className="relative text-right" id="tuto-search-bar">

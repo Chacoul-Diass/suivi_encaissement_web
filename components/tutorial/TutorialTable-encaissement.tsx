@@ -12,13 +12,23 @@ export default function EncaissementTutorial() {
   // Les différentes étapes du tutoriel
   const steps: Step[] = [
     {
+      target: "#completion",
+      content: "Vous indique combien de fiches ont été éditées sur les reversé",
+      placement: "bottom",
+    },
+    {
+      target: "#totalmontant",
+      content: "Vous indique combien de fiches ont été éditées sur les reversé",
+      placement: "bottom",
+    },
+    {
       target: "#tuto-encaissement-titre",
       content: "Voici le nombre total d'encaissements reversé.",
       placement: "bottom",
     },
     {
-      target: "#tuto-barre-actions",
-      content: "Vous pouvez rafraîchir les données, exporter un fichier, etc.",
+      target: "#refresh",
+      content: "Vous pouvez actualisez les données.",
       placement: "bottom",
     },
     {
@@ -27,8 +37,18 @@ export default function EncaissementTutorial() {
       placement: "left",
     },
     {
+      target: "#filtre",
+      content: "Ici, vous pouvez filtrer les encaissements.",
+      placement: "left",
+    },
+    {
       target: "#tuto-dropdown-colonnes",
       content: "Personnalisez les colonnes à afficher ou masquer ici.",
+      placement: "left",
+    },
+    {
+      target: "#export",
+      content: "Exportez les données dans un fichier.",
       placement: "left",
     },
     {
@@ -71,6 +91,7 @@ export default function EncaissementTutorial() {
         last: "Terminer",
         close: "Fermer",
         open: "Ouvrir",
+        nextLabelWithProgress: "Suivant",
       }}
       styles={{
         options: {
