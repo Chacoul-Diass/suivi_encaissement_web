@@ -28,14 +28,14 @@ const ComponentsDashboardSales = () => {
     (state: TRootState) => state?.dashboard?.data
   );
 
-  const loadingDashboard: any = useSelector(
-    (state: TRootState) => state?.dashboard.loading
+  const loadingDashboard = useSelector(
+    (state: TRootState) => state?.dashboard?.loading ?? false
   );
 
   useEffect(() => {
     dispatch(fetchDashbord({}));
     dispatch(fetchDirectionRegionales());
-  }, [dispatch]);
+  }, []);
 
   const caisses = dataDashboard?.caisses || {};
   const banques = dataDashboard?.banques || [];
@@ -53,7 +53,7 @@ const ComponentsDashboardSales = () => {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+  }, [setIsMounted]);
 
   const revenueChart: any = {
     series:

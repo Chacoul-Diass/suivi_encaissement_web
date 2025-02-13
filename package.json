@@ -6,7 +6,8 @@
     "dev": "next dev -p 2408",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prepare": "husky"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -32,6 +33,7 @@
     "@types/xlsx": "^0.0.36",
     "@x1mrdonut1x/nouislider-react": "^3.4.3",
     "apexcharts": "^3.37.1",
+    "asky": "^0.2.2",
     "axios": "^1.7.7",
     "cookies-next": "^5.0.2",
     "date-fns": "^2.0.1",
@@ -100,6 +102,7 @@
     "@types/redux-logger": "^3.0.13",
     "@types/sortablejs": "^1.15.0",
     "autoprefixer": "^10.4.17",
+    "husky": "^9.1.7",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",

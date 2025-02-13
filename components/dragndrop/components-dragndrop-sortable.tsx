@@ -31,20 +31,27 @@ const ComponentsDragndropSortable = () => {
   const [selectedPermissions, setSelectedPermissions] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!ProfilList || ProfilList.length === 0) {
+    try {
       dispatch(fetchProfile());
+    } catch (error) {
+      console.error("Erreur lors du chargement des profils:", error);
     }
   }, [dispatch]);
 
   useEffect(() => {
     if (ProfilList && Array.isArray(ProfilList)) {
-      const formattedProfiles = ProfilList.map((profile: any) => ({
-        id: profile?.id ?? '',
-        text: profile?.name ?? '',
-        name: profile?.description ?? "Pas de description",
-        permissions: profile?.permissions ?? [],
-      }));
-      setSortable1(formattedProfiles);
+      try {
+        const formattedProfiles = ProfilList.map((profile: any) => ({
+          id: profile?.id ?? '',
+          text: profile?.name ?? '',
+          name: profile?.description ?? "Pas de description",
+          permissions: Array.isArray(profile?.permissions) ? profile.permissions : [],
+        }));
+        setSortable1(formattedProfiles);
+      } catch (error) {
+        console.error("Erreur lors du formatage des profils:", error);
+        setSortable1([]);
+      }
     }
   }, [ProfilList]);
 

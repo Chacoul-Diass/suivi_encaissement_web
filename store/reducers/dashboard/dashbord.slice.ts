@@ -46,8 +46,14 @@ export const fetchDashbord = createAsyncThunk(
 const DashbordSlice = createSlice({
   name: "Dashbord",
   initialState: {
-    data: [],
-    loading: false,
+    data: {
+      caisses: {},
+      banques: [],
+      completionRate: {},
+      ecart: {},
+      graph: {},
+    },
+    loading: true,
     error: null as string | null,
   },
   reducers: {},
