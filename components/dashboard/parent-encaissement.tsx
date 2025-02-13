@@ -29,11 +29,11 @@ const ComponentsDashboardValider = () => {
   }, []);
 
   const dataReverse: any = useSelector(
-    (state: TRootState) => state.encaissementReleve.data
+    (state: TRootState) => state?.encaissementReleve?.data
   );
 
   const dataReverseloading: any = useSelector(
-    (state: any) => state.encaissementReleve.loading
+    (state: any) => state?.encaissementReleve?.loading
   );
 
   const [activeTab, setActiveTab] = useState<EStatutEncaissement>(

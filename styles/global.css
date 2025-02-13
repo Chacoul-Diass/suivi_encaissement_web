@@ -16,7 +16,110 @@
   }
 }
 
+@layer base {
+  /* Force le texte à rester noir même en mode sombre */
+  .dark body {
+    color: rgb(0, 0, 0);
+  }
+  
+  /* Classe utilitaire pour forcer le texte noir */
+  .force-text-black {
+    color: rgb(0, 0, 0) !important;
+  }
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: "#FFF" rgb(var(--background-start-rgb));
+}
+
+/* Accordion Styles */
+.accordion-item {
+  @apply overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300;
+}
+
+.accordion-item:hover {
+  @apply border-primary/20 shadow-md;
+}
+
+.accordion-button {
+  @apply flex w-full items-center justify-between bg-white px-4 py-4 text-left transition-all duration-300;
+}
+
+.accordion-button:hover {
+  @apply bg-gray-50;
+}
+
+.accordion-icon {
+  @apply flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-300;
+}
+
+.accordion-content {
+  @apply transform overflow-hidden transition-all duration-300;
+}
+
+/* Permission Colors */
+.permission-creation {
+  --permission-color: #10b981;
+  --permission-bg: #ecfdf5;
+}
+
+.permission-lecture {
+  --permission-color: #3b82f6;
+  --permission-bg: #eff6ff;
+}
+
+.permission-modification {
+  --permission-color: #f59e0b;
+  --permission-bg: #fffbeb;
+}
+
+.permission-suppression {
+  --permission-color: #ef4444;
+  --permission-bg: #fef2f2;
+}
+
+.permission-item {
+  @apply flex items-center justify-between rounded-lg bg-white p-3 shadow-sm transition-all duration-200;
+}
+
+.permission-item:hover {
+  @apply bg-gray-50 shadow-md;
+}
+
+.permission-icon {
+  @apply flex h-8 w-8 items-center justify-center rounded-lg;
+  background-color: var(--permission-bg);
+}
+
+.permission-icon svg {
+  @apply h-4 w-4;
+  color: var(--permission-color);
+}
+
+.permission-badge {
+  @apply rounded-full px-2 py-1 text-xs font-medium;
+  background-color: var(--permission-bg);
+  color: var(--permission-color);
+}
+
+/* Animation Classes */
+.slide-enter {
+  @apply transform opacity-0 transition-all duration-300;
+  transform: translateY(-10px);
+}
+
+.slide-enter-active {
+  @apply transform opacity-100 transition-all duration-300;
+  transform: translateY(0);
+}
+
+.slide-exit {
+  @apply transform opacity-100 transition-all duration-300;
+  transform: translateY(0);
+}
+
+.slide-exit-active {
+  @apply transform opacity-0 transition-all duration-300;
+  transform: translateY(-10px);
 }

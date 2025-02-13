@@ -61,6 +61,12 @@ const config: Config = {
           dark: "#888ea8",
         },
       },
+      textColor: {
+        DEFAULT: "#000000", // Couleur de texte par défaut noire
+        dark: {
+          DEFAULT: "#000000", // Force le noir même en mode sombre
+        },
+      },
       fontFamily: {
         nunito: ["var(--font-nunito)"],
       },

@@ -2,7 +2,7 @@ import { API_AUTH_SUIVI } from "@/config/constants";
 import { decodeTokens } from "@/utils/tokendecod";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-import { deleteCookie, setCookie } from "cookies-next";
+import { TokenService } from "@/services/tokenService";
 
 // Typage de la réponse de l'API et de l'état d'authentification
 interface AuthResponse {
@@ -50,11 +50,14 @@ export const login = createAsyncThunk(
       );
 
       if (response.data.data && response.data.data.acces_token) {
-        // Store token in Redux state only
-        const token = response.data.data.acces_token;
-        return token;
+        // Store tokens
+        const tokens = {
+          accessToken: response.data.data.acces_token,
+          refreshToken: response.data.data.refresh_token
+        };
+        return tokens;
       }
-      throw new Error("Token non reçu du serveur");
+      throw new Error("Tokens non reçus du serveur");
     } catch (error: any) {
       console.error("Erreur lors de la connexion :", error);
       console.log(error);
@@ -78,8 +81,8 @@ const authSlice = createSlice({
       state.success = false;
       state.loading = false;
 
-      // Clear cookies with correct path
-      document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      // Nettoyer tous les tokens
+      TokenService.clearAllTokens();
     },
     clearError: (state) => {
       state.error = null;
@@ -91,24 +94,23 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action: PayloadAction<string>) => {
-        state.accessToken = action.payload;
+      .addCase(login.fulfilled, (state, action: PayloadAction<{ accessToken: string, refreshToken: string }>) => {
+        state.accessToken = action.payload.accessToken;
+        state.refresh_token = action.payload.refreshToken;
         state.loading = false;
         state.success = true;
 
+        // Stocker les tokens
+        TokenService.setAccessToken(action.payload.accessToken);
+        TokenService.setRefreshToken(action.payload.refreshToken);
+
         // Décoder le token pour extraire les informations utilisateur
-        const decodedUser = decodeTokens(action.payload);
+        const decodedUser = decodeTokens(action.payload.accessToken);
         state.user = decodedUser;
 
-        // Stocker le token dans les cookies
-        setCookie("accessToken", action.payload, {
-          secure: true,
-          sameSite: "strict",
-        });
-
         if (process.env.NODE_ENV === "development") {
-          console.log("Token stocké et utilisateur décodé :", {
-            token: action.payload,
+          console.log("Tokens stockés et utilisateur décodé :", {
+            tokens: action.payload,
             user: decodedUser,
           });
         }

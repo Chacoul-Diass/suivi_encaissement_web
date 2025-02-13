@@ -94,7 +94,7 @@ const AskToRequestModal = ({
                       theme="snow"
                       value={observationReclamation} // Utilisation du state ici
                       onChange={(content) => setObservationReclamation(content)} // Mise à jour du state
-                      className="min-h-[200px]"
+                      className="min-h-[200px] text-black"
                     />
                   </div>
                 </div>

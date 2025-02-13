@@ -29,6 +29,7 @@ import { TRootState } from "@/store";
 import { safeLocalStorage } from "@/hooks/useLocalStorage";
 import IconCaretsDown from "@/components/icon/icon-carets-down";
 import IconHistory from "../icon/icon-history";
+import IconMenu2 from "../icon/icon-menu-2";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
@@ -363,6 +364,7 @@ const Sidebar = () => {
                   )}
                 </div>
               </PerfectScrollbar>
+              <IconMenu2 />
             </div>
           </div>
         </nav>

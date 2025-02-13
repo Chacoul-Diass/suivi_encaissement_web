@@ -766,7 +766,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
   const [toEmails, setToEmails] = useState<{ mail: string }[]>([]);
 
   const [toInput, setToInput] = useState<string>("");
-  const [ccEmails, setCcEmails] = useState<{ mail: string }[]>([emailConnecte]);
+  const [ccEmails, setCcEmails] = useState<Array<{ mail: string }>>([]);
   const [emailSubject, setEmailSubject] = useState<string>("");
   const [uploadedFiles, setUploadedFiles] = useState<
     { file: File; preview: string }[]
@@ -998,7 +998,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
     setToEmails((prevEmails) => prevEmails.filter((_, i) => i !== index));
   };
 
-  const validateEmail = (email: string): boolean => {
+  const validateEmail = (email: string | null | undefined): boolean => {
+    if (!email) return false;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
@@ -1033,27 +1034,36 @@ const ComponentsDatatablesColumnChooser: React.FC<
   const handleCcKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === "Tab" || e.key === " ") {
       e.preventDefault();
-      const email = emailInput.trim();
+      const email = emailInput?.trim();
 
-      if (
-        email &&
-        validateEmail(email) &&
-        !ccEmails.some((e) => e.mail === email)
-      ) {
-        setCcEmails((prevEmails) => [...prevEmails, { mail: email }]); // ✅ Ajout sous forme d'objet
-        setEmailInput("");
-        ToastSuccess.fire({
-          text: "Email ajouté avec succès !",
-        });
-      } else if (email && !validateEmail(email)) {
-        ToastError.fire({
-          text: "Veuillez entrer une adresse email valide.",
-        });
-      } else if (ccEmails.some((e) => e.mail === email)) {
+      // Vérifier si l'email n'est pas vide et est valide
+      if (!email || !validateEmail(email)) {
+        if (email) {
+          ToastError.fire({
+            text: "Veuillez entrer une adresse email valide.",
+          });
+        }
+        return;
+      }
+
+      // Vérifier si l'email n'est pas déjà dans la liste (insensible à la casse)
+      const emailExists = ccEmails.some(
+        (e) => e.mail.toLowerCase() === email.toLowerCase()
+      );
+
+      if (emailExists) {
         ToastError.fire({
           text: "Cet email est déjà ajouté.",
         });
+        return;
       }
+
+      // Ajouter l'email
+      setCcEmails((prevEmails) => [...prevEmails, { mail: email }]);
+      setEmailInput("");
+      ToastSuccess.fire({
+        text: "Email ajouté avec succès !",
+      });
     }
   };
 
@@ -1103,7 +1113,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         ToastSuccess.fire({ text: "Email envoyé avec succès !" });
 
         setToEmails([]);
-        setCcEmails([{ mail: emailConnecte }]);
+        resetCcEmails(); // Utilisation de la nouvelle fonction
         setEmailSubject("");
         setParams({ description: "", displayDescription: "" });
         setUploadedFiles([]);
@@ -1118,10 +1128,18 @@ const ComponentsDatatablesColumnChooser: React.FC<
   };
 
   useEffect(() => {
-    if (emailConnecte && !ccEmails.some((e) => e.mail === emailConnecte)) {
-      setCcEmails([{ mail: emailConnecte }, ...ccEmails]);
+    if (emailConnecte && ccEmails.length === 0) {
+      setCcEmails([{ mail: emailConnecte }]);
     }
-  }, [emailConnecte, ccEmails]);
+  }, [emailConnecte]);
+
+  const resetCcEmails = () => {
+    if (emailConnecte) {
+      setCcEmails([{ mail: emailConnecte }]);
+    } else {
+      setCcEmails([]);
+    }
+  };
 
   useEffect(() => {
     const allData = filterAndMapData(data, statutValidation);
@@ -1154,7 +1172,11 @@ const ComponentsDatatablesColumnChooser: React.FC<
       observationReleve: rasChecked2 ? "RAS" : observationBanque,
       montantReleve: updatedRow.montantReleve,
       ecartReleve: updatedRow.ecartReleve,
-      statutValidation: EStatutEncaissement.TRAITE,
+      statutValidation: statutValidation === 0 
+        ? EStatutEncaissement.TRAITE 
+        : statutValidation === 4 
+          ? EStatutEncaissement.RECLAMATION_TRAITES 
+          : EStatutEncaissement.TRAITE,
       observationReclamation: stripHtml(observationReclamation) || "",
       observationRejete: updatedRow.observationRejete || "",
     };

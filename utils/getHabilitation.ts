@@ -8,45 +8,43 @@ const getUserHabilitation = (): any => {
     return null;
   }
 
-  // Récupérer les données persistées
-  const persistData = safeLocalStorage.getItem("persist:suivi-encaissement");
-  console.log("getUserHabilitation: Données persistées:", persistData);
-
-  if (persistData) {
-    try {
-      // Parser les données JSON
-      const parsedData = JSON.parse(persistData);
-      console.log("getUserHabilitation: Données parsées:", parsedData);
-
-      // Récupérer et parser l'objet auth
-      const authData = parsedData.auth ? JSON.parse(parsedData.auth) : null;
-      console.log("getUserHabilitation: Données d'authentification:", authData);
-
-      // Vérifier si le token existe
-      const token = authData?.accessToken;
-      if (token) {
-        // Décoder le token
-        const tokenData: any = decodeToken(token);
-        console.log("getUserHabilitation: Données du token:", tokenData);
-
-        if (tokenData && tokenData.permissions) {
-          console.log(
-            "getUserHabilitation: Permissions trouvées:",
-            tokenData.permissions
-          );
-          return tokenData.permissions;
-        }
-      }
-    } catch (error) {
-      console.error(
-        "Erreur lors de la récupération ou du décodage du token :",
-        error
-      );
+  try {
+    // Récupérer les données persistées
+    const persistData = safeLocalStorage.getItem("persist:suivi-encaissement");
+    
+    if (!persistData) {
+      console.log("getUserHabilitation: Aucune donnée persistée trouvée");
+      return null;
     }
-  }
 
-  console.log("getUserHabilitation: Aucune permission trouvée, retourne null");
-  return null; // Retourne null si l'utilisateur n'est pas identifié
+    // Parser les données JSON
+    const parsedData = JSON.parse(persistData);
+    if (!parsedData || !parsedData.auth) {
+      console.log("getUserHabilitation: Données auth non trouvées dans les données persistées");
+      return null;
+    }
+
+    // Récupérer et parser l'objet auth
+    const authData = JSON.parse(parsedData.auth);
+    if (!authData || !authData.accessToken) {
+      console.log("getUserHabilitation: Token non trouvé dans les données auth");
+      return null;
+    }
+
+    // Décoder le token
+    const tokenData: any = decodeToken(authData.accessToken);
+    if (!tokenData || !tokenData.permissions) {
+      console.log("getUserHabilitation: Permissions non trouvées dans le token");
+      return null;
+    }
+
+    console.log("getUserHabilitation: Permissions récupérées avec succès");
+    return tokenData.permissions;
+
+  } catch (error) {
+    console.error("Erreur lors de la récupération des permissions:", error);
+    return null;
+  }
 };
 
 export default getUserHabilitation;

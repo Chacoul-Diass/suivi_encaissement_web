@@ -268,7 +268,8 @@ export default function ViewModal({
 
             {/* Content */}
             <div className="flex-1 space-y-6 overflow-y-auto p-6">
-              {statutValidation === EStatutEncaissement.REJETE ||
+              {(statutValidation === EStatutEncaissement.REJETE || 
+                statutValidation === EStatutEncaissement.RECLAMATION_REVERSES) ||
               (selectedRow["Observation rejet"] &&
                 selectedRow["Observation rejet"].trim() !== "") ? (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/50">
@@ -281,6 +282,23 @@ export default function ViewModal({
                     </p>
                     <p className="text-sm text-red-700 dark:text-red-300">
                       {selectedRow["Observation rejet"]}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              {(statutValidation === EStatutEncaissement.RECLAMATION_TRAITES ||
+                statutValidation ===
+                  EStatutEncaissement.RECLAMATION_REVERSES) &&
+              selectedRow.observationReclamation &&
+              selectedRow.observationReclamation.trim() !== "" ? (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/50">
+                  <div className="flex flex-col gap-2">
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-200">
+                      Observation Réclamation
+                    </h3>
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      {selectedRow.observationReclamation}
                     </p>
                   </div>
                 </div>

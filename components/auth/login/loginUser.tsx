@@ -243,10 +243,10 @@ const ComponentsAuthLoginForm = () => {
 
       if (login.fulfilled.match(result)) {
         // Stocker le token dans les cookies avec le bon path
-        document.cookie = `accessToken=${result.payload}; path=/; secure; samesite=strict`;
+        document.cookie = `accessToken=${result.payload.accessToken}; path=/; secure; samesite=strict`;
 
         // Décoder le token pour obtenir les informations utilisateur
-        const decodedUser = decodeTokens(result.payload);
+        const decodedUser = decodeTokens(result.payload.accessToken);
 
         if (decodedUser?.isFirstLogin === 0) {
           setShowFirstLoginModal(true);
@@ -254,15 +254,34 @@ const ComponentsAuthLoginForm = () => {
           return;
         }
 
-        const habilitation = getUserHabilitation();
-        console.log("Habilitations récupérées:", habilitation);
+        // Attendre un peu que le token soit bien enregistré
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Faire plusieurs tentatives pour récupérer les habilitations
+        let habilitation = null;
+        let attempts = 0;
+        const maxAttempts = 3;
+
+        while (!habilitation && attempts < maxAttempts) {
+          habilitation = getUserHabilitation();
+          if (!habilitation) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            attempts++;
+          }
+        }
 
         if (!habilitation) {
-          console.error("Échec de la récupération des habilitations:", {
-            persistData: localStorage.getItem("persist:suivi-encaissement"),
-            decodedUser,
-          });
-          Toastify("error", "Erreur lors de la récupération des permissions");
+          console.error(
+            "Échec de la récupération des habilitations après plusieurs tentatives:",
+            {
+              persistData: localStorage.getItem("persist:suivi-encaissement"),
+              decodedUser,
+            }
+          );
+          Toastify(
+            "error",
+            "Erreur lors de la récupération des permissions. Veuillez réessayer."
+          );
           setIsAnimating(false);
           return;
         }
@@ -279,15 +298,15 @@ const ComponentsAuthLoginForm = () => {
           return;
         }
 
+        const { firstname, lastname } = decodedUser || {};
         Toastify(
           "success",
           `Félicitation ${firstname} ${lastname}, vous êtes connecté avec succès`
         );
 
-        // Ajouter un délai avant la redirection pour s'assurer que le cookie est bien défini
-        setTimeout(() => {
-          window.location.replace(redirectPath);
-        }, 100);
+        // Redirection avec le chemin nettoyé
+        const cleanPath = redirectPath.replace(/\/$/, "");
+        window.location.replace(cleanPath);
       } else {
         setIsAnimating(false);
         Toastify("error", "Échec de la connexion. Vérifiez vos identifiants.");
@@ -445,7 +464,7 @@ const ComponentsAuthLoginForm = () => {
                     id="Credential"
                     type="text"
                     placeholder="Entrez votre email ou matricule"
-                    className="relative w-full rounded-xl border-2 border-gray-200 bg-white/90 px-5 py-4 text-base transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
+                    className="relative w-full rounded-xl border-2 border-gray-200 bg-white/90 px-5 py-4 text-black transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
                     value={credential}
                     onChange={(e) => setCredential(e.target.value)}
                     required
@@ -473,7 +492,7 @@ const ComponentsAuthLoginForm = () => {
                     id="Password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Entrez votre mot de passe"
-                    className="relative w-full rounded-xl border-2 border-gray-200 bg-white/90 px-5 py-4 text-base transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
+                    className="relative w-full rounded-xl border-2 border-gray-200 bg-white/90 px-5 py-4 text-black transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
