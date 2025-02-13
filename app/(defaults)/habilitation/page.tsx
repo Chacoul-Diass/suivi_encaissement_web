@@ -3,7 +3,7 @@
 import ComponentsDragndropSortable from "@/components/dragndrop/components-dragndrop-sortable";
 import React from "react";
 
-const Profil = () => {
+const HabilitationPage = () => {
   return (
     <div>
       <ComponentsDragndropSortable />
@@ -11,4 +11,4 @@ const Profil = () => {
   );
 };
 
-export default Profil;
+export default HabilitationPage;

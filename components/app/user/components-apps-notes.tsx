@@ -58,12 +58,12 @@ const ComponentsAppsUsers: React.FC = () => {
   const dispatch = useDispatch<TAppDispatch>();
   const { result: users, pagination } = useSelector(
     (state: TRootState) =>
-      state.usersData?.data || { result: [], pagination: {} }
+      state?.usersData?.data || { result: [], pagination: {} }
   );
-  const loading = useSelector((state: TRootState) => state.usersData?.loading);
+  const loading = useSelector((state: TRootState) => state?.usersData?.loading);
 
   const ProfilList: any = useSelector(
-    (state: TRootState) => state.profile.data
+    (state: TRootState) => state?.profile?.data
   );
 
   const [addUserModal, setAddUserModal] = useState(false);
@@ -258,13 +258,13 @@ const ComponentsAppsUsers: React.FC = () => {
 
   useEffect(() => {
     if (editUserData?.directionRegionales?.length > 0) {
-      const drIds = editUserData.directionRegionales.map((dr: any) => dr.id);
+      const drIds = editUserData?.directionRegionales.map((dr: any) => dr?.id);
       dispatch(fetchSecteurs(drIds))
         .unwrap()
         .then((secteurs) => {
-          const secteurOptions = secteurs.map((secteur: any) => ({
-            value: secteur.id,
-            label: secteur.name,
+          const secteurOptions = secteurs?.map((secteur: any) => ({
+            value: secteur?.id,
+            label: secteur?.name,
           }));
           setAvailableSecteurs(secteurOptions);
         })
@@ -281,10 +281,10 @@ const ComponentsAppsUsers: React.FC = () => {
       console.error("ID utilisateur manquant !");
       return;
     }
-    dispatch(fetchUserDelete(user.id))
+    dispatch(fetchUserDelete(user?.id))
       .unwrap()
       .then((data) => {
-        setFilteredItems(filteredItems.filter((u) => u.id !== data.id));
+        setFilteredItems(filteredItems?.filter((u) => u?.id !== data?.id));
         setIsDeleteUserModal(false);
       })
       .catch((error) => {
@@ -307,12 +307,12 @@ const ComponentsAppsUsers: React.FC = () => {
   });
 
   const profileData: any = useSelector(
-    (state: TRootState) => state.profile?.data
+    (state: TRootState) => state?.profile?.data
   );
 
-  const drData: any = useSelector((state: TRootState) => state.dr?.data);
+  const drData: any = useSelector((state: TRootState) => state?.dr?.data);
   const secteurData: any = useSelector(
-    (state: TRootState) => state.secteur?.data
+    (state: TRootState) => state?.secteur?.data
   );
 
   useEffect(() => {
@@ -321,32 +321,32 @@ const ComponentsAppsUsers: React.FC = () => {
         {
           value: "all",
           label:
-            drData.length === availableDirections.length - 1
+            drData?.length === availableDirections?.length - 1
               ? "Tout désélectionner"
               : "Tout sélectionner",
         },
-        ...drData.map((dr: any) => ({
-          value: dr.id,
-          label: `${dr.code} - ${dr.name.trim()}`,
+        ...drData?.map((dr: any) => ({
+          value: dr?.id,
+          label: `${dr?.code} - ${dr?.name?.trim()}`,
         })),
       ];
       setAvailableDirections(directions);
     }
-  }, [drData, drData.length, availableDirections.length]);
+  }, [drData, drData?.length, availableDirections?.length]);
 
   useEffect(() => {
     if (profileData) {
-      const profile = profileData.map((profil: any) => ({
-        value: profil.id,
-        label: `${profil.name.trim()}`,
+      const profile = profileData?.map((profil: any) => ({
+        value: profil?.id,
+        label: `${profil?.name?.trim()}`,
       }));
       setProfils(profile);
     }
   }, [profileData]);
 
   useEffect(() => {
-    if (drData.length > 0) {
-      const drIds = drData.map((dr: any) => Number(dr.value));
+    if (drData?.length > 0) {
+      const drIds = drData?.map((dr: any) => Number(dr?.value));
       dispatch(fetchSecteurs(drIds));
     } else {
       setAvailableSecteurs([]);
@@ -359,13 +359,13 @@ const ComponentsAppsUsers: React.FC = () => {
         {
           value: "all",
           label:
-            accountInfo.secteur.length === secteurData.length
+            accountInfo?.secteur?.length === secteurData?.length
               ? "Tout désélectionner"
               : "Tout sélectionner",
         },
-        ...secteurData.map((secteur: any) => ({
-          value: secteur.id,
-          label: secteur.name,
+        ...secteurData?.map((secteur: any) => ({
+          value: secteur?.id,
+          label: secteur?.name,
         })),
       ];
       setAvailableSecteurs(secteurs);
@@ -379,28 +379,28 @@ const ComponentsAppsUsers: React.FC = () => {
     }
 
     const userData = {
-      email: editUserData.email,
-      firstname: editUserData.firstname,
-      lastname: editUserData.lastname,
-      matricule: editUserData.matricule,
-      phoneNumber: editUserData.phoneNumber,
-      profileId: editUserData.profile?.id || 1, // Utiliser un profil par défaut si non défini
-      directionRegionales: editUserData.directionRegionales
-        .map((dr: any) => ({ id: dr.id }))
-        .filter((dr: any) => dr.id !== undefined), // S'assurer que `id` existe
-      secteurs: editUserData.secteurs
-        .map((secteur: any) => ({ id: secteur.id }))
-        .filter((secteur: any) => secteur.id !== undefined), // S'assurer que `id` existe
+      email: editUserData?.email,
+      firstname: editUserData?.firstname,
+      lastname: editUserData?.lastname,
+      matricule: editUserData?.matricule,
+      phoneNumber: editUserData?.phoneNumber,
+      profileId: editUserData?.profile?.id || 1, // Utiliser un profil par défaut si non défini
+      directionRegionales: editUserData?.directionRegionales
+        .map((dr: any) => ({ id: dr?.id }))
+        .filter((dr: any) => dr?.id !== undefined), // S'assurer que `id` existe
+      secteurs: editUserData?.secteurs
+        .map((secteur: any) => ({ id: secteur?.id }))
+        .filter((secteur: any) => secteur?.id !== undefined), // S'assurer que `id` existe
     };
 
     try {
       const resultAction = await dispatch(
-        fetchupdateUser({ userId: editUserData.id, userData })
+        fetchupdateUser({ userId: editUserData?.id, userData })
       ).unwrap();
 
       Swal.fire(
         "Succès",
-        resultAction.message || "Utilisateur mis à jour avec succès.",
+        resultAction?.message || "Utilisateur mis à jour avec succès.",
         "success"
       );
       setAddUserModal(false);
@@ -421,7 +421,7 @@ const ComponentsAppsUsers: React.FC = () => {
   };
 
   const handleSelectAllDR = () => {
-    if (editUserData?.directionRegionales?.length === drData.length) {
+    if (editUserData?.directionRegionales?.length === drData?.length) {
       // Si toutes les DR sont sélectionnées, on désélectionne tout et on vide les secteurs
       setEditUserData({
         ...editUserData,
@@ -431,10 +431,10 @@ const ComponentsAppsUsers: React.FC = () => {
       setAvailableSecteurs([]); // Réinitialiser les secteurs
     } else {
       // Sinon, on sélectionne toutes les DR disponibles
-      const selectedDRs = drData.map((dr: any) => ({
-        id: dr.id,
-        code: dr.code,
-        name: dr.name,
+      const selectedDRs = drData?.map((dr: any) => ({
+        id: dr?.id,
+        code: dr?.code,
+        name: dr?.name,
       }));
 
       setEditUserData({ ...editUserData, directionRegionales: selectedDRs });
@@ -444,9 +444,9 @@ const ComponentsAppsUsers: React.FC = () => {
       dispatch(fetchSecteurs(drIds))
         .unwrap()
         .then((secteurs) => {
-          const secteurOptions = secteurs.map((secteur: any) => ({
-            value: secteur.id,
-            label: secteur.name,
+          const secteurOptions = secteurs?.map((secteur: any) => ({
+            value: secteur?.id,
+            label: secteur?.name,
           }));
           setAvailableSecteurs(secteurOptions);
         })
@@ -678,12 +678,10 @@ const ComponentsAppsUsers: React.FC = () => {
 
         {/* Liste des utilisateurs */}
         {loading ? (
-          <div className="flex h-[400px] items-center justify-center rounded-md bg-white shadow-lg dark:bg-[#1c232f]">
+          <div className="min-h-[400px] grid place-content-center">
             <div className="flex flex-col items-center gap-4">
-              <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
-              <p className="text-lg font-medium text-gray-600 dark:text-gray-400">
-                Chargement des utilisateurs...
-              </p>
+              <div className="animate-spin w-10 h-10 border-4 border-primary border-l-transparent rounded-full"></div>
+              <p className="text-primary font-medium">Chargement en cours...</p>
             </div>
           </div>
         ) : (
@@ -1105,7 +1103,9 @@ const ComponentsAppsUsers: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <Dialog.Title className="flex items-center gap-2 text-2xl font-bold text-gray-800 dark:text-white">
                         <IconUserPlus className="h-6 w-6 text-primary" />
-                        {editUserData ? "Modifier l'utilisateur" : "Ajouter un utilisateur"}
+                        {editUserData
+                          ? "Modifier l'utilisateur"
+                          : "Ajouter un utilisateur"}
                       </Dialog.Title>
                       <button
                         type="button"
@@ -1164,8 +1164,7 @@ const ComponentsAppsUsers: React.FC = () => {
                                 >
                                   <div className="flex items-center gap-1">
                                     <IconSignature className="h-4 w-4 text-gray-400" />
-                                    Nom{" "}
-                                    <span className="text-red-500">*</span>
+                                    Nom <span className="text-red-500">*</span>
                                   </div>
                                 </label>
                                 <input
@@ -1227,8 +1226,7 @@ const ComponentsAppsUsers: React.FC = () => {
                               >
                                 <div className="flex items-center gap-1">
                                   <IconMail className="h-4 w-4 text-gray-400" />
-                                  Email{" "}
-                                  <span className="text-red-500">*</span>
+                                  Email <span className="text-red-500">*</span>
                                 </div>
                               </label>
                               <input
@@ -1277,7 +1275,8 @@ const ComponentsAppsUsers: React.FC = () => {
                                 editUserData.phoneNumber.length !== 10 && (
                                   <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
                                     <IconAlertCircle className="h-4 w-4" />
-                                    Le numéro doit contenir exactement 10 chiffres
+                                    Le numéro doit contenir exactement 10
+                                    chiffres
                                   </p>
                                 )}
                             </div>
@@ -1301,8 +1300,7 @@ const ComponentsAppsUsers: React.FC = () => {
                             >
                               <div className="flex items-center gap-1">
                                 <IconUserCircle className="h-4 w-4 text-gray-400" />
-                                Profil{" "}
-                                <span className="text-red-500">*</span>
+                                Profil <span className="text-red-500">*</span>
                               </div>
                             </label>
                             <Select
@@ -1354,46 +1352,69 @@ const ComponentsAppsUsers: React.FC = () => {
                                     {
                                       value: "all",
                                       label:
-                                        editUserData?.directionRegionales?.length === drData.length
+                                        editUserData?.directionRegionales
+                                          ?.length === drData.length
                                           ? "Tout désélectionner"
                                           : "Tout sélectionner",
                                     },
-                                    ...availableDirections.filter((option) => option.value !== "all"),
+                                    ...availableDirections.filter(
+                                      (option) => option.value !== "all"
+                                    ),
                                   ]}
-                                  value={editUserData?.directionRegionales.map((dr: any) => ({
-                                    value: dr.id,
-                                    label: `${dr.code} - ${dr.name}`,
-                                  }))}
+                                  value={editUserData?.directionRegionales.map(
+                                    (dr: any) => ({
+                                      value: dr.id,
+                                      label: `${dr.code} - ${dr.name}`,
+                                    })
+                                  )}
                                   isMulti
                                   onChange={(selectedOptions) => {
-                                    if (selectedOptions.some((option) => option.value === "all")) {
+                                    if (
+                                      selectedOptions.some(
+                                        (option) => option.value === "all"
+                                      )
+                                    ) {
                                       handleSelectAllDR();
                                     } else {
-                                      const selectedDRs = selectedOptions.map((option: any) => ({
-                                        id: option.value,
-                                        code: option.label.split(" - ")[0],
-                                        name: option.label.split(" - ")[1],
-                                      }));
+                                      const selectedDRs = selectedOptions.map(
+                                        (option: any) => ({
+                                          id: option.value,
+                                          code: option.label.split(" - ")[0],
+                                          name: option.label.split(" - ")[1],
+                                        })
+                                      );
 
                                       setEditUserData({
                                         ...editUserData,
                                         directionRegionales: selectedDRs,
-                                        secteurs: selectedDRs.length === 0 ? [] : editUserData.secteurs,
+                                        secteurs:
+                                          selectedDRs.length === 0
+                                            ? []
+                                            : editUserData.secteurs,
                                       });
 
                                       if (selectedDRs.length > 0) {
-                                        const drIds = selectedDRs.map((dr) => dr.id);
+                                        const drIds = selectedDRs.map(
+                                          (dr) => dr.id
+                                        );
                                         dispatch(fetchSecteurs(drIds))
                                           .unwrap()
                                           .then((secteurs) => {
-                                            const secteurOptions = secteurs.map((secteur: any) => ({
-                                              value: secteur.id,
-                                              label: secteur.name,
-                                            }));
-                                            setAvailableSecteurs(secteurOptions);
+                                            const secteurOptions = secteurs.map(
+                                              (secteur: any) => ({
+                                                value: secteur.id,
+                                                label: secteur.name,
+                                              })
+                                            );
+                                            setAvailableSecteurs(
+                                              secteurOptions
+                                            );
                                           })
                                           .catch((error) =>
-                                            console.error("Erreur lors du chargement des secteurs :", error)
+                                            console.error(
+                                              "Erreur lors du chargement des secteurs :",
+                                              error
+                                            )
                                           );
                                       } else {
                                         setAvailableSecteurs([]);
@@ -1424,27 +1445,38 @@ const ComponentsAppsUsers: React.FC = () => {
                                     {
                                       value: "all",
                                       label:
-                                        editUserData?.secteurs?.length === availableSecteurs.length
+                                        editUserData?.secteurs?.length ===
+                                        availableSecteurs.length
                                           ? "Tout désélectionner"
                                           : "Tout sélectionner",
                                     },
-                                    ...availableSecteurs.filter((option) => option.value !== "all"),
+                                    ...availableSecteurs.filter(
+                                      (option) => option.value !== "all"
+                                    ),
                                   ]}
-                                  value={editUserData?.secteurs.map((secteur: any) => ({
-                                    value: secteur.id,
-                                    label: secteur.name,
-                                  }))}
+                                  value={editUserData?.secteurs.map(
+                                    (secteur: any) => ({
+                                      value: secteur.id,
+                                      label: secteur.name,
+                                    })
+                                  )}
                                   isMulti
                                   onChange={(selectedOptions) => {
-                                    if (selectedOptions.some((option) => option.value === "all")) {
+                                    if (
+                                      selectedOptions.some(
+                                        (option) => option.value === "all"
+                                      )
+                                    ) {
                                       handleSelectAllSecteurs();
                                     } else {
                                       setEditUserData({
                                         ...editUserData,
-                                        secteurs: selectedOptions.map((option: any) => ({
-                                          id: option.value,
-                                          name: option.label,
-                                        })),
+                                        secteurs: selectedOptions.map(
+                                          (option: any) => ({
+                                            id: option.value,
+                                            name: option.label,
+                                          })
+                                        ),
                                       });
                                     }
                                   }}
@@ -1474,7 +1506,9 @@ const ComponentsAppsUsers: React.FC = () => {
                         className="group flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary/90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50 active:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-70"
                       >
                         <IconDeviceFloppy className="h-4 w-4 transition-transform group-hover:scale-110" />
-                        {loadingUpdate ? "Modification en cours..." : "Modifier"}
+                        {loadingUpdate
+                          ? "Modification en cours..."
+                          : "Modifier"}
                       </button>
                     </div>
                   </div>

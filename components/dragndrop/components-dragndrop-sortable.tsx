@@ -21,23 +21,28 @@ const ComponentsDragndropSortable = () => {
   const [modalAdd, setModalAdd] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false); // État pour différencier Ajout / Modification
 
-  const ProfilList: any = useSelector(
-    (state: TRootState) => state.profile?.data
+  const ProfilList = useSelector(
+    (state: TRootState) => state?.profile?.data ?? []
+  );
+  const loading = useSelector(
+    (state: TRootState) => state?.profile?.loading ?? false
   );
   const [sortable1, setSortable1] = useState<any[]>([]);
   const [selectedPermissions, setSelectedPermissions] = useState<any[]>([]);
 
   useEffect(() => {
-    dispatch(fetchProfile());
+    if (!ProfilList || ProfilList.length === 0) {
+      dispatch(fetchProfile());
+    }
   }, [dispatch]);
 
   useEffect(() => {
     if (ProfilList && Array.isArray(ProfilList)) {
-      const formattedProfiles = ProfilList?.map((profile: any) => ({
-        id: profile.id,
-        text: profile.name,
-        name: profile.description || "Pas de description",
-        permissions: profile?.permissions,
+      const formattedProfiles = ProfilList.map((profile: any) => ({
+        id: profile?.id ?? '',
+        text: profile?.name ?? '',
+        name: profile?.description ?? "Pas de description",
+        permissions: profile?.permissions ?? [],
       }));
       setSortable1(formattedProfiles);
     }
@@ -84,6 +89,17 @@ const ComponentsDragndropSortable = () => {
           : [...prevPermissions, permissionId] // Activer la permission
     );
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-[400px] grid place-content-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin w-10 h-10 border-4 border-primary border-l-transparent rounded-full"></div>
+          <p className="text-primary font-medium">Chargement des habilitations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div

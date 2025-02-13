@@ -119,9 +119,9 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
   const [individualSwitches, setIndividualSwitches] = useState<boolean[][]>([]);
   const [globalSwitch, setGlobalSwitch] = useState(false);
   const [treeview, setTreeview] = useState<string[]>([]);
-  const [openAccordions, setOpenAccordions] = useState<{ [key: string]: boolean }>(
-    {}
-  );
+  const [openAccordions, setOpenAccordions] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPersonalInfo({ ...personalInfo, [e.target.name]: e.target.value });
@@ -272,7 +272,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
               key={role.id}
               className={`group relative h-full overflow-hidden rounded-2xl border-0 bg-white shadow-lg ${
                 isOpen
-                  ? "ring-2 ring-success/30 shadow-success/10"
+                  ? "shadow-success/10 ring-2 ring-success/30"
                   : "hover:shadow-xl"
               }`}
             >
@@ -318,8 +318,8 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                             style={{
                               width: `${progress}%`,
                               boxShadow: isOpen
-                                ? '0 0 15px rgba(0, 200, 100, 0.3)'
-                                : 'none',
+                                ? "0 0 15px rgba(0, 200, 100, 0.3)"
+                                : "none",
                             }}
                           />
                         </div>
@@ -347,9 +347,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
 
               <AnimatePresence>
                 {isOpen && (
-                  <div
-                    className="relative overflow-hidden"
-                  >
+                  <div className="relative overflow-hidden">
                     <div className="max-h-[350px] space-y-3 overflow-y-auto border-t border-gray-100 bg-gray-50/80 p-5 backdrop-blur-sm">
                       {permissionNames?.map((permission, permIndex) => {
                         let IconComponent = IconTxtFile;
@@ -397,7 +395,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                             key={permIndex}
                             className={`group/item flex items-center justify-between rounded-xl bg-white/90 p-4 shadow-sm transition-colors duration-300 ${
                               isChecked
-                                ? "ring-1 ring-success shadow-success/10"
+                                ? "shadow-success/10 ring-1 ring-success"
                                 : "hover:bg-white hover:shadow-md"
                             }`}
                           >
@@ -671,9 +669,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
 
                         <AnimatePresence>
                           {treeview.includes(personalInfo.libelle) && (
-                            <div
-                              className="relative overflow-hidden"
-                            >
+                            <div className="relative overflow-hidden">
                               <div className="mt-2 space-y-2 rounded-lg bg-gray-50/50 p-3">
                                 {items2?.map(
                                   (
@@ -686,7 +682,9 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                                     ]?.some((state: boolean) => state);
                                     if (!isRoleVisible) return null;
 
-                                    const isRoleOpen = treeview.includes(role.text);
+                                    const isRoleOpen = treeview.includes(
+                                      role.text
+                                    );
 
                                     return (
                                       <div
@@ -698,7 +696,9 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                                           className={`flex w-full items-center justify-between rounded-lg p-3 text-left text-sm transition-all duration-200 ${
                                             isRoleOpen ? "bg-gray-50" : ""
                                           }`}
-                                          onClick={() => toggleTreeview(role.text)}
+                                          onClick={() =>
+                                            toggleTreeview(role.text)
+                                          }
                                         >
                                           <div className="flex items-center gap-2">
                                             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10">
@@ -717,9 +717,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
 
                                         <AnimatePresence>
                                           {isRoleOpen && (
-                                            <div
-                                              className="relative overflow-hidden"
-                                            >
+                                            <div className="relative overflow-hidden">
                                               <div className="space-y-1 p-2">
                                                 {permissionNames?.map(
                                                   (permission, permIndex) => {
@@ -730,35 +728,45 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                                                     )
                                                       return null;
 
-                                                    let IconComponent = IconTxtFile;
+                                                    let IconComponent =
+                                                      IconTxtFile;
                                                     let iconColorClass =
                                                       "text-gray-400";
-                                                    let bgColorClass = "bg-gray-100";
+                                                    let bgColorClass =
+                                                      "bg-gray-100";
 
                                                     switch (permission) {
                                                       case "CREATION":
-                                                        IconComponent = IconSave;
+                                                        IconComponent =
+                                                          IconSave;
                                                         iconColorClass =
                                                           "text-green-500";
-                                                        bgColorClass = "bg-green-50";
+                                                        bgColorClass =
+                                                          "bg-green-50";
                                                         break;
                                                       case "LECTURE":
                                                         IconComponent =
                                                           IconClipboardText;
                                                         iconColorClass =
                                                           "text-blue-500";
-                                                        bgColorClass = "bg-blue-50";
+                                                        bgColorClass =
+                                                          "bg-blue-50";
                                                         break;
                                                       case "MODIFICATION":
-                                                        IconComponent = IconEdit;
+                                                        IconComponent =
+                                                          IconEdit;
                                                         iconColorClass =
                                                           "text-yellow-500";
-                                                        bgColorClass = "bg-yellow-50";
+                                                        bgColorClass =
+                                                          "bg-yellow-50";
                                                         break;
                                                       case "SUPPRESSION":
-                                                        IconComponent = IconTrashLines;
-                                                        iconColorClass = "text-red-500";
-                                                        bgColorClass = "bg-red-50";
+                                                        IconComponent =
+                                                          IconTrashLines;
+                                                        iconColorClass =
+                                                          "text-red-500";
+                                                        bgColorClass =
+                                                          "bg-red-50";
                                                         break;
                                                     }
 
