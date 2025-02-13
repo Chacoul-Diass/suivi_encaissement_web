@@ -31,6 +31,7 @@ import EmailModal from "../modales/emailModal";
 import PreuvePhotoModal from "../modales/preuvePhotoModal";
 import ViewModal from "../modales/viewModal";
 import { fetchDirectionRegionales } from "@/store/reducers/select/dr.slice";
+import EncaissementTutorial from "../tutorial/TutorialTable-encaissement";
 
 export interface DataReverse {
   id: number;
@@ -146,6 +147,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
       return "N/A";
     }
   };
+
+  const user = getUserPermission();
+
+  const isFirstLogin = user?.isFirstLogin;
 
   const filterAndMapData = useCallback(
     (data: any[], statutValidation: number): any[] => {
@@ -943,6 +948,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   <button
                     type="button"
                     className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                    id="tuto-edit-btn"
                     onClick={() => handleOpenModal(row)}
                   >
                     <IconPencil className="h-5 w-5 stroke-[1.5]" />
@@ -952,6 +958,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   <button
                     type="button"
                     className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                    id="tuto-mail-btn"
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedRow(row); // Sauvegarder la ligne sélectionnée
@@ -1279,7 +1286,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
       {/* Contenu de la page */}
       <div className=" mt-9">
         {/* 10 Encaissements connus */}
-        <div className="flex w-full">
+        <div className="flex w-full" id="tuto-encaissement-titre">
           <h5 className="mb-8  flex w-full flex-wrap items-center gap-6 text-xl font-thin text-primary">
             {totalUnvalidatedRecords}
             {encaissementText}{" "}
@@ -1309,7 +1316,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
               />
 
               {/* Search Input with Icon */}
-              <div className="relative text-right">
+              <div className="relative text-right" id="tuto-search-bar">
                 <input
                   type="text"
                   className="form-input w-[300px] rounded-lg border-gray-300 py-2 pl-10 pr-4 focus:border-primary focus:ring-primary dark:border-[#253b5c] dark:bg-[#1b2e4b]"
@@ -1342,7 +1349,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
               </div>
 
               {/* Column Chooser Dropdown */}
-              <div className="dropdown">
+              <div className="dropdown" id="tuto-dropdown-colonnes">
                 <Dropdown
                   btnClassName="relative flex items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition-all hover:bg-gray-50 hover:shadow-sm dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark dark:hover:bg-[#1b2e4b]/80"
                   button={
@@ -1395,7 +1402,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative" id="tuto-datatable">
             <div className="overflow-x-auto">
               <DataTable
                 style={{
@@ -1617,6 +1624,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
           />
         </div>
       </div>
+
+      {isFirstLogin === 1 && <EncaissementTutorial />}
     </>
   );
 };
