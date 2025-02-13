@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import IconSave from "@/components/icon/icon-save";
 import IconArrowBackward from "../icon/icon-arrow-backward";
 import IconSquareRotated from "../icon/icon-square-rotated";
@@ -97,7 +97,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
     dispatch(fetchpermissions());
   }, [dispatch]);
 
-  const items2 = useMemo(
+  const items2: any = useMemo(
     () =>
       objetList
         ? objetList?.map(
@@ -122,6 +122,87 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
   const [openAccordions, setOpenAccordions] = useState<{
     [key: string]: boolean;
   }>({});
+
+  const getDynamicDependanceMapping = (items: Objet[]) => {
+    const mapping: Record<string, string[]> = {};
+
+    // Trouver les objets principaux
+    const mesEncaissements = items.find(
+      (item: any) => item?.text === "MES ENCAISEMENTS"
+    );
+    const reclamation = items.find((item: any) => item?.text === "RECLAMATION");
+
+    if (mesEncaissements) {
+      mapping["MES ENCAISEMENTS"] = items
+        .filter((item: any) =>
+          [
+            "ENCAISSEMENTS VALIDES",
+            "ENCAISSEMENTS REVERSES",
+            "ENCAISSEMENTS TRAITÉS",
+            "ENCAISSEMENTS REJETES",
+            "ENCAISSEMENTS CLOTURES",
+          ].includes(item?.text)
+        )
+        .map((item: any) => item?.text);
+    }
+
+    if (reclamation) {
+      mapping["RECLAMATION"] = items
+        .filter((item: any) =>
+          ["RECLAMATION REVERSES", "RECLAMATION TRAITES"].includes(item?.text)
+        )
+        .map((item: any) => item?.text);
+    }
+
+    return mapping;
+  };
+
+  const hasActivePermission = useCallback(
+    (objectName: string) => {
+      const roleIndex = items2.findIndex(
+        (item: any) => item.text.trim() === objectName.trim()
+      );
+      if (roleIndex === -1) return false;
+
+      return individualSwitches[roleIndex]?.some(Boolean) || false;
+    },
+    [items2, individualSwitches]
+  );
+
+  const filteredItems = useMemo(() => {
+    if (!items2) return [];
+
+    const dependanceMapping = getDynamicDependanceMapping(items2);
+
+    // Déterminer les objets toujours visibles
+    const alwaysDisplayed = items2
+      .filter((item: any) =>
+        [
+          "DASHBOARD",
+          "MES ENCAISEMENTS",
+          "UTILISATEURS",
+          "HABILITATIONS",
+          "RECLAMATION",
+          "RAPPROCHEMENT",
+          "HISTORIQUE CONNEXIONS",
+        ].includes(item?.text)
+      )
+      .map((item: any) => item?.text);
+
+    let displayedObjects = [...alwaysDisplayed];
+
+    // Vérifier MES ENCAISEMENTS
+    if (hasActivePermission("MES ENCAISEMENTS")) {
+      displayedObjects.push(...(dependanceMapping["MES ENCAISEMENTS"] || []));
+    }
+
+    // Vérifier RECLAMATION
+    if (hasActivePermission("RECLAMATION")) {
+      displayedObjects.push(...(dependanceMapping["RECLAMATION"] || []));
+    }
+
+    return items2.filter((item: any) => displayedObjects.includes(item?.text));
+  }, [items2, hasActivePermission]); // hasActivePermission est maintenant stable grâce à useCallback
 
   const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPersonalInfo({ ...personalInfo, [e.target.name]: e.target.value });
@@ -165,7 +246,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
       personalInfo.permissions.forEach(
         (perm: { objectId: number; permissionId: number }) => {
           const roleIndex = items2.findIndex(
-            (item: { id: number }) => item.id === perm.objectId
+            (item: { id: number }) => item?.id === perm.objectId
           );
           const permIndex = permissionList.findIndex(
             (p: Permission) => p.id === perm.permissionId
@@ -188,7 +269,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
       permissionList.forEach((permission: Permission, permIndex: number) => {
         if (individualSwitches[roleIndex]?.[permIndex]) {
           selectedPermissions.push({
-            objectId: item.id, // ID de l'objet
+            objectId: item?.id, // ID de l'objet
             permissionId: permission.id, // ID de la permission
           });
         }
@@ -260,196 +341,203 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
   const renderAccordions = () => (
     <div className="max-h-[calc(100vh-300px)] overflow-y-auto px-1">
       <div className="grid auto-rows-fr grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {items2?.map((role: { id: any; text: any }, roleIndex: number) => {
-          const isOpen = openAccordions[role.id] || false;
-          const activePermissions =
-            individualSwitches[roleIndex]?.filter(Boolean).length || 0;
-          const totalPermissions = permissionNames?.length || 0;
-          const progress = (activePermissions / totalPermissions) * 100;
+        {filteredItems?.map(
+          (role: { id: any; text: any }, roleIndex: number) => {
+            const isOpen = openAccordions[role.id] || false;
+            const activePermissions =
+              individualSwitches[roleIndex]?.filter(Boolean).length || 0;
+            const totalPermissions = permissionNames?.length || 0;
+            const progress = (activePermissions / totalPermissions) * 100;
 
-          return (
-            <div
-              key={role.id}
-              className={`group relative h-full overflow-hidden rounded-2xl border-0 bg-white shadow-lg ${
-                isOpen
-                  ? "shadow-success/10 ring-2 ring-success/30"
-                  : "hover:shadow-xl"
-              }`}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50/50 to-success/5 opacity-50" />
+            return (
               <div
-                className={`absolute inset-0 bg-success/5 transition-opacity duration-300 ${
-                  isOpen ? "opacity-10" : "opacity-0"
+                key={role.id}
+                className={`group relative h-full overflow-hidden rounded-2xl border-0 bg-white shadow-lg ${
+                  isOpen
+                    ? "shadow-success/10 ring-2 ring-success/30"
+                    : "hover:shadow-xl"
                 }`}
-              />
-
-              <button
-                type="button"
-                className={`relative flex w-full items-center justify-between p-5 text-left ${
-                  isOpen ? "bg-success/5" : "hover:bg-gray-50/80"
-                }`}
-                onClick={() => toggleAccordion(role.id)}
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`flex h-14 w-14 items-center justify-center rounded-xl backdrop-blur-sm transition-all duration-300 ${
-                      isOpen
-                        ? "bg-success/15 shadow-lg shadow-success/10"
-                        : "bg-gray-100/80 group-hover:bg-success/10"
-                    }`}
-                  >
-                    <IconUsers
-                      className={`h-7 w-7 transition-colors duration-300 ${
+                <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50/50 to-success/5 opacity-50" />
+                <div
+                  className={`absolute inset-0 bg-success/5 transition-opacity duration-300 ${
+                    isOpen ? "opacity-10" : "opacity-0"
+                  }`}
+                />
+
+                <button
+                  type="button"
+                  className={`relative flex w-full items-center justify-between p-5 text-left ${
+                    isOpen ? "bg-success/5" : "hover:bg-gray-50/80"
+                  }`}
+                  onClick={() => toggleAccordion(role.id)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`flex h-14 w-14 items-center justify-center rounded-xl backdrop-blur-sm transition-all duration-300 ${
                         isOpen
-                          ? "text-success"
-                          : "text-gray-500 group-hover:text-success"
+                          ? "bg-success/15 shadow-lg shadow-success/10"
+                          : "bg-gray-100/80 group-hover:bg-success/10"
+                      }`}
+                    >
+                      <IconUsers
+                        className={`h-7 w-7 transition-colors duration-300 ${
+                          isOpen
+                            ? "text-success"
+                            : "text-gray-500 group-hover:text-success"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-medium text-gray-900">
+                        {role.text}
+                      </h4>
+                      <div className="mt-3 flex items-center gap-3">
+                        <div className="flex-1">
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100/80 backdrop-blur-sm">
+                            <div
+                              className="h-full rounded-full bg-success shadow-sm transition-all duration-300"
+                              style={{
+                                width: `${progress}%`,
+                                boxShadow: isOpen
+                                  ? "0 0 15px rgba(0, 200, 100, 0.3)"
+                                  : "none",
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <span className="min-w-[3rem] text-center text-sm font-medium text-gray-500">
+                          {activePermissions}/{totalPermissions}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {activePermissions > 0 && (
+                      <span className="flex items-center gap-2 rounded-full bg-success/10 px-4 py-1.5 text-sm font-medium text-success backdrop-blur-sm">
+                        <IconCheck className="h-4 w-4" />
+                        {activePermissions}
+                      </span>
+                    )}
+                    <IconCaretDown
+                      className={`h-5 w-5 transition-transform duration-300 ${
+                        isOpen ? "rotate-180 text-success" : "text-gray-400"
                       }`}
                     />
                   </div>
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-900">
-                      {role.text}
-                    </h4>
-                    <div className="mt-3 flex items-center gap-3">
-                      <div className="flex-1">
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100/80 backdrop-blur-sm">
-                          <div
-                            className="h-full rounded-full bg-success shadow-sm transition-all duration-300"
-                            style={{
-                              width: `${progress}%`,
-                              boxShadow: isOpen
-                                ? "0 0 15px rgba(0, 200, 100, 0.3)"
-                                : "none",
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <span className="min-w-[3rem] text-center text-sm font-medium text-gray-500">
-                        {activePermissions}/{totalPermissions}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {activePermissions > 0 && (
-                    <span className="flex items-center gap-2 rounded-full bg-success/10 px-4 py-1.5 text-sm font-medium text-success backdrop-blur-sm">
-                      <IconCheck className="h-4 w-4" />
-                      {activePermissions}
-                    </span>
-                  )}
-                  <IconCaretDown
-                    className={`h-5 w-5 transition-transform duration-300 ${
-                      isOpen ? "rotate-180 text-success" : "text-gray-400"
-                    }`}
-                  />
-                </div>
-              </button>
+                </button>
 
-              <AnimatePresence>
-                {isOpen && (
-                  <div className="relative overflow-hidden">
-                    <div className="max-h-[350px] space-y-3 overflow-y-auto border-t border-gray-100 bg-gray-50/80 p-5 backdrop-blur-sm">
-                      {permissionNames?.map((permission, permIndex) => {
-                        let IconComponent = IconTxtFile;
-                        let iconColorClass = "text-gray-400";
-                        let bgColorClass = "bg-gray-100/80";
-                        let labelClass = "text-gray-700";
-                        let description = "";
+                <AnimatePresence>
+                  {isOpen && (
+                    <div className="relative overflow-hidden">
+                      <div className="max-h-[350px] space-y-3 overflow-y-auto border-t border-gray-100 bg-gray-50/80 p-5 backdrop-blur-sm">
+                        {permissionNames?.map((permission, permIndex) => {
+                          let IconComponent = IconTxtFile;
+                          let iconColorClass = "text-gray-400";
+                          let bgColorClass = "bg-gray-100/80";
+                          let labelClass = "text-gray-700";
+                          let description = "";
 
-                        switch (permission) {
-                          case "CREATION":
-                            IconComponent = IconSave;
-                            iconColorClass = "text-emerald-500";
-                            bgColorClass = "bg-emerald-50/80";
-                            labelClass = "text-emerald-700";
-                            description = "Créer de nouveaux éléments";
-                            break;
-                          case "LECTURE":
-                            IconComponent = IconClipboardText;
-                            iconColorClass = "text-blue-500";
-                            bgColorClass = "bg-blue-50/80";
-                            labelClass = "text-blue-700";
-                            description = "Consulter les informations";
-                            break;
-                          case "MODIFICATION":
-                            IconComponent = IconEdit;
-                            iconColorClass = "text-amber-500";
-                            bgColorClass = "bg-amber-50/80";
-                            labelClass = "text-amber-700";
-                            description = "Modifier les données existantes";
-                            break;
-                          case "SUPPRESSION":
-                            IconComponent = IconTrashLines;
-                            iconColorClass = "text-rose-500";
-                            bgColorClass = "bg-rose-50/80";
-                            labelClass = "text-rose-700";
-                            description = "Supprimer des éléments";
-                            break;
-                        }
+                          switch (permission) {
+                            case "CREATION":
+                              IconComponent = IconSave;
+                              iconColorClass = "text-emerald-500";
+                              bgColorClass = "bg-emerald-50/80";
+                              labelClass = "text-emerald-700";
+                              description = "Créer de nouveaux éléments";
+                              break;
+                            case "LECTURE":
+                              IconComponent = IconClipboardText;
+                              iconColorClass = "text-blue-500";
+                              bgColorClass = "bg-blue-50/80";
+                              labelClass = "text-blue-700";
+                              description = "Consulter les informations";
+                              break;
+                            case "MODIFICATION":
+                              IconComponent = IconEdit;
+                              iconColorClass = "text-amber-500";
+                              bgColorClass = "bg-amber-50/80";
+                              labelClass = "text-amber-700";
+                              description = "Modifier les données existantes";
+                              break;
+                            case "SUPPRESSION":
+                              IconComponent = IconTrashLines;
+                              iconColorClass = "text-rose-500";
+                              bgColorClass = "bg-rose-50/80";
+                              labelClass = "text-rose-700";
+                              description = "Supprimer des éléments";
+                              break;
+                          }
 
-                        const isChecked =
-                          individualSwitches[roleIndex]?.[permIndex] || false;
+                          const isChecked =
+                            individualSwitches[roleIndex]?.[permIndex] || false;
 
-                        return (
-                          <div
-                            key={permIndex}
-                            className={`group/item flex items-center justify-between rounded-xl bg-white/90 p-4 shadow-sm transition-colors duration-300 ${
-                              isChecked
-                                ? "shadow-success/10 ring-1 ring-success"
-                                : "hover:bg-white hover:shadow-md"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`flex h-8 w-8 items-center justify-center rounded-lg ${bgColorClass}`}
-                              >
-                                <IconComponent
-                                  className={`h-4 w-4 ${iconColorClass}`}
-                                />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className={`font-medium ${labelClass}`}>
-                                    {permission}
-                                  </span>
-                                  <span className="text-sm text-gray-500">
-                                    • {description}
-                                  </span>
+                          return (
+                            <div
+                              key={permIndex}
+                              className={`group/item flex items-center justify-between rounded-xl bg-white/90 p-4 shadow-sm transition-colors duration-300 ${
+                                isChecked
+                                  ? "shadow-success/10 ring-1 ring-success"
+                                  : "hover:bg-white hover:shadow-md"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${bgColorClass}`}
+                                >
+                                  <IconComponent
+                                    className={`h-4 w-4 ${iconColorClass}`}
+                                  />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className={`font-medium ${labelClass}`}
+                                    >
+                                      {permission}
+                                    </span>
+                                    <span className="text-sm text-gray-500">
+                                      • {description}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className={`flex h-7 items-center justify-center rounded-full px-3 text-xs font-medium transition-all duration-300 ${
+                                    isChecked
+                                      ? "bg-success/10 text-success"
+                                      : "bg-gray-100 text-gray-500"
+                                  }`}
+                                >
+                                  {isChecked ? "Activé" : "Désactivé"}
+                                </span>
+                                <label className="relative inline-flex cursor-pointer items-center">
+                                  <input
+                                    type="checkbox"
+                                    className="peer sr-only"
+                                    checked={isChecked}
+                                    onChange={() =>
+                                      handleIndividualSwitch(
+                                        roleIndex,
+                                        permIndex
+                                      )
+                                    }
+                                  />
+                                  <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:shadow-sm after:transition-all after:content-[''] peer-checked:bg-success peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-success/20"></div>
+                                </label>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`flex h-7 items-center justify-center rounded-full px-3 text-xs font-medium transition-all duration-300 ${
-                                  isChecked
-                                    ? "bg-success/10 text-success"
-                                    : "bg-gray-100 text-gray-500"
-                                }`}
-                              >
-                                {isChecked ? "Activé" : "Désactivé"}
-                              </span>
-                              <label className="relative inline-flex cursor-pointer items-center">
-                                <input
-                                  type="checkbox"
-                                  className="peer sr-only"
-                                  checked={isChecked}
-                                  onChange={() =>
-                                    handleIndividualSwitch(roleIndex, permIndex)
-                                  }
-                                />
-                                <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:shadow-sm after:transition-all after:content-[''] peer-checked:bg-success peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-success/20"></div>
-                              </label>
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          }
+        )}
       </div>
     </div>
   );

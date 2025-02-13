@@ -42,10 +42,12 @@ const ComponentsDragndropSortable = () => {
     if (ProfilList && Array.isArray(ProfilList)) {
       try {
         const formattedProfiles = ProfilList.map((profile: any) => ({
-          id: profile?.id ?? '',
-          text: profile?.name ?? '',
+          id: profile?.id ?? "",
+          text: profile?.name ?? "",
           name: profile?.description ?? "Pas de description",
-          permissions: Array.isArray(profile?.permissions) ? profile.permissions : [],
+          permissions: Array.isArray(profile?.permissions)
+            ? profile.permissions
+            : [],
         }));
         setSortable1(formattedProfiles);
       } catch (error) {
@@ -99,10 +101,12 @@ const ComponentsDragndropSortable = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[400px] grid place-content-center">
+      <div className="grid min-h-[400px] place-content-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin w-10 h-10 border-4 border-primary border-l-transparent rounded-full"></div>
-          <p className="text-primary font-medium">Chargement des habilitations...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-l-transparent"></div>
+          <p className="font-medium text-primary">
+            Chargement des habilitations...
+          </p>
         </div>
       </div>
     );
@@ -436,6 +440,16 @@ const ComponentsDragndropSortable = () => {
                     leaveTo="opacity-0 scale-95"
                   >
                     <Dialog.Panel className="relative w-[1600px] transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all dark:bg-[#1b2e4b]">
+                      {/* En-tête avec icône de fermeture */}
+                      <div className="absolute right-4 top-4">
+                        <button
+                          onClick={handleRoleModalClose}
+                          className="text-gray-500 transition duration-200 hover:text-gray-900"
+                        >
+                          <span className="text-2xl">&times;</span>{" "}
+                          {/* Icône de fermeture "×" */}
+                        </button>
+                      </div>
                       <Role
                         modalEdit={isEditMode}
                         onClose={handleRoleModalClose}
