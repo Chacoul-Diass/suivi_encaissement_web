@@ -192,6 +192,7 @@ const TableAB: React.FC<TableProps> = ({
           <button
             className="group inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 focus:outline-none active:bg-primary/95"
             onClick={() => onViewMore("AB")}
+            id="tuto-dashboard-ecart"
           >
             <span>Voir plus</span>
             <svg
