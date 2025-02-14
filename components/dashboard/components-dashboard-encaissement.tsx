@@ -21,9 +21,14 @@ import IconRefresh from "../icon/icon-refresh";
 import { fetchDirectionRegionales } from "@/store/reducers/select/dr.slice";
 import IconFilter from "../icon/icon-filter";
 import ComponentsDashboardTables from "./components-dashboard-tables"; // Corrected import statement
+import DashboardTutorial from "../tutorial/TutorialTable-dashboard";
 
 const ComponentsDashboardSales = () => {
   const dispatch = useDispatch<TAppDispatch>();
+
+  const user = getUserPermission();
+
+  const isFirstLogin = user?.isFirstLogin;
 
   const dataDashboard: any = useSelector(
     (state: TRootState) => state?.dashboard?.data
@@ -36,7 +41,7 @@ const ComponentsDashboardSales = () => {
   useEffect(() => {
     dispatch(fetchDashbord({}));
     dispatch(fetchDirectionRegionales());
-  }, []);
+  }, [dispatch]);
 
   const caisses = dataDashboard?.caisses || {};
   const banques = dataDashboard?.banques || [];
@@ -285,6 +290,7 @@ const ComponentsDashboardSales = () => {
                   : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               }`}
               onClick={() => setActiveTab(1)}
+              id="tuto-dashboard-globalView"
             >
               <div className="flex items-center gap-2">
                 <svg
@@ -323,6 +329,7 @@ const ComponentsDashboardSales = () => {
                   : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               }`}
               onClick={() => setActiveTab(2)}
+              id="tuto-dashboard-details"
             >
               <div className="flex items-center gap-2">
                 <svg
@@ -383,12 +390,16 @@ const ComponentsDashboardSales = () => {
               <button
                 className="flex items-center gap-2 rounded-md border border-primary px-4 py-2 text-primary transition-all hover:bg-primary hover:text-white"
                 onClick={handleRefresh}
+                id="tuto-dashboard-refresh"
               >
                 <IconRefresh className="h-4 w-4" />
                 Actualiser
               </button>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div
+                className="flex flex-wrap items-center gap-3"
+                id="tuto-dashboard-filtre"
+              >
                 <div className="min-w-[200px]">
                   <Select
                     placeholder="Filtrer par DR"
@@ -860,6 +871,8 @@ const ComponentsDashboardSales = () => {
         ) : (
           <ComponentsDashboardTables />
         )}
+
+        {isFirstLogin === 1 && <DashboardTutorial />}
       </div>
     </>
   );
