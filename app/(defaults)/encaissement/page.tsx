@@ -2,8 +2,8 @@ import ComponentsDashboardAnalytics from "@/components/dashboard/parent-encaisse
 import { Metadata } from "next";
 import React from "react";
 
-const Analytics = () => {
+const Page = () => {
   return <ComponentsDashboardAnalytics />;
 };
 
-export default Analytics;
+export default Page;

@@ -11,6 +11,7 @@ export const fetchDataReleve = createAsyncThunk(
       codeExpl,
       banque,
       caisse,
+      produit,
       startDate,
       endDate,
       modeReglement,
@@ -23,6 +24,7 @@ export const fetchDataReleve = createAsyncThunk(
       codeExpl?: string[];
       banque?: string[];
       caisse?: string[];
+      produit?: string[];
       startDate?: string;
       endDate?: string;
       search?: any;
@@ -56,6 +58,7 @@ export const fetchDataReleve = createAsyncThunk(
       if (endDate) params["endDate"] = formatDate(endDate);
       if (banque) params["banque"] = formatArray(banque);
       if (caisse) params["caisse"] = formatArray(caisse);
+      if (produit) params["produit"] = formatArray(produit);
       if (modeReglement) params["modeReglement"] = formatArray(modeReglement);
 
       Object.keys(params).forEach((key) => {
