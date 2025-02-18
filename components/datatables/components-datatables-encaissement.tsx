@@ -1293,36 +1293,27 @@ const ComponentsDatatablesColumnChooser: React.FC<
             {getStatutLibelle(statutValidation, totalUnvalidatedRecords)}
           </h5>
         </div>
-
-        <div id="filtre">
-          <GlobalFiltre
-            drData={drData}
-            showHideColumns={showHideColumns}
-            onApplyFilters={handleApplyFilters}
-            statutValidation={statutValidation}
-          />
-        </div>
+        <GlobalFiltre
+          drData={drData}
+          showHideColumns={showHideColumns}
+          onApplyFilters={handleApplyFilters}
+          statutValidation={statutValidation}
+        />
 
         <div className="panel datatables">
           <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
             {/* Actualisation */}
-
-            <div id="refresh">
-              <RefreshBtn
-                isRefreshing={isRefreshing}
-                handleRefresh={handleRefresh}
-              />
-            </div>
-
+            <RefreshBtn
+              isRefreshing={isRefreshing}
+              handleRefresh={handleRefresh}
+            />
             <div className="flex flex-wrap items-center gap-2">
-              <div id="export">
-                <ExportBtn
-                  filteredData={filteredData}
-                  cols={cols}
-                  hideCols={hideCols}
-                  formatNumber={formatNumber}
-                />
-              </div>
+              <ExportBtn
+                filteredData={filteredData}
+                cols={cols}
+                hideCols={hideCols}
+                formatNumber={formatNumber}
+              />
 
               {/* Search Input with Icon */}
               <div className="relative text-right" id="tuto-search-bar">
@@ -1438,45 +1429,53 @@ const ComponentsDatatablesColumnChooser: React.FC<
                         statutValidation === 0 &&
                         hasPermission("ENCAISSEMENTS REVERSES", "MODIFIER");
 
+                      const seeEmailIcon =
+                        (statutValidation === 4 &&
+                        hasPermission("RECLAMATION", "MODIFIER")) || (statutValidation === 6);
+
                       return (
                         <div className="flex items-center justify-center gap-3">
-                          {canEditComptable ? (
-                            <div className="flex items-center gap-3">
-                              <Tippy content="Modifier">
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                                  onClick={() => handleOpenModal(row)}
-                                >
-                                  <IconPencil className="h-5 w-5 stroke-[1.5]" />
-                                </button>
-                              </Tippy>
-                              <Tippy content="Envoyer un mail">
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedRow(row); // Sauvegarder la ligne sélectionnée
-                                    setEmailModalOpen(true);
-                                  }}
-                                >
-                                  <IconMail className="h-5 w-5 stroke-[1.5]" />
-                                </button>
-                              </Tippy>
-                            </div>
-                          ) : (
-                            statutValidation !== 0 && (
-                              <Tippy content="Voir">
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                                  onClick={() => handleOpenModal(row)}
-                                >
-                                  <IconEye className="h-5 w-5 stroke-[1.5]" />
-                                </button>
-                              </Tippy>
-                            )
+                          {/* Icône Modifier si l'utilisateur peut modifier */}
+                          {canEditComptable && (
+                            <Tippy content="Modifier">
+                              <button
+                                type="button"
+                                className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                                onClick={() => handleOpenModal(row)}
+                              >
+                                <IconPencil className="h-5 w-5 stroke-[1.5]" />
+                              </button>
+                            </Tippy>
+                          )}
+
+                          {/* Icône Voir si l'utilisateur ne peut pas modifier et statutValidation !== 0 */}
+                          {!canEditComptable && statutValidation !== 0 && (
+                            <Tippy content="Voir">
+                              <button
+                                type="button"
+                                className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                                onClick={() => handleOpenModal(row)}
+                              >
+                                <IconEye className="h-5 w-5 stroke-[1.5]" />
+                              </button>
+                            </Tippy>
+                          )}
+
+                          {/* Icône Envoyer un mail si statutValidation === 4 */}
+                          {seeEmailIcon && (
+                            <Tippy content="Envoyer un mail">
+                              <button
+                                type="button"
+                                className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedRow(row);
+                                  setEmailModalOpen(true);
+                                }}
+                              >
+                                <IconMail className="h-5 w-5 stroke-[1.5]" />
+                              </button>
+                            </Tippy>
                           )}
                         </div>
                       );

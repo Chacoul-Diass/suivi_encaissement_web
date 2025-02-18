@@ -36,6 +36,7 @@ const Sidebar = () => {
   const { t } = getTranslation();
   const pathname = usePathname();
   const [habilitation, setHabilitation] = useState<any>(null);
+  console.log(habilitation, "Habilitation");
   const themeConfig = useSelector((state: TRootState) => state.themeConfig);
   const auth = useSelector((state: TRootState) => state.auth);
 
