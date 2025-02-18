@@ -216,6 +216,61 @@ export default function ViewModal({
     },
   ];
 
+  const formatDateData = (dateString: string | null | undefined): string => {
+    if (!dateString) return "N/A";
+
+    try {
+      let date;
+
+      // Gérer le format DD/MM/YYYY
+      if (dateString.includes("/")) {
+        const [day, month, year] = dateString.split("/");
+        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else {
+        date = new Date(dateString);
+      }
+
+      if (isNaN(date.getTime())) {
+        console.error("Date invalide :", dateString);
+        return "N/A";
+      }
+
+      const jours = [
+        "dimanche",
+        "lundi",
+        "mardi",
+        "mercredi",
+        "jeudi",
+        "vendredi",
+        "samedi",
+      ];
+      const mois = [
+        "janvier",
+        "février",
+        "mars",
+        "avril",
+        "mai",
+        "juin",
+        "juillet",
+        "août",
+        "septembre",
+        "octobre",
+        "novembre",
+        "décembre",
+      ];
+
+      const jourSemaine = jours[date.getDay()];
+      const jour = date.getDate();
+      const moisTexte = mois[date.getMonth()];
+      const annee = date.getFullYear();
+
+      return `${jourSemaine} ${jour} ${moisTexte} ${annee}`;
+    } catch (error) {
+      console.error("Erreur lors du formatage de la date :", error);
+      return "N/A";
+    }
+  };
+
   return (
     <>
       {" "}
@@ -237,7 +292,11 @@ export default function ViewModal({
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Formulaire de visualisation
+                    Formulaire de visualisation du{" "}
+                    <span>
+                      {" "}
+                      {formatDateData(selectedRow["Date Validation"])}
+                    </span>
                   </h2>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                     <div className="group flex transform items-center gap-3 rounded-lg bg-primary/10 px-4 py-3 transition-all duration-200 hover:scale-105 hover:bg-primary/15">
@@ -268,8 +327,8 @@ export default function ViewModal({
 
             {/* Content */}
             <div className="flex-1 space-y-6 overflow-y-auto p-6">
-              {(statutValidation === EStatutEncaissement.REJETE || 
-                statutValidation === EStatutEncaissement.RECLAMATION_REVERSES) ||
+              {statutValidation === EStatutEncaissement.REJETE ||
+              statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
               (selectedRow["Observation rejet"] &&
                 selectedRow["Observation rejet"].trim() !== "") ? (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/50">
@@ -395,7 +454,7 @@ export default function ViewModal({
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                     Relevé du{" "}
                     <span className="font-semibold">
-                      {selectedRow["Date cloture"]}
+                      {formatDateData(selectedRow["Date Validation"])}
                     </span>
                   </h3>
                   <p className="mt-1 text-xs text-gray-500">
