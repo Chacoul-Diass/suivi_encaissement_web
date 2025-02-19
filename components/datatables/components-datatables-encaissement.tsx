@@ -14,7 +14,7 @@ import Tippy from "@tippyjs/react";
 import "flatpickr/dist/flatpickr.css";
 import "jspdf-autotable";
 import { DataTable, DataTableSortStatus } from "mantine-datatable";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ImageListType } from "react-images-uploading";
 import "react-quill/dist/quill.snow.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -106,51 +106,42 @@ const ComponentsDatatablesColumnChooser: React.FC<
   handlePageChange,
   handleSearchChange,
   handleLimitChange,
-}) => {
+}: EncaissementComptableProps) => {
   const dispatch = useDispatch<TAppDispatch>();
+  const drData: any = useSelector((state: TRootState) => state.dr?.data);
+  const userInfo = getUserPermission();
+  const emailConnecte = userInfo?.email;
 
+  // États du composant
+  const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
   const [hideCols, setHideCols] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const formatDateData = (dateString: string | null | undefined): string => {
-    if (!dateString) return "N/A";
+  const [recordsData, setRecordsData] = useState<any[]>([]);
+  const [emailInput, setEmailInput] = useState("");
+  const [toEmails, setToEmails] = useState<{ mail: string }[]>([]);
+  const [toInput, setToInput] = useState<string>("");
+  const [ccEmails, setCcEmails] = useState<Array<{ mail: string }>>([]);
+  const [emailSubject, setEmailSubject] = useState<string>("");
+  const [images2, setImages2] = useState<any>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
+  const [montantBanque, setMontantBanque] = useState("");
+  const [observationReclamation, setObservationReclamation] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<
+    { file: File; preview: string }[]
+  >([]);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [preuvePhotoModal, setPreuvePhotoModal] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [photoDocuments, setPhotoDocuments] = useState<DocumentType[]>([]);
+  const [params, setParams] = useState({
+    description: "",
+    displayDescription: "",
+  });
 
-    try {
-      // Gérer le format DD/MM/YYYY
-      if (dateString.includes("/")) {
-        const [day, month, year] = dateString.split("/");
-        const date = new Date(
-          parseInt(year),
-          parseInt(month) - 1,
-          parseInt(day)
-        );
-
-        if (!isNaN(date.getTime())) {
-          return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-        }
-      }
-
-      // Gérer les autres formats de date
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        console.error("Date invalide :", dateString);
-        return "N/A";
-      }
-
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const year = date.getFullYear();
-
-      return `${year}-${month}-${day}`;
-    } catch (error) {
-      console.error("Erreur lors du formatage de la date :", error);
-      return "N/A";
-    }
-  };
-
-  const user = getUserPermission();
-
-  const isFirstLogin = user?.isFirstLogin;
+  // Mémoisation des données et fonctions
+  const memoizedData = useMemo(() => data, [data]);
 
   const filterAndMapData = useCallback(
     (data: any[], statutValidation: number): any[] => {
@@ -202,17 +193,73 @@ const ComponentsDatatablesColumnChooser: React.FC<
       }));
       return mappedData;
     },
-    []
+    [statutValidation]
   );
 
+  // Effet pour gérer le montage du composant
   useEffect(() => {
-    const allData = filterAndMapData(data, statutValidation);
-    setRecordsData(allData);
-  }, [data, filterAndMapData, statutValidation]);
+    setMounted(true);
+  }, []);
 
-  const filteredData = filterAndMapData(data, statutValidation);
+  // Effet pour filtrer et mettre à jour les données
+  useEffect(() => {
+    if (mounted && memoizedData) {
+      const filteredData = filterAndMapData(memoizedData, statutValidation);
+      setRecordsData(filteredData);
+    }
+  }, [mounted, memoizedData, statutValidation, filterAndMapData]);
 
-  const [recordsData, setRecordsData] = useState<any[]>([]);
+  // Effet pour charger les données de direction régionale
+  useEffect(() => {
+    dispatch(fetchDirectionRegionales());
+  }, [dispatch]);
+
+  // Effet pour gérer les emails en copie
+  useEffect(() => {
+    if (emailConnecte && ccEmails.length === 0) {
+      setCcEmails([{ mail: emailConnecte }]);
+    }
+  }, [emailConnecte]);
+
+  const formatDateData = (dateString: string | null | undefined): string => {
+    if (!dateString) return "N/A";
+
+    try {
+      // Gérer le format DD/MM/YYYY
+      if (dateString.includes("/")) {
+        const [day, month, year] = dateString.split("/");
+        const date = new Date(
+          parseInt(year),
+          parseInt(month) - 1,
+          parseInt(day)
+        );
+
+        if (!isNaN(date.getTime())) {
+          return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+        }
+      }
+
+      // Gérer les autres formats de date
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.error("Date invalide :", dateString);
+        return "N/A";
+      }
+
+      const day = date.getDate().toString().padStart(2, "0");
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const year = date.getFullYear();
+
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error("Erreur lors du formatage de la date :", error);
+      return "N/A";
+    }
+  };
+
+  const user = getUserPermission();
+
+  const isFirstLogin = user?.isFirstLogin;
 
   const unvalidatedRecords = recordsData.filter(
     (record) => record.validated !== EStatutEncaissement.VALIDE
@@ -244,7 +291,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
   const [rasChecked1, setRasChecked1] = useState(false);
   const [rasChecked2, setRasChecked2] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<DataReverse | null>(null);
   const [observationCaisse, setObservationCaisse] = useState("");
   const [observationBanque, setObservationBanque] = useState("");
   const [observationRejete, setObeservationRejete] = useState("");
@@ -271,7 +317,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
     field: string
   ) => {
     const value = parseInt(event.target.value.replace(/\D/g, ""), 10);
-    setSelectedRow((prev) => ({
+    setSelectedRow((prev: any) => ({
       ...(prev as DataReverse),
       [field]: isNaN(value) ? "" : value,
     }));
@@ -753,35 +799,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
       });
   };
 
-  const [params, setParams] = useState({
-    description: "",
-    displayDescription: "",
-  });
-
-  const userInfo = getUserPermission();
-
-  const emailConnecte = userInfo?.email;
-
-  const drData: any = useSelector((state: TRootState) => state.dr?.data);
-
-  useEffect(() => {
-    dispatch(fetchDirectionRegionales());
-  }, [dispatch]);
-
-  const [toEmails, setToEmails] = useState<{ mail: string }[]>([]);
-
-  const [toInput, setToInput] = useState<string>("");
-  const [ccEmails, setCcEmails] = useState<Array<{ mail: string }>>([]);
-  const [emailSubject, setEmailSubject] = useState<string>("");
-  const [uploadedFiles, setUploadedFiles] = useState<
-    { file: File; preview: string }[]
-  >([]);
-
-  const [emailModalOpen, setEmailModalOpen] = useState(false);
-  const [preuvePhotoModal, setPreuvePhotoModal] = useState(false);
-
-  const [photoDocuments, setPhotoDocuments] = useState<DocumentType[]>([]);
-
   const baseCols = [
     {
       accessor: "numeroBordereau",
@@ -990,13 +1007,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
   const cols = [...baseCols, ...additionalCols, ...actionsCol];
 
-  useEffect(() => {
-    const filteredData = filterAndMapData(data, statutValidation);
-    setRecordsData(filteredData);
-  }, [data, filterAndMapData, statutValidation]);
-
-  const [emailInput, setEmailInput] = useState("");
-
   const removeCcEmail = (index: number) => {
     setCcEmails((prevEmails) => prevEmails.filter((_, i) => i !== index));
   };
@@ -1134,12 +1144,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
     }
   };
 
-  useEffect(() => {
-    if (emailConnecte && ccEmails.length === 0) {
-      setCcEmails([{ mail: emailConnecte }]);
-    }
-  }, [emailConnecte]);
-
   const resetCcEmails = () => {
     if (emailConnecte) {
       setCcEmails([{ mail: emailConnecte }]);
@@ -1148,19 +1152,47 @@ const ComponentsDatatablesColumnChooser: React.FC<
     }
   };
 
-  useEffect(() => {
-    const allData = filterAndMapData(data, statutValidation);
-    setRecordsData(allData);
-  }, [data, filterAndMapData, statutValidation]);
-
-  const [images2, setImages2] = useState<any>([]);
-
-  const onChange2 = (imageList: ImageListType) => {
-    setImages2(imageList as never[]);
-    const files: any = imageList.map((image) => image.file);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await dispatch(
+        fetchDataReleve({
+          id: statutValidation,
+          page: currentPage,
+          limit: 5,
+          search: search,
+        })
+      );
+    } catch (error) {
+      console.error("Erreur lors de l'actualisation :", error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  const [observationReclamation, setObservationReclamation] = useState("");
+  const handleOpenConfirmationModal = () => {
+    setConfirmationModalOpen(true);
+  };
+
+  const handleApplyFilters = (params: any) => {
+    dispatch(
+      fetchDataReleve({
+        id: statutValidation,
+        page: currentPage || 1,
+        limit: 5,
+        search: search || "",
+        ...params,
+      })
+    );
+  };
+
+  const isMontantValid = montantBanque !== "";
+
+  const handleMontantChange = (value: number) => {
+    const formattedValue = new Intl.NumberFormat().format(value);
+    setMontantBanque(formattedValue);
+  };
+
   const stripHtml = (html: string) => {
     const doc = new DOMParser().parseFromString(html, "text/html");
     return doc.body.textContent || "";
@@ -1230,55 +1262,40 @@ const ComponentsDatatablesColumnChooser: React.FC<
     setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const onChange2 = (imageList: ImageListType) => {
+    setImages2(imageList as never[]);
+    const files: any = imageList.map((image) => image.file);
+  };
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
+  const confirmClose = async () => {
     try {
-      await dispatch(
+      const payload = {
+        encaissementId: selectedRow?.id,
+        statutValidation: EStatutEncaissement.CLOTURE,
+      };
+
+      await dispatch(submitEncaissementValidation(payload)).unwrap();
+      
+      ToastSuccess.fire({
+        text: "L'encaissement a été clôturé avec succès",
+      });
+      
+      setConfirmationModalOpen(false);
+      
+      dispatch(
         fetchDataReleve({
           id: statutValidation,
           page: currentPage,
-          limit: 5,
+          limit: pageSize,
           search: search,
         })
       );
     } catch (error) {
-      console.error("Erreur lors de l'actualisation :", error);
-    } finally {
-      setIsRefreshing(false);
+      console.error("Erreur lors de la clôture :", error);
+      ToastError.fire({
+        text: "Une erreur est survenue lors de la clôture",
+      });
     }
-  };
-
-  const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
-
-  const confirmClose = () => {
-    setConfirmationModalOpen(false);
-    setModalOpen(false);
-  };
-
-  const handleOpenConfirmationModal = () => {
-    setConfirmationModalOpen(true);
-  };
-
-  const handleApplyFilters = (params: any) => {
-    dispatch(
-      fetchDataReleve({
-        id: statutValidation,
-        page: currentPage || 1,
-        limit: 5,
-        search: search || "",
-        ...params,
-      })
-    );
-  };
-
-  const [montantBanque, setMontantBanque] = useState("");
-  const isMontantValid = montantBanque !== "";
-
-  const handleMontantChange = (value: number) => {
-    const formattedValue = new Intl.NumberFormat().format(value);
-    setMontantBanque(formattedValue);
   };
 
   return (
@@ -1317,7 +1334,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             <div className="flex flex-wrap items-center gap-2">
               <div id="export">
                 <ExportBtn
-                  filteredData={filteredData}
+                  filteredData={recordsData}
                   cols={cols}
                   hideCols={hideCols}
                   formatNumber={formatNumber}
@@ -1420,7 +1437,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 }}
                 className="table-hover whitespace-nowrap"
                 records={
-                  !loading && filteredData?.length > 0 ? filteredData : []
+                  !loading && recordsData?.length > 0 ? recordsData : []
                 }
                 columns={[
                   ...cols

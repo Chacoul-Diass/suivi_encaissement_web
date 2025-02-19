@@ -80,12 +80,7 @@ export const fetchDataReleve = createAsyncThunk(
 // Slice Redux Toolkit
 
 const initialState = {
-  data: {
-    result: [],
-    pagination: {},
-    totalAmount: 0,
-    totalCount: 0,
-  },
+  data: null,
   loading: true,
   error: null as string | null,
 };

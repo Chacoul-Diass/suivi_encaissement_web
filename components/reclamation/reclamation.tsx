@@ -28,13 +28,14 @@ export default function Reclamation() {
     setIsMounted(true);
   }, []);
 
-  const dataReverse: DataReverse = useSelector(
-    (state: any) => state.encaissementReleve.data
+  const { data: apiResponse, loading: dataReverseloading } = useSelector(
+    (state: any) => state?.encaissementReleve || { data: null, loading: true }
   );
 
-  const dataReverseloading: any = useSelector(
-    (state: any) => state.encaissementReleve.loading
-  );
+  const dataReverse = apiResponse?.data || { result: [], totals: {}, pagination: {} };
+  const dataEncaissementReverse = dataReverse.result;
+  const Totaldata = dataReverse.totals;
+  const pagination = dataReverse.pagination;
 
   const [activeTab, setActiveTab] = useState<EStatutEncaissement>(
     EStatutEncaissement.RECLAMATION_REVERSES
@@ -43,6 +44,25 @@ export default function Reclamation() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLimit, setPageLimit] = useState(5);
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    if (isMounted) {
+      dispatch(
+        fetchDataReleve({
+          id: activeTab,
+          page: currentPage,
+          limit: pageLimit,
+          search: searchTerm,
+        })
+      );
+    }
+  }, [isMounted, dispatch, activeTab, currentPage, pageLimit, searchTerm]);
+
+  useEffect(() => {
+    if (pagination?.currentPage) {
+      setCurrentPage(pagination.currentPage);
+    }
+  }, [pagination?.currentPage]);
 
   const allTabs = [
     {
@@ -68,23 +88,6 @@ export default function Reclamation() {
         h.LIRE === true
     )
   );
-
-  useEffect(() => {
-    if (isMounted) {
-      dispatch(
-        fetchDataReleve({
-          id: activeTab?.toString(),
-          page: currentPage,
-          limit: pageLimit,
-          search: searchTerm,
-        })
-      );
-    }
-  }, [dispatch, activeTab, isMounted, currentPage, pageLimit, searchTerm]);
-
-  const dataEncaissementReverse = dataReverse?.result || [];
-  const Totaldata = dataReverse?.totals || [];
-  const paginate = dataReverse?.pagination || [];
 
   return (
     <div>
@@ -136,7 +139,7 @@ export default function Reclamation() {
                     statutValidation={tab.id}
                     data={dataEncaissementReverse || []}
                     total={Totaldata}
-                    paginate={paginate}
+                    paginate={pagination}
                     loading={dataReverseloading}
                     habilitation={habilitation}
                   />
