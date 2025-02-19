@@ -591,8 +591,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     await swalWithBootstrapButtons
       .fire({
-        title: "Êtes-vous sûr de mettre cet encaissement en reclamation ?",
-        text: "Cette action mettra l'encaissement en reclamation.",
+        title: "Êtes-vous sûr de mettre cet encaissement en litige ?",
+        text: "Cette action mettra l'encaissement en litige.",
         icon: "warning",
         showCancelButton: true,
         confirmButtonText: "Confirmer",
@@ -654,7 +654,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             .then((response) => {
               swalWithBootstrapButtons.fire(
                 "Rejeté",
-                `Votre encaissement est en reclamation avec la raison : "${userInput}"`,
+                `Votre encaissement est en litige avec la raison : "${userInput}"`,
                 "success"
               );
               dispatch(
@@ -797,14 +797,21 @@ const ComponentsDatatablesColumnChooser: React.FC<
     },
     {
       accessor: "modeEtJournee",
-      title: "Journée caisse - Mode de règlement ",
+      title: "Session Caisse",
       sortable: true,
-      render: ({ modeReglement, journeeCaisse }: any) => (
+      render: ({ journeeCaisse }: any) => (
         <div>
-          <p className="text-sm ">
-            {journeeCaisse} -{" "}
-            <span className="text-sm  text-gray-500">{modeReglement}</span>
-          </p>
+          <p className="text-sm ">{journeeCaisse}</p>
+        </div>
+      ),
+    },
+    {
+      accessor: "modeEtJournee",
+      title: "Mode de réglement ",
+      sortable: true,
+      render: ({ modeReglement }: any) => (
+        <div>
+          <p className="text-sm ">{modeReglement}</p>
         </div>
       ),
     },
@@ -1281,6 +1288,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
     setMontantBanque(formattedValue);
   };
 
+  console.log(paginate, "paginate");
+
   return (
     <>
       {/* Contenu de la page */}
@@ -1288,7 +1297,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         {/* 10 Encaissements connus */}
         <div className="flex w-full" id="tuto-encaissement-titre">
           <h5 className="mb-8  flex w-full flex-wrap items-center gap-6 text-xl font-thin text-primary">
-            {totalUnvalidatedRecords}
+            {paginate.totalCount}
             {encaissementText}{" "}
             {getStatutLibelle(statutValidation, totalUnvalidatedRecords)}
           </h5>
@@ -1427,11 +1436,12 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     render: (row: DataReverse) => {
                       const canEditComptable =
                         statutValidation === 0 &&
-                        hasPermission("ENCAISSEMENTS REVERSES", "MODIFIER");
+                        hasPermission("ENCAISSEMENTS CHARGES", "MODIFIER");
 
                       const seeEmailIcon =
                         (statutValidation === 4 &&
-                        hasPermission("RECLAMATION", "MODIFIER")) || (statutValidation === 6);
+                          hasPermission("LITIGES", "MODIFIER")) ||
+                        statutValidation === 6;
 
                       return (
                         <div className="flex items-center justify-center gap-3">

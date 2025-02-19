@@ -45,6 +45,7 @@ type User = {
   firstname: string;
   lastname: string;
   profile: string;
+  poste: string;
   directionRegionales: string[];
   secteurs: string[];
 };
@@ -533,13 +534,6 @@ const ComponentsAppsUsers: React.FC = () => {
     (state: TRootState) => state.userUpdate.loading
   );
 
-  const pageSizeOptions = [
-    { value: 5, label: "5 par page" },
-    { value: 10, label: "10 par page" },
-    { value: 25, label: "25 par page" },
-    { value: 50, label: "50 par page" },
-  ];
-
   return (
     <>
       <div>
@@ -562,14 +556,31 @@ const ComponentsAppsUsers: React.FC = () => {
               </div>
             </div>
 
-            {/* Bouton d'ajout */}
-            <Link
-              href="/utilisateur/add"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50 active:bg-primary/80"
-            >
-              <IconPlus className="h-4 w-4" strokeWidth={2.5} />
-              <span>Ajouter un utilisateur</span>
-            </Link>
+            {/* Boutons d'action */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  dispatch(
+                    fetchUsers({
+                      search: searchTerm,
+                      page: currentPage,
+                      limit: itemsPerPage,
+                    })
+                  );
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary shadow-sm transition-all duration-200 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 active:bg-primary/80 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-primary"
+              >
+                <IconRefresh className="h-4 w-4" />
+                <span>Actualiser</span>
+              </button>
+              <Link
+                href="/utilisateur/add"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50 active:bg-primary/80"
+              >
+                <IconPlus className="h-4 w-4" strokeWidth={2.5} />
+                <span>Ajouter un utilisateur</span>
+              </Link>
+            </div>
           </div>
           {/* Conteneur des filtres */}
           <div className="space-y-6">
@@ -655,33 +666,35 @@ const ComponentsAppsUsers: React.FC = () => {
               </div>
 
               {/* Bouton de réinitialisation */}
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedProfile(null);
-                  setItemsPerPage(5);
-                  updateUrlAndFilters({
-                    search: "",
-                    profile: null,
-                    page: 1,
-                    limit: 5,
-                  });
-                }}
-                className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
-              >
-                <IconRefresh className="h-4 w-4" />
-                Réinitialiser les filtres
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedProfile(null);
+                    setItemsPerPage(5);
+                    updateUrlAndFilters({
+                      search: "",
+                      profile: null,
+                      page: 1,
+                      limit: 5,
+                    });
+                  }}
+                  className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
+                >
+                  <IconRefresh className="h-4 w-4" />
+                  Réinitialiser les filtres
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Liste des utilisateurs */}
         {loading ? (
-          <div className="min-h-[400px] grid place-content-center">
+          <div className="grid min-h-[400px] place-content-center">
             <div className="flex flex-col items-center gap-4">
-              <div className="animate-spin w-10 h-10 border-4 border-primary border-l-transparent rounded-full"></div>
-              <p className="text-primary font-medium">Chargement en cours...</p>
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-l-transparent"></div>
+              <p className="font-medium text-primary">Chargement en cours...</p>
             </div>
           </div>
         ) : (
@@ -703,6 +716,9 @@ const ComponentsAppsUsers: React.FC = () => {
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                           Email
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          Poste
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                           Téléphone
@@ -742,6 +758,9 @@ const ComponentsAppsUsers: React.FC = () => {
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                             {user.email}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
+                            {user.poste}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                             {user.phoneNumber}

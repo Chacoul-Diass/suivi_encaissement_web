@@ -43,15 +43,15 @@ const ComponentsDashboardValider = () => {
   const allTabs = [
     {
       id: EStatutEncaissement.EN_ATTENTE,
-      label: "Encaissements Reversés",
+      label: "Encaissements Chargés",
       icon: IconBarChart,
-      habilitationName: "ENCAISSEMENTS REVERSES",
+      habilitationName: "ENCAISSEMENTS CHARGES",
     },
     {
       id: EStatutEncaissement.TRAITE,
-      label: "Encaissements Traités",
+      label: "Encaissements Vérifiés",
       icon: IconChecks,
-      habilitationName: "ENCAISSEMENTS TRAITÉS",
+      habilitationName: "ENCAISSEMENTS VERIFIES",
     },
     {
       id: EStatutEncaissement.REJETE,
@@ -67,9 +67,9 @@ const ComponentsDashboardValider = () => {
     },
     {
       id: EStatutEncaissement.CLOTURE,
-      label: "Encaissements Clôturés",
+      label: "Encaissements Traités",
       icon: IconArchive,
-      habilitationName: "ENCAISSEMENTS CLOTURES",
+      habilitationName: "ENCAISSEMENTS TRAITES",
     },
   ];
 

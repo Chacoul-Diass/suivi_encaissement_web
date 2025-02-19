@@ -34,6 +34,7 @@ const ComponentsAppsInvoiceAdd = () => {
     prenom: "",
     email: "",
     number: "",
+    poste: "",
   });
 
   const [accountInfo, setAccountInfo] = useState({
@@ -52,6 +53,7 @@ const ComponentsAppsInvoiceAdd = () => {
     profil: "",
     dr: "",
     secteur: "",
+    poste: "",
   });
 
   const [profils, setProfils] = useState<Option[]>([]);
@@ -101,6 +103,7 @@ const ComponentsAppsInvoiceAdd = () => {
           prenom: user.lastname,
           email: user.email,
           number: user.phoneNumber,
+          poste: user.poste || "", // Ajout de la récupération du poste avec une valeur par défaut
         });
         setAccountInfo({
           matricule: user.matricule,
@@ -254,15 +257,18 @@ const ComponentsAppsInvoiceAdd = () => {
       lastname: personalInfo.prenom,
       matricule: accountInfo.matricule,
       phoneNumber: personalInfo.number,
+      poste: personalInfo.poste,
       profileId:
         profils.find((p) => p.label === accountInfo.profil)?.value || 1,
       directionRegionales: accountInfo.dr
         .map((dr) => ({ id: Number(dr.value) }))
-        .filter((dr) => dr.id !== undefined), // Filtrer les `id` invalides
+        .filter((dr) => dr.id !== undefined),
       secteurs: accountInfo.secteur
         .map((secteur) => ({ id: Number(secteur.value) }))
-        .filter((secteur) => secteur.id !== undefined), // Filtrer les `id` invalides
+        .filter((secteur) => secteur.id !== undefined),
     };
+
+    console.log(userData, "userData");
 
     setLoading(true);
 
@@ -428,6 +434,23 @@ const ComponentsAppsInvoiceAdd = () => {
                     Le numéro de téléphone doit contenir exactement 10 chiffres.
                   </p>
                 )}
+
+              <div className="mt-4 flex items-center">
+                <label htmlFor="poste" className="mb-0 w-1/3 ltr:mr-2 rtl:ml-2">
+                  Poste
+                </label>
+                <input
+                  id="poste"
+                  type="text"
+                  name="poste"
+                  className="form-input flex-1"
+                  placeholder="Entrer le poste"
+                  value={personalInfo.poste}
+                  onChange={(e) =>
+                    setPersonalInfo({ ...personalInfo, poste: e.target.value })
+                  }
+                />
+              </div>
             </div>
 
             {/* Information Compte */}
@@ -628,6 +651,10 @@ const ComponentsAppsInvoiceAdd = () => {
               <label className="text-[#8e8e8e]">
                 Téléphone :{" "}
                 <span className="text-black">{personalInfo.number}</span>
+              </label>{" "}
+              <br />
+              <label className="text-[#8e8e8e]">
+                Poste : <span className="text-black">{personalInfo.poste}</span>
               </label>{" "}
             </p>
             <p className="mt-4">

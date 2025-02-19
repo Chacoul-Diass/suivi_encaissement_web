@@ -23,13 +23,13 @@ const menuItems: MenuItem[] = [
   },
   {
     id: 2,
-    name: "MES ENCAISEMENTS",
+    name: "MES ENCAISSEMENTS",
     path: "/encaissement",
     section: "Encaissements",
   },
   {
     id: 11,
-    name: "RECLAMATION",
+    name: "LITIGES",
     path: "/reclamation",
     section: "Encaissements",
   },

@@ -128,28 +128,28 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
 
     // Trouver les objets principaux
     const mesEncaissements = items.find(
-      (item: any) => item?.text === "MES ENCAISEMENTS"
+      (item: any) => item?.text === "MES ENCAISSEMENTS"
     );
-    const reclamation = items.find((item: any) => item?.text === "RECLAMATION");
+    const reclamation = items.find((item: any) => item?.text === "LITIGES");
 
     if (mesEncaissements) {
-      mapping["MES ENCAISEMENTS"] = items
+      mapping["MES ENCAISSEMENTS"] = items
         .filter((item: any) =>
           [
             "ENCAISSEMENTS VALIDES",
-            "ENCAISSEMENTS REVERSES",
-            "ENCAISSEMENTS TRAITÉS",
+            "ENCAISSEMENTS CHARGES",
+            "ENCAISSEMENTS VERIFIES",
             "ENCAISSEMENTS REJETES",
-            "ENCAISSEMENTS CLOTURES",
+            "ENCAISSEMENTS TRAITES",
           ].includes(item?.text)
         )
         .map((item: any) => item?.text);
     }
 
     if (reclamation) {
-      mapping["RECLAMATION"] = items
+      mapping["LITIGES"] = items
         .filter((item: any) =>
-          ["RECLAMATION REVERSES", "RECLAMATION TRAITES"].includes(item?.text)
+          ["LITIGES CHARGES", "LITIGES TRAITES"].includes(item?.text)
         )
         .map((item: any) => item?.text);
     }
@@ -179,7 +179,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
       .filter((item: any) =>
         [
           "DASHBOARD",
-          "MES ENCAISEMENTS",
+          "MES ENCAISSEMENTS",
           "UTILISATEURS",
           "HABILITATIONS",
           "RECLAMATION",
@@ -192,9 +192,9 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
 
     let displayedObjects = [...alwaysDisplayed];
 
-    // Vérifier MES ENCAISEMENTS
-    if (hasActivePermission("MES ENCAISEMENTS")) {
-      displayedObjects.push(...(dependanceMapping["MES ENCAISEMENTS"] || []));
+    // Vérifier MES ENCAISSEMENTS
+    if (hasActivePermission("MES ENCAISSEMENTS")) {
+      displayedObjects.push(...(dependanceMapping["MES ENCAISSEMENTS"] || []));
     }
 
     // Vérifier RECLAMATION
