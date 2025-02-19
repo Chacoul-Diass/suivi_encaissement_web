@@ -744,7 +744,7 @@ const ComponentsDashboardSales = () => {
                             </div>
                             <div className="flex-1 text-center">
                               <div className="mb-2 flex justify-between font-semibold text-white-dark">
-                                <h6>Clôture</h6>
+                                <h6>Traités</h6>
                                 <p>{completionRate.completionRateCloture}%</p>
                               </div>
                               <div className="h-2 rounded-full bg-dark-light shadow dark:bg-[#1b2e4b]">
@@ -767,7 +767,7 @@ const ComponentsDashboardSales = () => {
                             </div>
                             <div className="flex-1 text-center">
                               <div className="mb-2 flex justify-between font-semibold text-white-dark">
-                                <h6>Validation</h6>
+                                <h6>Validés</h6>
                                 <p>
                                   {completionRate.completionRateValidation}%
                                 </p>
@@ -792,7 +792,7 @@ const ComponentsDashboardSales = () => {
                             </div>
                             <div className="flex-1 text-center">
                               <div className="mb-2 flex justify-between font-semibold text-white-dark">
-                                <h6>Réclamation</h6>
+                                <h6>Litiges</h6>
                                 <p>
                                   {completionRate.completionRateReclamation}%
                                 </p>
@@ -817,7 +817,7 @@ const ComponentsDashboardSales = () => {
                             </div>
                             <div className="flex-1 text-center">
                               <div className="mb-2 flex justify-between font-semibold text-white-dark">
-                                <h6>Reversement</h6>
+                                <h6>Chargés</h6>
                                 <p>{completionRate.completionRateReverse}%</p>
                               </div>
                               <div className="h-2 w-full rounded-full bg-dark-light shadow dark:bg-[#1b2e4b]">
@@ -1025,7 +1025,7 @@ const ComponentsDashboardSales = () => {
                     <div className="p-5">
                       <div className="mb-5">
                         <span className="rounded-full bg-[#1b2e4b] px-4 py-1.5 text-xs text-white before:inline-block before:h-1.5 before:w-1.5 before:rounded-full before:bg-white ltr:before:mr-2 rtl:before:ml-2">
-                          Liste des caisses avec le plus de clôtures
+                          Liste des caisses avec le plus de traités
                         </span>
                       </div>
                       <div className="mb-5 space-y-1">
@@ -1074,7 +1074,11 @@ const ComponentsDashboardSales = () => {
                 <h5 className="text-lg font-semibold">Écarts de restitution</h5>
               </div>
               <div className="relative">
-                <div className={`table-responsive ${showAllRestitution ? 'max-h-[400px] overflow-y-auto' : ''}`}>
+                <div
+                  className={`table-responsive ${
+                    showAllRestitution ? "max-h-[400px] overflow-y-auto" : ""
+                  }`}
+                >
                   {loading ? (
                     <div className="flex h-40 items-center justify-center">
                       <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -1087,23 +1091,58 @@ const ComponentsDashboardSales = () => {
                     <table className="w-full table-auto">
                       <thead className="sticky top-0 bg-white dark:bg-[#1a1c2d]">
                         <tr className="border-b border-[#e0e6ed] bg-white dark:border-[#191e3a] dark:bg-[#1a1c2d]">
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Direction Régionale</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart A</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart B</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart A-B</th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                            Direction Régionale
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                            Écart A
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                            Écart B
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                            Écart A-B
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {(showAllRestitution ? ecartData?.restitution : ecartData?.restitution?.slice(0, 5))?.map((item: any, index: number) => (
-                          <tr key={index} className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]">
-                            <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">{item.directionRegionale}</td>
-                            <td className={`px-6 py-3 text-left text-sm ${(item.montantA - item.montantB) < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
-                              {(item.montantA - item.montantB).toLocaleString()} FCFA
+                        {(showAllRestitution
+                          ? ecartData?.restitution
+                          : ecartData?.restitution?.slice(0, 5)
+                        )?.map((item: any, index: number) => (
+                          <tr
+                            key={index}
+                            className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]"
+                          >
+                            <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">
+                              {item.directionRegionale}
                             </td>
-                            <td className={`px-6 py-3 text-left text-sm ${item.montantB < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                            <td
+                              className={`px-6 py-3 text-left text-sm ${
+                                item.montantA - item.montantB < 0
+                                  ? "text-primary"
+                                  : "text-gray-800"
+                              } dark:text-white-light`}
+                            >
+                              {(item.montantA - item.montantB).toLocaleString()}{" "}
+                              FCFA
+                            </td>
+                            <td
+                              className={`px-6 py-3 text-left text-sm ${
+                                item.montantB < 0
+                                  ? "text-primary"
+                                  : "text-gray-800"
+                              } dark:text-white-light`}
+                            >
                               {item.montantB.toLocaleString()} FCFA
                             </td>
-                            <td className={`px-6 py-3 text-left text-sm ${item.ecartAB < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                            <td
+                              className={`px-6 py-3 text-left text-sm ${
+                                item.ecartAB < 0
+                                  ? "text-primary"
+                                  : "text-gray-800"
+                              } dark:text-white-light`}
+                            >
                               {item.ecartAB.toLocaleString()} FCFA
                             </td>
                           </tr>
@@ -1118,7 +1157,7 @@ const ComponentsDashboardSales = () => {
                       className="btn btn-primary btn-sm"
                       onClick={() => setShowAllRestitution(!showAllRestitution)}
                     >
-                      {showAllRestitution ? 'Voir moins' : 'Voir plus'}
+                      {showAllRestitution ? "Voir moins" : "Voir plus"}
                     </button>
                   </div>
                 )}
@@ -1131,7 +1170,11 @@ const ComponentsDashboardSales = () => {
                 <h5 className="text-lg font-semibold">Écarts de bordereau</h5>
               </div>
               <div className="relative">
-                <div className={`table-responsive ${showAllBordereau ? 'max-h-[400px] overflow-y-auto' : ''}`}>
+                <div
+                  className={`table-responsive ${
+                    showAllBordereau ? "max-h-[400px] overflow-y-auto" : ""
+                  }`}
+                >
                   {loading ? (
                     <div className="flex h-40 items-center justify-center">
                       <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -1144,23 +1187,57 @@ const ComponentsDashboardSales = () => {
                     <table className="w-full table-auto">
                       <thead className="sticky top-0 bg-white dark:bg-[#1a1c2d]">
                         <tr className="border-b border-[#e0e6ed] bg-white dark:border-[#191e3a] dark:bg-[#1a1c2d]">
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Direction Régionale</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart C</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart B</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart B-C</th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                            Direction Régionale
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                            Écart C
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                            Écart B
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                            Écart B-C
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {(showAllBordereau ? ecartData?.bordereau : ecartData?.bordereau?.slice(0, 5))?.map((item: any, index: number) => (
-                          <tr key={index} className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]">
-                            <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">{item.directionRegionale}</td>
-                            <td className={`px-6 py-3 text-left text-sm ${item.ecartC < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                        {(showAllBordereau
+                          ? ecartData?.bordereau
+                          : ecartData?.bordereau?.slice(0, 5)
+                        )?.map((item: any, index: number) => (
+                          <tr
+                            key={index}
+                            className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]"
+                          >
+                            <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">
+                              {item.directionRegionale}
+                            </td>
+                            <td
+                              className={`px-6 py-3 text-left text-sm ${
+                                item.ecartC < 0
+                                  ? "text-primary"
+                                  : "text-gray-800"
+                              } dark:text-white-light`}
+                            >
                               {item.ecartC.toLocaleString()} FCFA
                             </td>
-                            <td className={`px-6 py-3 text-left text-sm ${item.ecartB < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                            <td
+                              className={`px-6 py-3 text-left text-sm ${
+                                item.ecartB < 0
+                                  ? "text-primary"
+                                  : "text-gray-800"
+                              } dark:text-white-light`}
+                            >
                               {item.ecartB.toLocaleString()} FCFA
                             </td>
-                            <td className={`px-6 py-3 text-left text-sm ${item.ecartBC < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                            <td
+                              className={`px-6 py-3 text-left text-sm ${
+                                item.ecartBC < 0
+                                  ? "text-primary"
+                                  : "text-gray-800"
+                              } dark:text-white-light`}
+                            >
                               {item.ecartBC.toLocaleString()} FCFA
                             </td>
                           </tr>
@@ -1175,7 +1252,7 @@ const ComponentsDashboardSales = () => {
                       className="btn btn-primary btn-sm"
                       onClick={() => setShowAllBordereau(!showAllBordereau)}
                     >
-                      {showAllBordereau ? 'Voir moins' : 'Voir plus'}
+                      {showAllBordereau ? "Voir moins" : "Voir plus"}
                     </button>
                   </div>
                 )}

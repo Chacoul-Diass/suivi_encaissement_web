@@ -29,7 +29,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: 11,
-    name: "RECLAMATION",
+    name: "LITIGES",
     path: "/reclamation",
     section: "Encaissements",
   },
