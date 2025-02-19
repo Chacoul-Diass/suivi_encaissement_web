@@ -36,6 +36,7 @@ import IconBuildingCommunity from "@/components/icon/icon-building-community";
 import IconAlertCircle from "@/components/icon/icon-alert-circle";
 import IconDeviceFloppy from "@/components/icon/icon-device-floppy";
 import IconBook from "@/components/icon/icon-book";
+import IconBuildingStore from "@/components/icon/icon-building-store";
 
 type User = {
   id: number;
@@ -66,6 +67,8 @@ const ComponentsAppsUsers: React.FC = () => {
   const ProfilList: any = useSelector(
     (state: TRootState) => state?.profile?.data
   );
+
+  console.log(pagination, "pagination");
 
   const [addUserModal, setAddUserModal] = useState(false);
   const [isDeleteUserModal, setIsDeleteUserModal] = useState(false);
@@ -124,7 +127,7 @@ const ComponentsAppsUsers: React.FC = () => {
       url.searchParams.delete("search");
     }
 
-    if (params.limit && params.limit !== 5) {
+    if (params.limit && params.limit !== 10) {
       url.searchParams.set("limit", params.limit.toString());
     } else {
       url.searchParams.delete("limit");
@@ -136,7 +139,7 @@ const ComponentsAppsUsers: React.FC = () => {
     // Appel à l'API avec les paramètres
     const apiParams: any = {
       page: params.page || 1,
-      limit: params.limit || 5,
+      limit: params.limit || 10,
     };
 
     if (params.search) {
@@ -175,26 +178,28 @@ const ComponentsAppsUsers: React.FC = () => {
   };
 
   // Gestionnaire de changement de page
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    updateUrlAndFilters({
-      profile: selectedProfile,
-      page: page,
-      search: searchTerm,
-      limit: itemsPerPage,
-    });
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    dispatch(
+      fetchUsers({
+        search: searchTerm,
+        page: pageNumber,
+        limit: itemsPerPage,
+      })
+    );
   };
 
   // Gestionnaire de changement d'items par page
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
     setCurrentPage(1);
-    updateUrlAndFilters({
-      profile: selectedProfile,
-      page: 1,
-      search: searchTerm,
-      limit: value,
-    });
+    dispatch(
+      fetchUsers({
+        search: searchTerm,
+        page: 1,
+        limit: value,
+      })
+    );
   };
 
   // Effet pour initialiser les filtres depuis l'URL
@@ -203,7 +208,7 @@ const ComponentsAppsUsers: React.FC = () => {
     const profileParam = searchParams.get("profile");
     const pageParam = parseInt(searchParams.get("page") || "1");
     const searchParam = searchParams.get("search") || "";
-    const limitParam = parseInt(searchParams.get("limit") || "5");
+    const limitParam = parseInt(searchParams.get("limit") || "10");
 
     setSelectedProfile(profileParam);
     setCurrentPage(pageParam);
@@ -384,6 +389,7 @@ const ComponentsAppsUsers: React.FC = () => {
       firstname: editUserData?.firstname,
       lastname: editUserData?.lastname,
       matricule: editUserData?.matricule,
+      poste: editUserData?.poste,
       phoneNumber: editUserData?.phoneNumber,
       profileId: editUserData?.profile?.id || 1, // Utiliser un profil par défaut si non défini
       directionRegionales: editUserData?.directionRegionales
@@ -671,12 +677,12 @@ const ComponentsAppsUsers: React.FC = () => {
                   onClick={() => {
                     setSearchTerm("");
                     setSelectedProfile(null);
-                    setItemsPerPage(5);
+                    setItemsPerPage(10);
                     updateUrlAndFilters({
                       search: "",
                       profile: null,
                       page: 1,
-                      limit: 5,
+                      limit: 10,
                     });
                   }}
                   className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
@@ -925,58 +931,124 @@ const ComponentsAppsUsers: React.FC = () => {
               </div>
             )}
 
-            {/* Pagination controls */}
-            {pagination && (
-              <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <div className="flex items-center gap-4">
-                  <button
-                    className={`btn btn-outline-primary ${
-                      currentPage === 1 ? "cursor-not-allowed opacity-50" : ""
-                    }`}
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(1, prev - 1))
-                    }
-                    disabled={currentPage === 1 || loading}
-                  >
-                    Précédent
-                  </button>
-                  <span className="text-sm font-medium">
-                    Page {currentPage} sur {pagination.totalPages}
-                  </span>
-                  <button
-                    className={`btn btn-outline-primary ${
-                      currentPage === pagination.totalPages
-                        ? "cursor-not-allowed opacity-50"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(pagination.totalPages, prev + 1)
-                      )
-                    }
-                    disabled={currentPage === pagination.totalPages || loading}
-                  >
-                    Suivant
-                  </button>
+            {/* Pagination */}
+            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Affichage de{" "}
+                    <span className="font-medium">
+                      {((pagination?.currentPage || 1) - 1) * itemsPerPage + 1}
+                    </span>{" "}
+                    à{" "}
+                    <span className="font-medium">
+                      {Math.min(
+                        (pagination?.currentPage || 1) * itemsPerPage,
+                        pagination?.totalCount || 0
+                      )}
+                    </span>{" "}
+                    sur{" "}
+                    <span className="font-medium">
+                      {pagination?.totalCount || 0}
+                    </span>{" "}
+                    résultats
+                  </p>
                 </div>
-                {/* <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Afficher</span>
-                  <Select
-                    value={pageSizeOptions.find(
-                      (option) => option.value === itemsPerPage
-                    )}
-                    onChange={(option) =>
-                      handleItemsPerPageChange(
-                        Number(option?.value) || itemsPerPage
+                <div className="flex items-center gap-4">
+                  {/* Navigation de pagination */}
+                  <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                        currentPage === 1 ? "cursor-not-allowed" : ""
+                      }`}
+                    >
+                      <span className="sr-only">Précédent</span>
+                      <svg
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+
+                    {/* Pages */}
+                    {Array.from(
+                      {
+                        length: Math.ceil(
+                          (pagination?.totalCount || 0) / itemsPerPage
+                        ),
+                      },
+                      (_, i) => i + 1
+                    )
+                      .filter(
+                        (pageNum) =>
+                          pageNum === 1 ||
+                          pageNum ===
+                            Math.ceil(
+                              (pagination?.totalCount || 0) / itemsPerPage
+                            ) ||
+                          (pageNum >= currentPage - 1 &&
+                            pageNum <= currentPage + 1)
                       )
-                    }
-                    options={pageSizeOptions}
-                    className="w-40"
-                  />
-                  <span className="text-sm font-medium">éléments</span>
-                </div> */}
+                      .map((pageNum, index, array) => (
+                        <React.Fragment key={pageNum}>
+                          {index > 0 && array[index - 1] !== pageNum - 1 && (
+                            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                              ...
+                            </span>
+                          )}
+                          <button
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                              currentPage === pageNum
+                                ? "z-10 bg-primary text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        </React.Fragment>
+                      ))}
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={
+                        currentPage ===
+                        Math.ceil((pagination?.totalCount || 0) / itemsPerPage)
+                      }
+                      className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                        currentPage ===
+                        Math.ceil((pagination?.totalCount || 0) / itemsPerPage)
+                          ? "cursor-not-allowed"
+                          : ""
+                      }`}
+                    >
+                      <span className="sr-only">Suivant</span>
+                      <svg
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06.02z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
@@ -1298,6 +1370,31 @@ const ComponentsAppsUsers: React.FC = () => {
                                     chiffres
                                   </p>
                                 )}
+                            </div>
+
+                            <div>
+                              <label
+                                htmlFor="poste"
+                                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                              >
+                                <div className="flex items-center gap-1">
+                                  <IconBuildingStore className="h-4 w-4 text-gray-400" />
+                                  Poste
+                                </div>
+                              </label>
+                              <input
+                                id="poste"
+                                type="text"
+                                placeholder="Entrez le poste"
+                                className="form-input w-full rounded-lg border-gray-300 bg-white px-3 py-2 text-sm transition-all focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800"
+                                value={editUserData?.poste || ""}
+                                onChange={(e) =>
+                                  setEditUserData({
+                                    ...editUserData,
+                                    poste: e.target.value,
+                                  })
+                                }
+                              />
                             </div>
                           </div>
                         </div>

@@ -16,6 +16,15 @@ import { Toastify } from "@/utils/toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchUsers } from "@/store/reducers/user/get.user.slice";
 import { fetchupdateUser } from "@/store/reducers/user/update-user.slice";
+import IconId from "@/components/icon/icon-id";
+import IconUser from "@/components/icon/icon-user";
+import IconMail from "@/components/icon/icon-mail";
+import IconPhone from "@/components/icon/icon-phone";
+import IconBuildingStore from "@/components/icon/icon-building-store";
+import IconUserCircle from "@/components/icon/icon-user-circle";
+import IconBuildingSkyscraper from "@/components/icon/icon-building-skyscraper";
+import IconBuildingCommunity from "@/components/icon/icon-building-community";
+import IconAlertCircle from "@/components/icon/icon-alert-circle";
 
 // Définition des types pour les options des sélecteurs
 interface Option {
@@ -103,7 +112,7 @@ const ComponentsAppsInvoiceAdd = () => {
           prenom: user.lastname,
           email: user.email,
           number: user.phoneNumber,
-          poste: user.poste || "", // Ajout de la récupération du poste avec une valeur par défaut
+          poste: user.poste || "",
         });
         setAccountInfo({
           matricule: user.matricule,
@@ -302,390 +311,656 @@ const ComponentsAppsInvoiceAdd = () => {
   return (
     <div className="flex flex-col gap-2.5 xl:flex-row">
       <div className="panel flex-1 px-0 py-6 ltr:xl:mr-6 rtl:xl:ml-6">
-        <p className="item-center flex justify-center text-center">
+        <div className="flex items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <IconSquareRotated className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold">
+              {id ? `Modifier l'utilisateur` : "Ajouter un utilisateur"}
+            </h2>
+          </div>
           <button
             type="button"
-            className="flex cursor-default items-center rounded-md font-medium text-primary duration-300"
+            onClick={() => router.push("/user")}
+            className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
           >
-            <IconSquareRotated className="shrink-0 fill-primary" />
+            <IconArrowBackward className="h-4 w-4" />
+            Retour
           </button>
-          <span className="ml-2 text-xl font-thin text-black">
-            {id ? `Modifier l'utilisateur` : "Ajouter un utilisateur"}
-          </span>
-        </p>
-        <hr className="my-6 border-white-light dark:border-[#1b2e4b]" />
+        </div>
+        <hr className="my-6 border-gray-200 dark:border-gray-700" />
 
-        <div className="mt-8 px-4">
-          <div className="flex flex-col justify-between lg:flex-row">
+        <div className="px-4">
+          <div className="flex flex-col gap-8 lg:flex-row">
             {/* Information Personnelle */}
-            <div className="mb-6 w-full lg:w-1/2 ltr:lg:mr-6 rtl:lg:ml-6">
-              <div className="text-lg">Information personnelle :</div>
-
-              <div className="mt-4 flex items-center">
-                <label htmlFor="acno" className="mb-0 w-1/3 ltr:mr-2 rtl:ml-2">
-                  Matricule<span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="acno"
-                  type="text"
-                  name="matricule"
-                  className="form-input flex-1"
-                  placeholder="Entrer votre matricule"
-                  value={accountInfo.matricule}
-                  onChange={(e) =>
-                    setAccountInfo({
-                      ...accountInfo,
-                      matricule: e.target.value,
-                    })
-                  }
-                />
+            <div className="w-full space-y-6 lg:w-1/2">
+              <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+                <IconSquareRotated className="h-5 w-5 text-primary" />
+                Information personnelle
               </div>
-              {errors.matricule && (
-                <p className="text-red-500">{errors.matricule}</p>
-              )}
 
-              <div className="mt-4 flex items-center">
-                <label
-                  htmlFor="reciever-name"
-                  className="mb-0 w-1/3 ltr:mr-2 rtl:ml-2"
-                >
-                  Nom<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  className="form-input flex-1"
-                  placeholder="Entrer votre nom"
-                  value={personalInfo.name}
-                  onChange={(e) =>
-                    setPersonalInfo({ ...personalInfo, name: e.target.value })
-                  }
-                />
-              </div>
-              {errors.name && <p className="text-red-500">{errors.name}</p>}
+              <div className="space-y-4 rounded-xl bg-gray-50 p-6 dark:bg-gray-800/50">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="matricule"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    <div className="flex items-center gap-1">
+                      <IconId className="h-4 w-4 text-gray-400" />
+                      Matricule <span className="text-red-500">*</span>
+                    </div>
+                  </label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <IconId className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <input
+                      id="matricule"
+                      type="text"
+                      className="form-input w-full rounded-lg border-gray-300 bg-white pl-10 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                      placeholder="Entrer votre matricule"
+                      value={accountInfo.matricule}
+                      onChange={(e) =>
+                        setAccountInfo({
+                          ...accountInfo,
+                          matricule: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  {errors.matricule && (
+                    <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                      <IconAlertCircle className="h-4 w-4" />
+                      {errors.matricule}
+                    </p>
+                  )}
+                </div>
 
-              <div className="mt-4 flex items-center">
-                <label
-                  htmlFor="reciever-prenom"
-                  className="mb-0 w-1/3 ltr:mr-2 rtl:ml-2"
-                >
-                  Prénoms<span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="reciever-prenom"
-                  type="text"
-                  name="prenom"
-                  className="form-input flex-1"
-                  placeholder="Entrer votre prénom"
-                  value={personalInfo.prenom}
-                  onChange={(e) =>
-                    setPersonalInfo({ ...personalInfo, prenom: e.target.value })
-                  }
-                />
-              </div>
-              {errors.prenom && <p className="text-red-500">{errors.prenom}</p>}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="name"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      <div className="flex items-center gap-1">
+                        <IconUser className="h-4 w-4 text-gray-400" />
+                        Nom <span className="text-red-500">*</span>
+                      </div>
+                    </label>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <IconUser className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        id="name"
+                        type="text"
+                        className="form-input w-full rounded-lg border-gray-300 bg-white pl-10 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                        placeholder="Entrer votre nom"
+                        value={personalInfo.name}
+                        onChange={(e) =>
+                          setPersonalInfo({
+                            ...personalInfo,
+                            name: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    {errors.name && (
+                      <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                        <IconAlertCircle className="h-4 w-4" />
+                        {errors.name}
+                      </p>
+                    )}
+                  </div>
 
-              <div className="mt-4 flex items-center">
-                <label
-                  htmlFor="reciever-email"
-                  className="mb-0 w-1/3 ltr:mr-2 rtl:ml-2"
-                >
-                  Email<span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="reciever-email"
-                  type="email"
-                  name="email"
-                  className="form-input flex-1"
-                  placeholder="Entrer votre email"
-                  value={personalInfo.email}
-                  onChange={(e) =>
-                    setPersonalInfo({ ...personalInfo, email: e.target.value })
-                  }
-                />
-              </div>
-              {errors.email && <p className="text-red-500">{errors.email}</p>}
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="prenom"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      <div className="flex items-center gap-1">
+                        <IconUser className="h-4 w-4 text-gray-400" />
+                        Prénoms <span className="text-red-500">*</span>
+                      </div>
+                    </label>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <IconUser className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        id="prenom"
+                        type="text"
+                        className="form-input w-full rounded-lg border-gray-300 bg-white pl-10 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                        placeholder="Entrer votre prénom"
+                        value={personalInfo.prenom}
+                        onChange={(e) =>
+                          setPersonalInfo({
+                            ...personalInfo,
+                            prenom: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    {errors.prenom && (
+                      <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                        <IconAlertCircle className="h-4 w-4" />
+                        {errors.prenom}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-              <div className="mt-4 flex items-center">
-                <label
-                  htmlFor="reciever-number"
-                  className="mb-0 w-1/3 ltr:mr-2 rtl:ml-2"
-                >
-                  Téléphone<span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="reciever-number"
-                  type="text"
-                  name="number"
-                  className="form-input flex-1"
-                  placeholder="Entrer votre téléphone"
-                  value={personalInfo.number}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^\d{0,10}$/.test(value)) {
-                      setPersonalInfo({ ...personalInfo, number: value });
-                    }
-                  }}
-                />
-              </div>
-              {personalInfo.number.length > 0 &&
-                personalInfo.number.length !== 10 && (
-                  <p className="text-red-500">
-                    Le numéro de téléphone doit contenir exactement 10 chiffres.
-                  </p>
-                )}
+                <div className="space-y-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    <div className="flex items-center gap-1">
+                      <IconMail className="h-4 w-4 text-gray-400" />
+                      Email <span className="text-red-500">*</span>
+                    </div>
+                  </label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <IconMail className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <input
+                      id="email"
+                      type="email"
+                      className="form-input w-full rounded-lg border-gray-300 bg-white pl-10 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                      placeholder="exemple@cie.ci"
+                      value={personalInfo.email}
+                      onChange={(e) =>
+                        setPersonalInfo({
+                          ...personalInfo,
+                          email: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                      <IconAlertCircle className="h-4 w-4" />
+                      {errors.email}
+                    </p>
+                  )}
+                </div>
 
-              <div className="mt-4 flex items-center">
-                <label htmlFor="poste" className="mb-0 w-1/3 ltr:mr-2 rtl:ml-2">
-                  Poste
-                </label>
-                <input
-                  id="poste"
-                  type="text"
-                  name="poste"
-                  className="form-input flex-1"
-                  placeholder="Entrer le poste"
-                  value={personalInfo.poste}
-                  onChange={(e) =>
-                    setPersonalInfo({ ...personalInfo, poste: e.target.value })
-                  }
-                />
+                <div className="space-y-2">
+                  <label
+                    htmlFor="number"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    <div className="flex items-center gap-1">
+                      <IconPhone className="h-4 w-4 text-gray-400" />
+                      Téléphone <span className="text-red-500">*</span>
+                    </div>
+                  </label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <IconPhone className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <input
+                      id="number"
+                      type="text"
+                      className="form-input w-full rounded-lg border-gray-300 bg-white pl-10 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                      placeholder="0X XX XX XX XX"
+                      value={personalInfo.number}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d{0,10}$/.test(value)) {
+                          setPersonalInfo({ ...personalInfo, number: value });
+                        }
+                      }}
+                    />
+                  </div>
+                  {personalInfo.number.length > 0 &&
+                    personalInfo.number.length !== 10 && (
+                      <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                        <IconAlertCircle className="h-4 w-4" />
+                        Le numéro de téléphone doit contenir exactement 10
+                        chiffres.
+                      </p>
+                    )}
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="poste"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    <div className="flex items-center gap-1">
+                      <IconBuildingStore className="h-4 w-4 text-gray-400" />
+                      Poste
+                    </div>
+                  </label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <IconBuildingStore className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <input
+                      id="poste"
+                      type="text"
+                      className="form-input w-full rounded-lg border-gray-300 bg-white pl-10 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                      placeholder="Entrer le poste"
+                      value={personalInfo.poste}
+                      onChange={(e) =>
+                        setPersonalInfo({
+                          ...personalInfo,
+                          poste: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Information Compte */}
-            <div className="w-full lg:w-1/2">
-              <div className="text-lg">Information Compte :</div>
-
-              <div className="mt-4 flex items-center">
-                <label
-                  htmlFor="profil"
-                  className="mb-0 w-1/3 ltr:mr-2 rtl:ml-2"
-                >
-                  Profil<span className="text-red-500">*</span>
-                </label>
-                <Select
-                  placeholder="Choisir un profil"
-                  options={profils}
-                  value={profils.find((p) => p.label === accountInfo.profil)}
-                  onChange={(option) =>
-                    setAccountInfo({
-                      ...accountInfo,
-                      profil: option?.label || "",
-                    })
-                  }
-                  isClearable
-                />
+            <div className="w-full space-y-6 lg:w-1/2">
+              <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+                <IconSquareRotated className="h-5 w-5 text-primary" />
+                Information Compte
               </div>
-              {errors.profil && <p className="text-red-500">{errors.profil}</p>}
 
-              <div className="mt-4 flex items-center">
-                <label htmlFor="DR" className="mb-0 w-1/3 ltr:mr-2 rtl:ml-2">
-                  Direction régionale<span className="text-red-500">*</span>
-                </label>
-                <Select
-                  placeholder="Choisir une direction régionale"
-                  options={availableDirections.filter(
-                    (dir) => dir.value !== "all"
-                  )}
-                  value={accountInfo.dr}
-                  isMulti
-                  isSearchable
-                  isClearable
-                  onChange={(selectedOptions: any) => {
-                    const newDRs = selectedOptions || [];
-                    const oldDRIds = new Set(
-                      accountInfo.dr.map((dr) => dr.value)
-                    );
-                    const newDRIds = new Set(newDRs.map((dr: any) => dr.value));
-
-                    // Vérifier quelles DRs ont été retirées
-                    const removedDRIds = [...oldDRIds].filter(
-                      (id) => !newDRIds.has(id)
-                    );
-
-                    // Si des DRs ont été retirées, filtrer les secteurs correspondants
-                    const updatedSecteurs =
-                      removedDRIds.length > 0
-                        ? accountInfo.secteur.filter((secteur) => {
-                            // Garder le secteur si sa DR est toujours sélectionnée
-                            const sectorInfo = secteurData?.find(
-                              (s: { id: number }) =>
-                                s.id === Number(secteur.value)
-                            );
-                            return (
-                              sectorInfo &&
-                              newDRs.some(
-                                (dr: any) =>
-                                  Number(dr.value) ===
-                                  sectorInfo.directionRegionaleId
-                              )
-                            );
-                          })
-                        : accountInfo.secteur;
-
-                    // Mettre à jour les DRs sélectionnées
-                    setAccountInfo((prev) => ({
-                      ...prev,
-                      dr: newDRs,
-                      secteur: updatedSecteurs,
-                    }));
-
-                    // Récupérer les secteurs pour les nouvelles DRs
-                    if (newDRs.length > 0) {
-                      const drIds = newDRs
-                        .map((dr: any) => Number(dr.value))
-                        .filter((id: number) => !isNaN(id) && id > 0);
-
-                      if (drIds.length > 0) {
-                        dispatch(fetchSecteurs(drIds));
-                      }
-                    } else {
-                      setAvailableSecteurs([]);
+              <div className="space-y-4 rounded-xl bg-gray-50 p-6 dark:bg-gray-800/50">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="profil"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    <div className="flex items-center gap-1">
+                      <IconUserCircle className="h-4 w-4 text-gray-400" />
+                      Profil <span className="text-red-500">*</span>
+                    </div>
+                  </label>
+                  <Select
+                    id="profil"
+                    placeholder="Choisir un profil"
+                    options={profils}
+                    value={profils.find((p) => p.label === accountInfo.profil)}
+                    onChange={(option) =>
+                      setAccountInfo({
+                        ...accountInfo,
+                        profil: option?.label || "",
+                      })
                     }
-                  }}
-                  className="flex-1"
-                  classNamePrefix="select"
-                />
-              </div>
-              {errors.dr && <p className="text-red-500">{errors.dr}</p>}
-
-              <div className="mt-4 flex items-center">
-                <label
-                  htmlFor="secteur"
-                  className="mb-0 w-1/3 ltr:mr-2 rtl:ml-2"
-                >
-                  Secteur<span className="text-red-500">*</span>
-                </label>
-                <Select
-                  placeholder={
-                    accountInfo.dr.length === 0
-                      ? "Sélectionnez d'abord une direction régionale"
-                      : "Choisir un secteur"
-                  }
-                  options={availableSecteurs.filter(
-                    (sect) => sect.value !== "all"
+                    isClearable
+                    className="text-sm"
+                    classNamePrefix="select"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        borderColor: "#E5E7EB",
+                        borderRadius: "0.5rem",
+                        minHeight: "2.5rem",
+                        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+                        paddingLeft: "2.5rem",
+                      }),
+                      container: (base) => ({
+                        ...base,
+                        position: "relative",
+                        "&:before": {
+                          content: '""',
+                          position: "absolute",
+                          left: "12px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: "16px",
+                          height: "16px",
+                          backgroundImage:
+                            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' stroke='currentColor' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round' class='css-i6dzq1'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E\")",
+                          backgroundRepeat: "no-repeat",
+                          backgroundPosition: "center",
+                          opacity: 0.5,
+                          zIndex: 1,
+                        },
+                      }),
+                    }}
+                  />
+                  {errors.profil && (
+                    <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                      <IconAlertCircle className="h-4 w-4" />
+                      {errors.profil}
+                    </p>
                   )}
-                  value={accountInfo.secteur}
-                  isMulti
-                  isSearchable
-                  isClearable
-                  isDisabled={accountInfo.dr.length === 0}
-                  onChange={(selectedOptions: any) => {
-                    const newSecteurs = selectedOptions || [];
-                    setAccountInfo((prev) => ({
-                      ...prev,
-                      secteur: newSecteurs,
-                    }));
-                  }}
-                  className="flex-1"
-                  classNamePrefix="select"
-                />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="dr"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    <div className="flex items-center gap-1">
+                      <IconBuildingSkyscraper className="h-4 w-4 text-gray-400" />
+                      Direction régionale{" "}
+                      <span className="text-red-500">*</span>
+                    </div>
+                  </label>
+                  <Select
+                    id="dr"
+                    placeholder="Choisir une direction régionale"
+                    options={availableDirections.filter(
+                      (dir) => dir.value !== "all"
+                    )}
+                    value={accountInfo.dr}
+                    isMulti
+                    isSearchable
+                    isClearable
+                    onChange={(selectedOptions: any) => {
+                      const newDRs = selectedOptions || [];
+                      const oldDRIds = new Set(
+                        accountInfo.dr.map((dr) => dr.value)
+                      );
+                      const newDRIds = new Set(
+                        newDRs.map((dr: any) => dr.value)
+                      );
+                      const removedDRIds = [...oldDRIds].filter(
+                        (id) => !newDRIds.has(id)
+                      );
+                      const updatedSecteurs =
+                        removedDRIds.length > 0
+                          ? accountInfo.secteur.filter((secteur) => {
+                              const sectorInfo = secteurData?.find(
+                                (s: { id: number }) =>
+                                  s.id === Number(secteur.value)
+                              );
+                              return (
+                                sectorInfo &&
+                                newDRs.some(
+                                  (dr: any) =>
+                                    Number(dr.value) ===
+                                    sectorInfo.directionRegionaleId
+                                )
+                              );
+                            })
+                          : accountInfo.secteur;
+
+                      setAccountInfo((prev) => ({
+                        ...prev,
+                        dr: newDRs,
+                        secteur: updatedSecteurs,
+                      }));
+
+                      if (newDRs.length > 0) {
+                        const drIds = newDRs
+                          .map((dr: any) => Number(dr.value))
+                          .filter((id: number) => !isNaN(id) && id > 0);
+
+                        if (drIds.length > 0) {
+                          dispatch(fetchSecteurs(drIds));
+                        }
+                      } else {
+                        setAvailableSecteurs([]);
+                      }
+                    }}
+                    className="text-sm"
+                    classNamePrefix="select"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        borderColor: "#E5E7EB",
+                        borderRadius: "0.5rem",
+                        minHeight: "2.5rem",
+                        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+                        paddingLeft: "2.5rem",
+                      }),
+                      container: (base) => ({
+                        ...base,
+                        position: "relative",
+                        "&:before": {
+                          content: '""',
+                          position: "absolute",
+                          left: "12px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: "16px",
+                          height: "16px",
+                          backgroundImage:
+                            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' stroke='currentColor' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round' class='css-i6dzq1'%3E%3Crect x='4' y='4' width='16' height='16' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='12' y1='4' x2='12' y2='20'%3E%3C/line%3E%3C/svg%3E\")",
+                          backgroundRepeat: "no-repeat",
+                          backgroundPosition: "center",
+                          opacity: 0.5,
+                          zIndex: 1,
+                        },
+                      }),
+                    }}
+                  />
+                  {errors.dr && (
+                    <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                      <IconAlertCircle className="h-4 w-4" />
+                      {errors.dr}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="secteur"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    <div className="flex items-center gap-1">
+                      <IconBuildingCommunity className="h-4 w-4 text-gray-400" />
+                      Secteur <span className="text-red-500">*</span>
+                    </div>
+                  </label>
+                  <Select
+                    id="secteur"
+                    placeholder={
+                      accountInfo.dr.length === 0
+                        ? "Sélectionnez d'abord une direction régionale"
+                        : "Choisir un secteur"
+                    }
+                    options={availableSecteurs.filter(
+                      (sect) => sect.value !== "all"
+                    )}
+                    value={accountInfo.secteur}
+                    isMulti
+                    isSearchable
+                    isClearable
+                    isDisabled={accountInfo.dr.length === 0}
+                    onChange={(selectedOptions: any) => {
+                      const newSecteurs = selectedOptions || [];
+                      setAccountInfo((prev) => ({
+                        ...prev,
+                        secteur: newSecteurs,
+                      }));
+                    }}
+                    className="text-sm"
+                    classNamePrefix="select"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        borderColor: "#E5E7EB",
+                        borderRadius: "0.5rem",
+                        minHeight: "2.5rem",
+                        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+                        paddingLeft: "2.5rem",
+                      }),
+                      container: (base) => ({
+                        ...base,
+                        position: "relative",
+                        "&:before": {
+                          content: '""',
+                          position: "absolute",
+                          left: "12px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: "16px",
+                          height: "16px",
+                          backgroundImage:
+                            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' stroke='currentColor' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round' class='css-i6dzq1'%3E%3Cpath d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'%3E%3C/path%3E%3Cpolyline points='9 22 9 12 15 12 15 22'%3E%3C/polyline%3E%3C/svg%3E\")",
+                          backgroundRepeat: "no-repeat",
+                          backgroundPosition: "center",
+                          opacity: 0.5,
+                          zIndex: 1,
+                        },
+                      }),
+                    }}
+                  />
+                  {errors.secteur && (
+                    <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                      <IconAlertCircle className="h-4 w-4" />
+                      {errors.secteur}
+                    </p>
+                  )}
+                </div>
               </div>
-              {errors.secteur && (
-                <p className="text-red-500">{errors.secteur}</p>
-              )}
             </div>
           </div>
 
-          <div className="mb-10 mt-10">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-1">
-              <button
-                type="button"
-                className={`btn btn-success w-full gap-2 ${
-                  loading ? "opacity-50" : ""
-                }`}
-                onClick={handleSubmit}
-                disabled={loading}
-              >
-                <IconSave className="shrink-0 ltr:mr-2 rtl:ml-2" />
-
-                {loading ? "En cours..." : id ? "Modifier" : "Ajouter"}
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-danger w-full gap-2"
-                onClick={() => router.push("/user")}
-              >
-                <IconArrowBackward className="shrink-0 ltr:mr-2 rtl:ml-2" />
-                Retour
-              </button>
-            </div>
+          <div className="mt-8 flex justify-end">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading}
+              className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 active:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <IconSave className="h-4 w-4" />
+              {loading ? "En cours..." : id ? "Modifier" : "Ajouter"}
+            </button>
           </div>
         </div>
       </div>
 
       {/* Récapitulatif */}
       <div className="mt-6 w-full xl:mt-0 xl:w-96">
-        <div className="panel mb-5 h-full">
-          <hr className="my-6 border-white-light dark:border-[#1b2e4b]" />
+        <div className="panel h-full">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+            <div className="flex items-center gap-2">
+              <IconSquareRotated className="h-5 w-5 text-success" />
+              <h3 className="text-lg font-semibold">Récapitulatif</h3>
+            </div>
+          </div>
 
-          <p className="flex items-center justify-center text-center">
-            <button
-              type="button"
-              className={` h-10 cursor-default items-center rounded-md font-medium text-success duration-300`}
-            >
-              <IconSquareRotated className="shrink-0 fill-success" />
-            </button>
-            <span className="ml-4 items-center justify-center text-center text-lg font-bold">
-              Récapitulatif
-            </span>
-          </p>
+          <div className="space-y-6 p-4">
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900 dark:text-white">
+                Information personnelle
+              </h4>
+              <div className="rounded-lg bg-gradient-to-br from-gray-50 to-orange-50/30 p-4 dark:from-gray-800/50 dark:to-orange-900/20">
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <IconUser className="h-4 w-4 text-primary" />
+                      Nom :
+                    </dt>
+                    <dd className="font-medium text-gray-900 dark:text-white">
+                      {personalInfo.name}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <IconUser className="h-4 w-4 text-primary" />
+                      Prénoms :
+                    </dt>
+                    <dd className="font-medium text-gray-900 dark:text-white">
+                      {personalInfo.prenom}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <IconMail className="h-4 w-4 text-primary" />
+                      Email :
+                    </dt>
+                    <dd className="font-medium text-gray-900 dark:text-white">
+                      {personalInfo.email}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <IconPhone className="h-4 w-4 text-primary" />
+                      Téléphone :
+                    </dt>
+                    <dd className="font-medium text-gray-900 dark:text-white">
+                      {personalInfo.number}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <IconBuildingStore className="h-4 w-4 text-primary" />
+                      Poste :
+                    </dt>
+                    <dd className="font-medium text-gray-900 dark:text-white">
+                      {personalInfo.poste || "-"}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
 
-          <div className="mt-4">
-            <p>
-              <label className="text-[#8e8e8e]">
-                Nom : <span className="text-black">{personalInfo.name}</span>
-              </label>{" "}
-              <br />
-              <label className="text-[#8e8e8e]">
-                Prénoms :{" "}
-                <span className="text-black">{personalInfo.prenom} </span>
-              </label>
-              <br />
-              <label className="text-[#8e8e8e]">
-                Email : <span className="text-black">{personalInfo.email}</span>
-              </label>{" "}
-              <br />
-              <label className="text-[#8e8e8e]">
-                Téléphone :{" "}
-                <span className="text-black">{personalInfo.number}</span>
-              </label>{" "}
-              <br />
-              <label className="text-[#8e8e8e]">
-                Poste : <span className="text-black">{personalInfo.poste}</span>
-              </label>{" "}
-            </p>
-            <p className="mt-4">
-              <label className="text-[#8e8e8e]">
-                Matricule :{" "}
-                <span className="text-black">{accountInfo.matricule}</span>
-              </label>{" "}
-              <br />
-              <label className="text-[#8e8e8e]">
-                Profil :{" "}
-                <span className="text-black">{accountInfo.profil}</span>
-              </label>{" "}
-              <br />
-              <>
-                <label className="text-[#8e8e8e]">
-                  Direction régionale :{" "}
-                  <span className="text-black">
-                    {accountInfo.dr.map((dr: Option) => dr.label).join(", ")}
-                  </span>
-                </label>{" "}
-                <br />
-              </>
-              <label className="text-[#8e8e8e]">
-                Secteur :{" "}
-                <span className="text-black">
-                  {accountInfo.secteur
-                    .map((secteur: Option) => secteur.label)
-                    .join(", ")}
-                </span>
-              </label>
-            </p>
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900 dark:text-white">
+                Information compte
+              </h4>
+              <div className="rounded-lg bg-gradient-to-br from-gray-50 to-orange-50/30 p-4 dark:from-gray-800/50 dark:to-orange-900/20">
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <IconId className="h-4 w-4 text-primary" />
+                      Matricule :
+                    </dt>
+                    <dd className="font-medium text-gray-900 dark:text-white">
+                      {accountInfo.matricule}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <IconUserCircle className="h-4 w-4 text-primary" />
+                      Profil :
+                    </dt>
+                    <dd className="font-medium text-gray-900 dark:text-white">
+                      {accountInfo.profil || "-"}
+                    </dd>
+                  </div>
+                  <div className="space-y-1">
+                    <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <IconBuildingSkyscraper className="h-4 w-4 text-primary" />
+                      Directions régionales :
+                    </dt>
+                    <dd className="mt-2">
+                      {accountInfo.dr.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-1">
+                          {accountInfo.dr.map((dr: Option, index: number) => (
+                            <div
+                              key={index}
+                              className="flex items-center rounded bg-white/80 px-2 py-1 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-200/70 hover:bg-orange-50/50"
+                            >
+                              <IconBuildingSkyscraper className="mr-2 h-3 w-3 text-primary" />
+                              {dr.label}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">-</span>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="space-y-1">
+                    <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <IconBuildingCommunity className="h-4 w-4 text-primary" />
+                      Exploitations :
+                    </dt>
+                    <dd className="mt-2">
+                      {accountInfo.secteur.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-1">
+                          {accountInfo.secteur.map((secteur: Option, index: number) => (
+                            <div
+                              key={index}
+                              className="flex items-center rounded bg-white/80 px-2 py-1 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-200/70 hover:bg-orange-50/50"
+                            >
+                              <IconBuildingCommunity className="mr-2 h-3 w-3 text-primary" />
+                              {secteur.label}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">-</span>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
           </div>
         </div>
       </div>
