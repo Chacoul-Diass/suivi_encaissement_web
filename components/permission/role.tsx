@@ -185,6 +185,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
           "RECLAMATION",
           "RAPPROCHEMENT",
           "HISTORIQUE CONNEXIONS",
+          "PARAMETRES",
         ].includes(item?.text)
       )
       .map((item: any) => item?.text);

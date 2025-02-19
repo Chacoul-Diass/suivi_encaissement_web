@@ -62,50 +62,57 @@ const Sidebar = () => {
     {
       id: 1,
       name: "DASHBOARD",
-      icon: <IconDesktop />,
+      icon: <IconMenuCharts />,
       path: "/dashboard",
-      section: "Tableau de bord",
+      section: "Analyse",
     },
     {
       id: 2,
       name: "MES ENCAISEMENTS",
-      icon: <IconNotesEdit />,
+      icon: <IconDesktop />,
       path: "/encaissement",
-      section: "Encaissements",
+      section: "Menu",
     },
     {
-      id: 11,
+      id: 3,
       name: "RECLAMATION",
-      icon: <IconBellBing />,
+      icon: <IconNotesEdit />,
       path: "/reclamation",
-      section: "Encaissements",
+      section: "Menu",
     },
     {
-      id: 12,
+      id: 4,
       name: "RAPPROCHEMENT",
       icon: <IconLink />,
       path: "/rapprochement",
-      section: "Encaissements",
+      section: "Menu",
     },
     {
       id: 5,
       name: "HABILITATIONS",
-      icon: <IconMenuCharts />,
+      icon: <IconBellBing />,
       path: "/habilitation",
       section: "Administration",
     },
     {
-      id: 4,
+      id: 6,
       name: "UTILISATEURS",
       icon: <IconUsersGroup />,
       path: "/user",
       section: "Administration",
     },
     {
-      id: 6,
+      id: 7,
       name: "HISTORIQUE CONNEXIONS",
       icon: <IconHistory />,
       path: "/historique",
+      section: "Administration",
+    },
+    {
+      id: 8,
+      name: "PARAMETRES",
+      icon: <IconMenu2 />,
+      path: "/parametres",
       section: "Administration",
     },
   ];
@@ -166,7 +173,9 @@ const Sidebar = () => {
       case "UTILISATEURS":
         return t("Utilisateurs");
       case "HISTORIQUE CONNEXIONS":
-        return t("Historique ");
+        return t("Historique");
+      case "PARAMETRES":
+        return t("Paramètres email");
       default:
         return t(name);
     }
@@ -320,32 +329,28 @@ const Sidebar = () => {
               <PerfectScrollbar className="relative -mr-4 h-full pr-4">
                 <div className="space-y-8">
                   {/* Section Statistiques */}
-                  {hasMenuInSection("Tableau de bord") && (
+
+                  {hasMenuInSection("Analyse") && (
                     <div className="animate-fadeIn overflow-hidden rounded-2xl bg-black/20 p-4 backdrop-blur-sm transition-all duration-300 hover:bg-black/30 hover:shadow-lg hover:shadow-primary/10">
                       <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase tracking-wider text-white/90">
                         <IconMinus className="h-4 w-4 text-primary/80" />
                         <span className="animate-slideRight">
-                          {t("Statistiques")}
+                          {t("Analyse")}
                         </span>
                       </h2>
                       <ul className="space-y-2 px-2">
-                        {renderMenu("Tableau de bord")}
+                        {renderMenu("Analyse")}
                       </ul>
                     </div>
                   )}
 
-                  {/* Section Gestion des Encaissements */}
-                  {hasMenuInSection("Encaissements") && (
+                  {hasMenuInSection("Menu") && (
                     <div className="animate-fadeIn overflow-hidden rounded-2xl bg-black/20 p-4 backdrop-blur-sm transition-all duration-300 hover:bg-black/30 hover:shadow-lg hover:shadow-primary/10">
                       <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase tracking-wider text-white/90">
                         <IconMinus className="h-4 w-4 text-primary/80" />
-                        <span className="animate-slideRight">
-                          {t("Gestion des Encaissements")}
-                        </span>
+                        <span className="animate-slideRight">{t("Menu")}</span>
                       </h2>
-                      <ul className="space-y-2 px-2">
-                        {renderMenu("Encaissements")}
-                      </ul>
+                      <ul className="space-y-2 px-2">{renderMenu("Menu")}</ul>
                     </div>
                   )}
 
@@ -365,7 +370,6 @@ const Sidebar = () => {
                   )}
                 </div>
               </PerfectScrollbar>
-
             </div>
           </div>
         </nav>

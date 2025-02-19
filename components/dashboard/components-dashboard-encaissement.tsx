@@ -20,8 +20,13 @@ import { fetchSecteurs } from "@/store/reducers/select/secteur.slice";
 import IconRefresh from "../icon/icon-refresh";
 import { fetchDirectionRegionales } from "@/store/reducers/select/dr.slice";
 import IconFilter from "../icon/icon-filter";
-import ComponentsDashboardTables from "./components-dashboard-tables"; // Corrected import statement
+import ComponentsDashboardTables from "./components-dashboard-tables";
 import DashboardTutorial from "../tutorial/TutorialTable-dashboard";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import axios from "axios";
+import { API_AUTH_SUIVI } from "@/config/constants";
+import axiosInstance from "@/utils/axios";
 
 const ComponentsDashboardSales = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -193,6 +198,11 @@ const ComponentsDashboardSales = () => {
   const [selectedDR, setSelectedDR] = useState<any[]>([]);
   const [selectedSecteur, setSelectedSecteur] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState(1);
+  const [isTableView, setIsTableView] = useState(true);
+  const [showAllRestitution, setShowAllRestitution] = useState(false);
+  const [showAllBordereau, setShowAllBordereau] = useState(false);
+  const [ecartData, setEcartData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   const drData: any = useSelector((state: TRootState) => state.dr?.data);
   const drOptions = drData?.map((dr: any) => ({
@@ -223,6 +233,87 @@ const ComponentsDashboardSales = () => {
     }
   }, [secteurs, selectedDRIds]);
 
+  const fetchEcartData = async (filters?: any) => {
+    const config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: `${API_AUTH_SUIVI}/dashboard/get-ecart-data`,
+      params: {
+        ...(filters?.selectedDRIds?.length && {
+          directionRegional: filters.selectedDRIds.map(String),
+        }),
+        ...(filters?.selectedSecteurIds?.length && {
+          codeExpl: filters.selectedSecteurIds.map(String),
+        }),
+        ...(filters?.startDate && { startDate: filters.startDate }),
+        ...(filters?.endDate && { endDate: filters.endDate }),
+      },
+    };
+
+    try {
+      setLoading(true);
+      const response: any = await axiosInstance.request(config);
+
+      if (response?.error === false) {
+        setEcartData(response?.data);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des écarts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setSelectedDR([]);
+    setSelectedSecteur([]);
+    setSecteurOptions([]);
+    setSelectedDRLabel([]);
+    dispatch(fetchDashbord({}));
+    fetchEcartData({});
+  };
+
+  const handleRefresh = () => {
+    if (selectedDR.length === 0) {
+      dispatch(fetchDashbord({}));
+      fetchEcartData({});
+    } else {
+      const filters = {
+        selectedDRIds: selectedDRIds,
+        selectedSecteurIds: selectedCodeExpl,
+      };
+
+      const dashboardFilters = {
+        directionRegional: selectedDRIds.map(String),
+        codeExpl: selectedCodeExpl.map(String),
+      };
+
+      dispatch(fetchDashbord(dashboardFilters));
+      fetchEcartData(filters);
+    }
+  };
+
+  const handleSearch = () => {
+    const filters = {
+      selectedDRIds: selectedDRIds,
+      selectedSecteurIds: selectedCodeExpl,
+    };
+
+    const dashboardFilters = {
+      directionRegional: selectedDRIds.map(String),
+      codeExpl: selectedCodeExpl.map(String),
+    };
+
+    dispatch(fetchDashbord(dashboardFilters));
+    fetchEcartData(filters);
+  };
+
+  useEffect(() => {
+    fetchEcartData();
+  }, []);
+
+  console.log(ecartData, "ecartData");
+
   // Gestion des sélections DR
   const handleDRChange = (selected: any) => {
     setSelectedDR(selected);
@@ -239,6 +330,10 @@ const ComponentsDashboardSales = () => {
   };
 
   const handleApplyFilters = () => {
+    const filters = {
+      selectedDRIds: selectedDRIds,
+      selectedSecteurIds: selectedCodeExpl,
+    };
     dispatch(
       fetchDashbord({
         directionRegional: selectedDRLabel?.length
@@ -249,6 +344,14 @@ const ComponentsDashboardSales = () => {
           : undefined,
       })
     );
+    fetchEcartData({
+      directionRegional: selectedDRLabel?.length
+        ? selectedDRLabel?.map(String)
+        : undefined,
+      codeExpl: selectedCodeExpl?.length
+        ? selectedCodeExpl?.map(String)
+        : undefined,
+    });
   };
 
   const handleResetFilters = () => {
@@ -259,23 +362,7 @@ const ComponentsDashboardSales = () => {
     setSecteurOptions([]);
     setSelectedDRLabel([]);
     dispatch(fetchDashbord({}));
-  };
-
-  const handleRefresh = () => {
-    if (selectedDRLabel.length === 0 && selectedCodeExpl.length === 0) {
-      dispatch(fetchDashbord({}));
-    } else {
-      dispatch(
-        fetchDashbord({
-          directionRegional: selectedDRLabel.length
-            ? selectedDRLabel.map(String)
-            : undefined,
-          codeExpl: selectedCodeExpl.length
-            ? selectedCodeExpl.map(String)
-            : undefined,
-        })
-      );
-    }
+    fetchEcartData({});
   };
 
   return (
@@ -475,6 +562,31 @@ const ComponentsDashboardSales = () => {
                   <div className="panel h-full xl:col-span-2">
                     <div className="mb-5 flex items-center justify-between dark:text-white-light">
                       <h5 className="text-lg font-semibold">Revenue</h5>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-sm ${
+                            !isTableView ? "text-primary" : "text-gray-500"
+                          }`}
+                        >
+                          Graphique
+                        </span>
+                        <label className="relative inline-flex cursor-pointer items-center">
+                          <input
+                            type="checkbox"
+                            className="peer sr-only"
+                            checked={isTableView}
+                            onChange={() => setIsTableView(!isTableView)}
+                          />
+                          <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700"></div>
+                        </label>
+                        <span
+                          className={`text-sm ${
+                            isTableView ? "text-primary" : "text-gray-500"
+                          }`}
+                        >
+                          Tableau
+                        </span>
+                      </div>
                     </div>
 
                     {loadingDashboard ? (
@@ -490,7 +602,93 @@ const ComponentsDashboardSales = () => {
                     ) : (
                       <div className="relative">
                         <div className="rounded-lg bg-white dark:bg-black">
-                          {isMounted ? (
+                          {isTableView ? (
+                            <div className="table-responsive">
+                              <table className="w-full table-auto">
+                                <thead>
+                                  <tr className="border-b border-[#e0e6ed] bg-white dark:border-[#191e3a] dark:bg-[#1a1c2d]">
+                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                                      Mois
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                                      Encaissements Clôturés
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                                      Encaissements Reversés
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {graph?.categories?.map(
+                                    (month: string, index: number) => {
+                                      const clotures =
+                                        graph?.series?.[0]?.data?.[index] || 0;
+                                      const reverses =
+                                        graph?.series?.[1]?.data?.[index] || 0;
+                                      return (
+                                        <tr
+                                          key={index}
+                                          className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]"
+                                        >
+                                          <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">
+                                            {format(
+                                              new Date(month),
+                                              "MMMM yyyy",
+                                              { locale: fr }
+                                            )}
+                                          </td>
+                                          <td
+                                            className={`px-6 py-3 text-left text-sm ${
+                                              clotures < 0
+                                                ? "text-primary"
+                                                : "text-gray-800"
+                                            } dark:text-white-light`}
+                                          >
+                                            {clotures.toLocaleString()} FCFA
+                                          </td>
+                                          <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">
+                                            {reverses.toLocaleString()} FCFA
+                                          </td>
+                                        </tr>
+                                      );
+                                    }
+                                  )}
+                                  <tr className="border-t-2 border-[#e0e6ed] bg-gray-50 dark:border-[#191e3a] dark:bg-[#1a1c2d]">
+                                    <td className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                                      Total
+                                    </td>
+                                    <td
+                                      className={`px-6 py-3 text-left text-sm font-semibold ${
+                                        (graph?.series?.[0]?.data?.reduce(
+                                          (a: number, b: number) => a + b,
+                                          0
+                                        ) || 0) < 0
+                                          ? "text-primary"
+                                          : "text-gray-800"
+                                      } dark:text-white-light`}
+                                    >
+                                      {(
+                                        graph?.series?.[0]?.data?.reduce(
+                                          (a: number, b: number) => a + b,
+                                          0
+                                        ) || 0
+                                      ).toLocaleString()}{" "}
+                                      FCFA
+                                    </td>
+                                    <td className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
+                                      {(
+                                        graph?.series?.[1]?.data?.reduce(
+                                          (a: number, b: number) => a + b,
+                                          0
+                                        ) || 0
+                                      ).toLocaleString()}{" "}
+                                      FCFA
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : isMounted ? (
                             <ReactApexChart
                               series={revenueChart?.series}
                               options={revenueChart?.options}
@@ -869,7 +1067,121 @@ const ComponentsDashboardSales = () => {
             </div>
           </div>
         ) : (
-          <ComponentsDashboardTables />
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            {/* Tableau des écarts de restitution */}
+            <div className="panel h-full">
+              <div className="mb-5 flex items-center justify-between dark:text-white-light">
+                <h5 className="text-lg font-semibold">Écarts de restitution</h5>
+              </div>
+              <div className="relative">
+                <div className={`table-responsive ${showAllRestitution ? 'max-h-[400px] overflow-y-auto' : ''}`}>
+                  {loading ? (
+                    <div className="flex h-40 items-center justify-center">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                    </div>
+                  ) : !ecartData?.restitution?.length ? (
+                    <div className="flex h-40 items-center justify-center text-gray-500 dark:text-gray-400">
+                      Aucune donnée disponible
+                    </div>
+                  ) : (
+                    <table className="w-full table-auto">
+                      <thead className="sticky top-0 bg-white dark:bg-[#1a1c2d]">
+                        <tr className="border-b border-[#e0e6ed] bg-white dark:border-[#191e3a] dark:bg-[#1a1c2d]">
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Direction Régionale</th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart A</th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart B</th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart A-B</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(showAllRestitution ? ecartData?.restitution : ecartData?.restitution?.slice(0, 5))?.map((item: any, index: number) => (
+                          <tr key={index} className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]">
+                            <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">{item.directionRegionale}</td>
+                            <td className={`px-6 py-3 text-left text-sm ${(item.montantA - item.montantB) < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                              {(item.montantA - item.montantB).toLocaleString()} FCFA
+                            </td>
+                            <td className={`px-6 py-3 text-left text-sm ${item.montantB < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                              {item.montantB.toLocaleString()} FCFA
+                            </td>
+                            <td className={`px-6 py-3 text-left text-sm ${item.ecartAB < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                              {item.ecartAB.toLocaleString()} FCFA
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+                {ecartData?.restitution?.length > 5 && (
+                  <div className="sticky bottom-0 mt-4 flex justify-center bg-white py-2 dark:bg-[#1a1c2d]">
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setShowAllRestitution(!showAllRestitution)}
+                    >
+                      {showAllRestitution ? 'Voir moins' : 'Voir plus'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Tableau des écarts de bordereau */}
+            <div className="panel h-full">
+              <div className="mb-5 flex items-center justify-between dark:text-white-light">
+                <h5 className="text-lg font-semibold">Écarts de bordereau</h5>
+              </div>
+              <div className="relative">
+                <div className={`table-responsive ${showAllBordereau ? 'max-h-[400px] overflow-y-auto' : ''}`}>
+                  {loading ? (
+                    <div className="flex h-40 items-center justify-center">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                    </div>
+                  ) : !ecartData?.bordereau?.length ? (
+                    <div className="flex h-40 items-center justify-center text-gray-500 dark:text-gray-400">
+                      Aucune donnée disponible
+                    </div>
+                  ) : (
+                    <table className="w-full table-auto">
+                      <thead className="sticky top-0 bg-white dark:bg-[#1a1c2d]">
+                        <tr className="border-b border-[#e0e6ed] bg-white dark:border-[#191e3a] dark:bg-[#1a1c2d]">
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Direction Régionale</th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart C</th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart B</th>
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">Écart B-C</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(showAllBordereau ? ecartData?.bordereau : ecartData?.bordereau?.slice(0, 5))?.map((item: any, index: number) => (
+                          <tr key={index} className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]">
+                            <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">{item.directionRegionale}</td>
+                            <td className={`px-6 py-3 text-left text-sm ${item.ecartC < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                              {item.ecartC.toLocaleString()} FCFA
+                            </td>
+                            <td className={`px-6 py-3 text-left text-sm ${item.ecartB < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                              {item.ecartB.toLocaleString()} FCFA
+                            </td>
+                            <td className={`px-6 py-3 text-left text-sm ${item.ecartBC < 0 ? 'text-primary' : 'text-gray-800'} dark:text-white-light`}>
+                              {item.ecartBC.toLocaleString()} FCFA
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+                {ecartData?.bordereau?.length > 5 && (
+                  <div className="sticky bottom-0 mt-4 flex justify-center bg-white py-2 dark:bg-[#1a1c2d]">
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setShowAllBordereau(!showAllBordereau)}
+                    >
+                      {showAllBordereau ? 'Voir moins' : 'Voir plus'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {isFirstLogin === 1 && <DashboardTutorial />}
