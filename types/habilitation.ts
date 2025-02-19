@@ -9,7 +9,7 @@ export interface Habilitation {
 
 export type MenuName =
   | "DASHBOARD"
-  | "MES ENCAISEMENTS"
+  | "MES ENCAISSEMENTS"
   | "ENCAISSEMENTS VALIDES"
   | "UTILISATEURS"
   | "HABILITATIONS"

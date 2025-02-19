@@ -68,7 +68,7 @@ const Sidebar = () => {
     },
     {
       id: 2,
-      name: "MES ENCAISEMENTS",
+      name: "MES ENCAISSEMENTS",
       icon: <IconDesktop />,
       path: "/encaissement",
       section: "Menu",
@@ -162,7 +162,7 @@ const Sidebar = () => {
     switch (name) {
       case "DASHBOARD":
         return t("Tableau de bord");
-      case "MES ENCAISEMENTS":
+      case "MES ENCAISSEMENTS":
         return t("Encaissements");
       case "RECLAMATION":
         return t("Réclamations");

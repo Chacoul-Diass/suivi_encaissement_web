@@ -23,7 +23,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: 2,
-    name: "MES ENCAISEMENTS",
+    name: "MES ENCAISSEMENTS",
     path: "/encaissement",
     section: "Encaissements",
   },
