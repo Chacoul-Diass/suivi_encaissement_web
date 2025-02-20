@@ -383,6 +383,52 @@ const ComponentsAppsUsers: React.FC = () => {
     }
   }, [secteurData, accountInfo.secteur]);
 
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [selectedUserForToggle, setSelectedUserForToggle] = useState<{
+    id: number;
+    currentStatus: number;
+  } | null>(null);
+
+  const openConfirmToggleModal = (userId: number, currentStatus: number) => {
+    setSelectedUserForToggle({ id: userId, currentStatus });
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleToggleStatus = async () => {
+    if (!selectedUserForToggle) return;
+
+    try {
+      const { id: userId, currentStatus } = selectedUserForToggle;
+      const endpoint = currentStatus === 1 ? "deactivate" : "activate";
+      const response: any = await axiosInstance.patch(
+        `${API_AUTH_SUIVI}/users/${userId}/${endpoint}`
+      );
+
+      if (!response.data.error) {
+        Toastify(
+          "success",
+          `Utilisateur ${
+            currentStatus === 1 ? "désactivé" : "activé"
+          } avec succès`
+        );
+
+        // Rafraîchir la liste des utilisateurs
+        dispatch(fetchUsers({}));
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (error: any) {
+      console.error("Erreur lors du changement de statut:", error);
+      Toastify(
+        "error",
+        error.response?.data?.message || "Erreur lors du changement de statut"
+      );
+    } finally {
+      setIsConfirmModalOpen(false);
+      setSelectedUserForToggle(null);
+    }
+  };
+
   const updateUser = async () => {
     if (!editUserData?.id) {
       Swal.fire("Erreur", "ID utilisateur manquant.", "error");
@@ -545,36 +591,6 @@ const ComponentsAppsUsers: React.FC = () => {
   const loadingUpdate = useSelector(
     (state: TRootState) => state.userUpdate.loading
   );
-
-  const handleToggleStatus = async (userId: number, currentStatus: number) => {
-    try {
-      // Si isActif est 1, on désactive (0), si isActif est 0, on active (1)
-      const endpoint = currentStatus === 1 ? "deactivate" : "activate";
-      const response: any = await axiosInstance.patch(
-        `${API_AUTH_SUIVI}/users/${userId}/${endpoint}`
-      );
-
-      if (!response.data.error) {
-        Toastify(
-          "success",
-          `Utilisateur ${
-            currentStatus === 1 ? "désactivé" : "activé"
-          } avec succès`
-        );
-
-        // Rafraîchir la liste des utilisateurs
-        dispatch(fetchUsers({}));
-      } else {
-        throw new Error(response.data.message);
-      }
-    } catch (error: any) {
-      console.error("Erreur lors du changement de statut:", error);
-      Toastify(
-        "error",
-        error.response?.data?.message || "Erreur lors du changement de statut"
-      );
-    }
-  };
 
   return (
     <>
@@ -843,20 +859,38 @@ const ComponentsAppsUsers: React.FC = () => {
                               <button
                                 type="button"
                                 className={clsx(
-                                  "inline-flex items-center rounded-md p-2 transition-colors",
+                                  "group relative flex items-center justify-center rounded-full p-2.5 transition-all duration-200",
                                   user.isActif === 1
-                                    ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                                    : "text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                                    ? "bg-red-100/80 text-red-600 hover:bg-red-200 hover:shadow-md"
+                                    : "bg-emerald-100/80 text-emerald-600 hover:bg-emerald-200 hover:shadow-md"
                                 )}
                                 onClick={() =>
-                                  handleToggleStatus(user.id, user.isActif)
+                                  openConfirmToggleModal(user.id, user.isActif)
+                                }
+                                title={
+                                  user.isActif === 1
+                                    ? "Désactiver l'utilisateur"
+                                    : "Activer l'utilisateur"
                                 }
                               >
-                                {user.isActif === 1 ? (
-                                  <IconLock className="h-4 w-4" />
-                                ) : (
-                                  <IconLockOpen className="h-4 w-4" />
-                                )}
+                                <div className="flex items-center justify-center w-8 h-8 relative">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    {user.isActif === 1 ? (
+                                      <IconLock className="h-5 w-5" />
+                                    ) : (
+                                      <IconLockOpen className="h-5 w-5" />
+                                    )}
+                                  </div>
+                                  <div className="absolute -top-1 -right-1">
+                                    <div className={`flex h-4 w-4 items-center justify-center rounded-full ${
+                                      user.isActif === 1
+                                        ? 'bg-red-500'
+                                        : 'bg-emerald-500'
+                                    } text-[10px] font-bold text-white`}>
+                                      {user.isActif === 1 ? '✕' : '✓'}
+                                    </div>
+                                  </div>
+                                </div>
                               </button>
                               {/* <button
                                 type="button"
@@ -938,7 +972,7 @@ const ComponentsAppsUsers: React.FC = () => {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth="2"
-                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 011.21-.502l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                               />
                             </svg>
                           </div>
@@ -982,20 +1016,38 @@ const ComponentsAppsUsers: React.FC = () => {
                       <button
                         type="button"
                         className={clsx(
-                          "flex-1 rounded-lg p-2 transition-colors",
+                          "group relative flex items-center justify-center rounded-full p-2.5 transition-all duration-200",
                           user.isActif === 1
-                            ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                            : "text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                            ? "bg-red-100/80 text-red-600 hover:bg-red-200 hover:shadow-md"
+                            : "bg-emerald-100/80 text-emerald-600 hover:bg-emerald-200 hover:shadow-md"
                         )}
                         onClick={() =>
-                          handleToggleStatus(user.id, user.isActif)
+                          openConfirmToggleModal(user.id, user.isActif)
+                        }
+                        title={
+                          user.isActif === 1
+                            ? "Désactiver l'utilisateur"
+                            : "Activer l'utilisateur"
                         }
                       >
-                        {user.isActif === 1 ? (
-                          <IconLockOpen className="h-4 w-4" />
-                        ) : (
-                          <IconLock className="h-4 w-4" />
-                        )}
+                        <div className="flex items-center justify-center w-8 h-8 relative">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            {user.isActif === 1 ? (
+                              <IconLock className="h-5 w-5" />
+                            ) : (
+                              <IconLockOpen className="h-5 w-5" />
+                            )}
+                          </div>
+                          <div className="absolute -top-1 -right-1">
+                            <div className={`flex h-4 w-4 items-center justify-center rounded-full ${
+                              user.isActif === 1
+                                ? 'bg-red-500'
+                                : 'bg-emerald-500'
+                            } text-[10px] font-bold text-white`}>
+                              {user.isActif === 1 ? '✕' : '✓'}
+                            </div>
+                          </div>
+                        </div>
                       </button>
                       <button
                         type="button"
@@ -1055,7 +1107,7 @@ const ComponentsAppsUsers: React.FC = () => {
                       >
                         <path
                           fillRule="evenodd"
-                          d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                          d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 011.04 1.08l-4.5 4.25a.75.75 0 010 1.08l4.5-4.25a.75.75 0 011.06-.02z"
                           clipRule="evenodd"
                         />
                       </svg>
@@ -1122,7 +1174,7 @@ const ComponentsAppsUsers: React.FC = () => {
                       >
                         <path
                           fillRule="evenodd"
-                          d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06.02z"
+                          d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 011.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06.02z"
                           clipRule="evenodd"
                         />
                       </svg>
@@ -1709,6 +1761,74 @@ const ComponentsAppsUsers: React.FC = () => {
                           : "Modifier"}
                       </button>
                     </div>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      <Transition appear show={isConfirmModalOpen} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-50"
+          onClose={() => setIsConfirmModalOpen(false)}
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/25" />
+          </Transition.Child>
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900"
+                  >
+                    Confirmation
+                  </Dialog.Title>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Êtes-vous sûr de vouloir{" "}
+                      {selectedUserForToggle?.currentStatus === 1
+                        ? "désactiver"
+                        : "activer"}{" "}
+                      cet utilisateur ?
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                      onClick={() => setIsConfirmModalOpen(false)}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      onClick={handleToggleStatus}
+                    >
+                      Confirmer
+                    </button>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>

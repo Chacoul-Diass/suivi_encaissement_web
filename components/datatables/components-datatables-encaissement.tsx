@@ -179,9 +179,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
           item.montantRestitutionCaisse - item.montantBordereauBanque,
         "Ecart(B-C)": item.validationEncaissement?.ecartReleve || 0,
         "Observation(A-B)":
-          item.validationEncaissement?.observationCaisse || "RAS",
+          item.validationEncaissement?.observationCaisse || "",
         "Observation(B-C)":
-          item.validationEncaissement?.observationReleve || "RAS",
+          item.validationEncaissement?.observationReleve || "",
         ...(item.validationEncaissement && {
           "Date Validation":
             item.validationEncaissement?.dateValidation || "N/A",
@@ -1182,8 +1182,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
     // ✅ Construction du payload avec les valeurs mises à jour
     const payload: any = {
       encaissementId: selectedRow.id,
-      observationCaisse: rasChecked1 ? "RAS" : observationCaisse,
-      observationReleve: rasChecked2 ? "RAS" : observationBanque,
+      observationCaisse: rasChecked1 ? "" : observationCaisse,
+      observationReleve: rasChecked2 ? "" : observationBanque,
       montantReleve: updatedRow.montantReleve,
       ecartReleve: updatedRow.ecartReleve,
       statutValidation:

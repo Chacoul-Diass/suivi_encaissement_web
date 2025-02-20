@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import IconX from "../icon/icon-x";
 import IconBank from "../icon/icon-bank";
+import IconPackage from "../icon/icon-package";
+import IconFileText from "../icon/icon-file-text";
 import { EStatutEncaissement } from "@/utils/enums";
 import AskToRequestModal from "./askToRequestModal";
 
@@ -298,16 +300,54 @@ export default function ViewModal({
                       {formatDateData(selectedRow["Date Validation"])}
                     </span>
                   </h2>
-                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <div className="group flex transform items-center gap-3 rounded-lg bg-primary/10 px-4 py-3 transition-all duration-200 hover:scale-105 hover:bg-primary/15">
-                      <div className="rounded-full bg-primary/20 p-2">
-                        <IconBank className="h-6 w-6 text-primary transition-transform duration-200 group-hover:scale-110" />
+                  <div className="mt-4 space-y-3">
+                    <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
+                      <div className="flex items-start gap-3">
+                        <div className="shrink-0 rounded-full bg-primary/20 p-2">
+                          <IconBank className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            Banque
+                          </p>
+                          <p className="break-words text-sm font-semibold text-primary">
+                            {selectedRow.banque}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-lg font-semibold text-primary">
-                          {selectedRow.banque}
-                        </p>
-                        <p className="text-sm text-primary/80">Banque</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 rounded-full bg-primary/20 p-2">
+                            <IconPackage className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                              Produit
+                            </p>
+                            <p className="break-words text-sm font-semibold text-primary">
+                              {selectedRow.Produit}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 rounded-full bg-primary/20 p-2">
+                            <IconFileText className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                              N° Bordereau
+                            </p>
+                            <p className="break-words text-sm font-semibold text-primary">
+                              {selectedRow.numeroBordereau}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -424,24 +464,12 @@ export default function ViewModal({
                         Observation sur l'écart entre les montants
                       </p>
                     </div>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        checked={rasChecked1}
-                        onChange={handleRasChecked1Change}
-                        disabled={statutValidation !== 1}
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-200">
-                        RAS
-                      </span>
-                    </label>
                   </div>
                   <textarea
                     className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                     rows={4}
                     placeholder="Saisir votre observation ici"
-                    disabled={statutValidation !== 1 || rasChecked1}
+                    disabled={statutValidation !== 1}
                     value={observationCaisse}
                     onChange={(e) => setObservationCaisse(e.target.value)}
                   />
@@ -512,32 +540,22 @@ export default function ViewModal({
                         Observation sur l'écart avec la banque
                       </p>
                     </div>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        checked={rasChecked2}
-                        onChange={handleRasChecked2Change}
-                        disabled={statutValidation !== 1}
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-200">
-                        RAS
-                      </span>
-                    </label>
                   </div>
                   <textarea
                     className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                     rows={4}
                     placeholder="Saisir votre observation ici"
-                    disabled={statutValidation !== 1 || rasChecked2}
+                    disabled={statutValidation !== 1}
                     value={observationBanque}
                     onChange={(e) => setObservationBanque(e.target.value)}
                   />
                 </div>
               )}
+            </div>
 
-              {/* Actions */}
-              <div className="flex gap-2">
+            {/* Footer avec boutons fixes */}
+            <div className="border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+              <div className="flex justify-end gap-2">
                 {buttonsConfig
                   .filter(({ statut }) => statutValidation === statut)
                   .flatMap(({ buttons }) => buttons)

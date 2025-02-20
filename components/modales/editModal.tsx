@@ -6,10 +6,17 @@ import { TAppDispatch } from "@/store";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import IconX from "../icon/icon-x";
-import IconPaperclip from "../icon/icon-paperclip";
 import IconBank from "../icon/icon-bank";
 import IconCashBanknotes from "../icon/icon-cash-banknotes";
+import IconPaperclip from "../icon/icon-paperclip";
+import IconPackage from "../icon/icon-package";
+import IconFileText from "../icon/icon-file-text";
 import ImageUploading, { ImageListType } from "react-images-uploading";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 interface EditModalProps {
   setModalOpen: (open: boolean) => void;
@@ -20,6 +27,8 @@ interface EditModalProps {
     "Montant revelé (C)": number;
     "Date cloture": string;
     banque: string;
+    Produit: string;
+    numeroBordereau: any;
   };
   handleSubmit: (updatedRow: any) => void;
   today: string;
@@ -57,11 +66,13 @@ export default function EditModal({
   setImages2,
   onChange2,
   handleMontantChange,
-}: EditModalProps) {
+}: any) {
   const dispatch = useDispatch<TAppDispatch>();
   const maxNumber = 69;
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [montantSaisi, setMontantSaisi] = useState<string>("");
+  const [montantAffiche, setMontantAffiche] = useState<string>("");
+  const [dateMontantBanque, setDateMontantBanque] = useState<string>("");
   const [formError, setFormError] = useState("");
 
   const handleCloseModal = () => {
@@ -69,13 +80,18 @@ export default function EditModal({
   };
 
   const handleMontantInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setMontantSaisi(value);
-    setFormError("");
-    const numericValue = parseFloat(value.replace(/[^\d.-]/g, ""));
-    if (!isNaN(numericValue)) {
-      handleMontantChange(numericValue);
+    const inputValue = e.target.value.replace(/[^\d]/g, ""); // Garde uniquement les chiffres
+    if (inputValue === "") {
+      setMontantSaisi("");
+      setMontantAffiche("");
+      return;
     }
+    
+    const numericValue = parseInt(inputValue);
+    setMontantSaisi(numericValue.toString());
+    setMontantAffiche(formatNumber(numericValue));
+    setFormError("");
+    handleMontantChange(numericValue);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -99,6 +115,7 @@ export default function EditModal({
       rasChecked2,
       images2,
       montantReleve: parseFloat(montantSaisi),
+      dateMontantBanque,
       ecartReleve:
         selectedRow["Montant bordereau (B)"] - parseFloat(montantSaisi),
       statutValidation: 2,
@@ -130,16 +147,54 @@ export default function EditModal({
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Formulaire d'édition
                 </h2>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <div className="group flex transform items-center gap-3 rounded-lg bg-primary/10 px-4 py-3 transition-all duration-200 hover:scale-105 hover:bg-primary/15">
-                    <div className="rounded-full bg-primary/20 p-2">
-                      <IconBank className="h-6 w-6 text-primary transition-transform duration-200 group-hover:scale-110" />
+                <div className="mt-4 space-y-3">
+                  <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
+                    <div className="flex items-start gap-3">
+                      <div className="shrink-0 rounded-full bg-primary/20 p-2">
+                        <IconBank className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                          Banque
+                        </p>
+                        <p className="break-words text-sm font-semibold text-primary">
+                          {selectedRow.banque}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-lg font-semibold text-primary">
-                        {selectedRow.banque}
-                      </p>
-                      <p className="text-sm text-primary/80">Banque</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
+                      <div className="flex items-start gap-3">
+                        <div className="shrink-0 rounded-full bg-primary/20 p-2">
+                          <IconPackage className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            Produit
+                          </p>
+                          <p className="break-words text-sm font-semibold text-primary">
+                            {selectedRow.Produit}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
+                      <div className="flex items-start gap-3">
+                        <div className="shrink-0 rounded-full bg-primary/20 p-2">
+                          <IconFileText className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            N° Bordereau
+                          </p>
+                          <p className="break-words text-sm font-semibold text-primary">
+                            {selectedRow.numeroBordereau}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -202,7 +257,7 @@ export default function EditModal({
                     )}{" "}
                     F CFA
                   </p>
-                  <p className="text-sm text-gray-500">Écart 1</p>
+                  <p className="text-sm text-gray-500">Écart (A-B)</p>
                 </div>
               </div>
             </div>
@@ -218,23 +273,11 @@ export default function EditModal({
                     Observation sur l'écart entre les montants
                   </p>
                 </div>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    checked={rasChecked1}
-                    onChange={handleRasChecked1Change}
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-200">
-                    RAS
-                  </span>
-                </label>
               </div>
               <textarea
                 className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 rows={4}
                 placeholder="Saisir votre observation ici"
-                disabled={rasChecked1}
                 value={observationCaisse}
                 onChange={(e) => setObservationCaisse(e.target.value)}
               />
@@ -259,11 +302,26 @@ export default function EditModal({
                     : "border-gray-300 dark:border-gray-600"
                 } bg-white p-3 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:bg-gray-800 dark:text-white`}
                 placeholder="Montant"
-                value={montantSaisi}
+                value={montantAffiche}
                 onChange={handleMontantInputChange}
                 required
               />
               {formError && <p className="text-sm text-red-500">{formError}</p>}
+              <div className="mt-4">
+                <label
+                  htmlFor="dateMontantBanque"
+                  className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+                >
+                  Date coupon banque
+                </label>
+                <input
+                  type="date"
+                  id="dateMontantBanque"
+                  className="block w-full rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  value={dateMontantBanque}
+                  onChange={(e) => setDateMontantBanque(e.target.value)}
+                />
+              </div>
             </div>
 
             {/* Image Upload */}
@@ -378,11 +436,11 @@ export default function EditModal({
                       selectedRow["Montant bordereau (B)"] -
                         (montantSaisi ? parseFloat(montantSaisi) : 0) <
                       0
-                        ? "text-primary"
+                        ? "text-red-500"
                         : selectedRow["Montant bordereau (B)"] -
                             (montantSaisi ? parseFloat(montantSaisi) : 0) >
                           0
-                        ? "text-success"
+                        ? "text-green-500"
                         : "text-gray-900 dark:text-white"
                     }`}
                   >
@@ -392,7 +450,7 @@ export default function EditModal({
                     )}{" "}
                     F CFA
                   </p>
-                  <p className="text-sm text-gray-500">Écart 2</p>
+                  <p className="text-sm text-gray-500">Écart (B-C)</p>
                 </div>
               </div>
             </div>
@@ -405,26 +463,14 @@ export default function EditModal({
                     Observation Banque
                   </h3>
                   <p className="mt-1 text-xs text-gray-500">
-                    Observation sur l'écart avec la banque
+                    Observation sur l'écart entre les montants
                   </p>
                 </div>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    checked={rasChecked2}
-                    onChange={handleRasChecked2Change}
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-200">
-                    RAS
-                  </span>
-                </label>
               </div>
               <textarea
                 className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 rows={4}
                 placeholder="Saisir votre observation ici"
-                disabled={rasChecked2}
                 value={observationBanque}
                 onChange={(e) => setObservationBanque(e.target.value)}
               />
@@ -458,7 +504,36 @@ export default function EditModal({
                 <p className="mt-2 text-2xl font-bold text-primary">
                   {formatNumber(parseFloat(montantSaisi))} F CFA
                 </p>
-                <p className="mt-2 text-sm text-gray-500">
+                {dateMontantBanque && (
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Date coupon banque : {dateMontantBanque}
+                  </p>
+                )}
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm text-gray-500">
+                    Écart 2 (Bordereau - Relevé) :
+                  </p>
+                  <p
+                    className={`text-lg font-semibold ${
+                      selectedRow["Montant bordereau (B)"] -
+                        parseFloat(montantSaisi) <
+                      0
+                        ? "text-red-500"
+                        : selectedRow["Montant bordereau (B)"] -
+                            parseFloat(montantSaisi) >
+                          0
+                        ? "text-green-500"
+                        : "text-gray-900"
+                    }`}
+                  >
+                    {formatNumber(
+                      selectedRow["Montant bordereau (B)"] -
+                        parseFloat(montantSaisi)
+                    )}{" "}
+                    F CFA
+                  </p>
+                </div>
+                <p className="mt-4 text-sm text-gray-500">
                   Veuillez vérifier que ce montant est correct avant de
                   confirmer.
                 </p>
