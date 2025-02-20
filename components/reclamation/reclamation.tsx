@@ -47,16 +47,16 @@ export default function Reclamation() {
   const allTabs = [
     {
       id: EStatutEncaissement.RECLAMATION_REVERSES,
-      label: "Réclamation Reversés",
+      label: "Litiges Chargés",
       icon: IconBarChart,
-      habilitationName: "RECLAMATION REVERSES",
+      habilitationName: "LITIGES CHARGES",
     },
 
     {
       id: EStatutEncaissement.RECLAMATION_TRAITES,
-      label: "Réclamation Traités",
+      label: "Litiges Traités",
       icon: IconChecks,
-      habilitationName: "RECLAMATION TRAITES",
+      habilitationName: "LITIGES TRAITES",
     },
   ];
 

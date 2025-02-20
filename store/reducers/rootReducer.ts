@@ -17,6 +17,7 @@ import directionRegionalesReducer from "./select/dr.slice";
 import ProfileReducer from "./select/profile.slice";
 import SecteursReducer from "./select/secteur.slice";
 import caissesReducer from "./select/caisse.slice";
+import produitReducer from "./select/produit.slice";
 import BanquesReducer from "./select/banque.slice";
 import modeReglementReducer from "./select/modeReglement.slice";
 
@@ -65,6 +66,7 @@ const topReducer = combineReducers({
   profile: ProfileReducer,
   secteur: SecteursReducer,
   caisses: caissesReducer,
+  produit: produitReducer,
   Banques: BanquesReducer,
   modeReglement: modeReglementReducer,
 

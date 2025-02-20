@@ -36,6 +36,11 @@ import IconBuildingCommunity from "@/components/icon/icon-building-community";
 import IconAlertCircle from "@/components/icon/icon-alert-circle";
 import IconDeviceFloppy from "@/components/icon/icon-device-floppy";
 import IconBook from "@/components/icon/icon-book";
+import IconBuildingStore from "@/components/icon/icon-building-store";
+import { IconLock, IconLockOpen } from "@tabler/icons-react";
+import axiosInstance from "@/utils/axios";
+import { API_AUTH_SUIVI } from "@/config/constants";
+import { clsx } from "@mantine/core";
 
 type User = {
   id: number;
@@ -45,8 +50,10 @@ type User = {
   firstname: string;
   lastname: string;
   profile: string;
+  poste: string;
   directionRegionales: string[];
   secteurs: string[];
+  isActif: number;
 };
 
 interface Option {
@@ -65,6 +72,8 @@ const ComponentsAppsUsers: React.FC = () => {
   const ProfilList: any = useSelector(
     (state: TRootState) => state?.profile?.data
   );
+
+  console.log(users, "users");
 
   const [addUserModal, setAddUserModal] = useState(false);
   const [isDeleteUserModal, setIsDeleteUserModal] = useState(false);
@@ -123,7 +132,7 @@ const ComponentsAppsUsers: React.FC = () => {
       url.searchParams.delete("search");
     }
 
-    if (params.limit && params.limit !== 5) {
+    if (params.limit && params.limit !== 10) {
       url.searchParams.set("limit", params.limit.toString());
     } else {
       url.searchParams.delete("limit");
@@ -135,7 +144,7 @@ const ComponentsAppsUsers: React.FC = () => {
     // Appel à l'API avec les paramètres
     const apiParams: any = {
       page: params.page || 1,
-      limit: params.limit || 5,
+      limit: params.limit || 10,
     };
 
     if (params.search) {
@@ -174,26 +183,28 @@ const ComponentsAppsUsers: React.FC = () => {
   };
 
   // Gestionnaire de changement de page
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    updateUrlAndFilters({
-      profile: selectedProfile,
-      page: page,
-      search: searchTerm,
-      limit: itemsPerPage,
-    });
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    dispatch(
+      fetchUsers({
+        search: searchTerm,
+        page: pageNumber,
+        limit: itemsPerPage,
+      })
+    );
   };
 
   // Gestionnaire de changement d'items par page
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
     setCurrentPage(1);
-    updateUrlAndFilters({
-      profile: selectedProfile,
-      page: 1,
-      search: searchTerm,
-      limit: value,
-    });
+    dispatch(
+      fetchUsers({
+        search: searchTerm,
+        page: 1,
+        limit: value,
+      })
+    );
   };
 
   // Effet pour initialiser les filtres depuis l'URL
@@ -202,7 +213,7 @@ const ComponentsAppsUsers: React.FC = () => {
     const profileParam = searchParams.get("profile");
     const pageParam = parseInt(searchParams.get("page") || "1");
     const searchParam = searchParams.get("search") || "";
-    const limitParam = parseInt(searchParams.get("limit") || "5");
+    const limitParam = parseInt(searchParams.get("limit") || "10");
 
     setSelectedProfile(profileParam);
     setCurrentPage(pageParam);
@@ -372,6 +383,52 @@ const ComponentsAppsUsers: React.FC = () => {
     }
   }, [secteurData, accountInfo.secteur]);
 
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [selectedUserForToggle, setSelectedUserForToggle] = useState<{
+    id: number;
+    currentStatus: number;
+  } | null>(null);
+
+  const openConfirmToggleModal = (userId: number, currentStatus: number) => {
+    setSelectedUserForToggle({ id: userId, currentStatus });
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleToggleStatus = async () => {
+    if (!selectedUserForToggle) return;
+
+    try {
+      const { id: userId, currentStatus } = selectedUserForToggle;
+      const endpoint = currentStatus === 1 ? "deactivate" : "activate";
+      const response: any = await axiosInstance.patch(
+        `${API_AUTH_SUIVI}/users/${userId}/${endpoint}`
+      );
+
+      if (!response.data.error) {
+        Toastify(
+          "success",
+          `Utilisateur ${
+            currentStatus === 1 ? "désactivé" : "activé"
+          } avec succès`
+        );
+
+        // Rafraîchir la liste des utilisateurs
+        dispatch(fetchUsers({}));
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (error: any) {
+      console.error("Erreur lors du changement de statut:", error);
+      Toastify(
+        "error",
+        error.response?.data?.message || "Erreur lors du changement de statut"
+      );
+    } finally {
+      setIsConfirmModalOpen(false);
+      setSelectedUserForToggle(null);
+    }
+  };
+
   const updateUser = async () => {
     if (!editUserData?.id) {
       Swal.fire("Erreur", "ID utilisateur manquant.", "error");
@@ -383,6 +440,7 @@ const ComponentsAppsUsers: React.FC = () => {
       firstname: editUserData?.firstname,
       lastname: editUserData?.lastname,
       matricule: editUserData?.matricule,
+      poste: editUserData?.poste,
       phoneNumber: editUserData?.phoneNumber,
       profileId: editUserData?.profile?.id || 1, // Utiliser un profil par défaut si non défini
       directionRegionales: editUserData?.directionRegionales
@@ -504,6 +562,7 @@ const ComponentsAppsUsers: React.FC = () => {
       </div>
     );
   };
+
   const editUser = (user: User) => {
     if (!user?.id) {
       console.error("ID utilisateur manquant !");
@@ -533,13 +592,6 @@ const ComponentsAppsUsers: React.FC = () => {
     (state: TRootState) => state.userUpdate.loading
   );
 
-  const pageSizeOptions = [
-    { value: 5, label: "5 par page" },
-    { value: 10, label: "10 par page" },
-    { value: 25, label: "25 par page" },
-    { value: 50, label: "50 par page" },
-  ];
-
   return (
     <>
       <div>
@@ -562,14 +614,31 @@ const ComponentsAppsUsers: React.FC = () => {
               </div>
             </div>
 
-            {/* Bouton d'ajout */}
-            <Link
-              href="/utilisateur/add"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50 active:bg-primary/80"
-            >
-              <IconPlus className="h-4 w-4" strokeWidth={2.5} />
-              <span>Ajouter un utilisateur</span>
-            </Link>
+            {/* Boutons d'action */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  dispatch(
+                    fetchUsers({
+                      search: searchTerm,
+                      page: currentPage,
+                      limit: itemsPerPage,
+                    })
+                  );
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary shadow-sm transition-all duration-200 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 active:bg-primary/80 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-primary"
+              >
+                <IconRefresh className="h-4 w-4" />
+                <span>Actualiser</span>
+              </button>
+              <Link
+                href="/utilisateur/add"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50 active:bg-primary/80"
+              >
+                <IconPlus className="h-4 w-4" strokeWidth={2.5} />
+                <span>Ajouter un utilisateur</span>
+              </Link>
+            </div>
           </div>
           {/* Conteneur des filtres */}
           <div className="space-y-6">
@@ -645,7 +714,7 @@ const ComponentsAppsUsers: React.FC = () => {
                   onChange={(e) =>
                     handleItemsPerPageChange(Number(e.target.value))
                   }
-                  className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-600 transition-all duration-200 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
+                  className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-600 transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
                 >
                   <option value="5">5 par page</option>
                   <option value="10">10 par page</option>
@@ -655,33 +724,35 @@ const ComponentsAppsUsers: React.FC = () => {
               </div>
 
               {/* Bouton de réinitialisation */}
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedProfile(null);
-                  setItemsPerPage(5);
-                  updateUrlAndFilters({
-                    search: "",
-                    profile: null,
-                    page: 1,
-                    limit: 5,
-                  });
-                }}
-                className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
-              >
-                <IconRefresh className="h-4 w-4" />
-                Réinitialiser les filtres
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedProfile(null);
+                    setItemsPerPage(10);
+                    updateUrlAndFilters({
+                      search: "",
+                      profile: null,
+                      page: 1,
+                      limit: 10,
+                    });
+                  }}
+                  className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
+                >
+                  <IconRefresh className="h-4 w-4" />
+                  Réinitialiser les filtres
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Liste des utilisateurs */}
         {loading ? (
-          <div className="min-h-[400px] grid place-content-center">
+          <div className="grid min-h-[400px] place-content-center">
             <div className="flex flex-col items-center gap-4">
-              <div className="animate-spin w-10 h-10 border-4 border-primary border-l-transparent rounded-full"></div>
-              <p className="text-primary font-medium">Chargement en cours...</p>
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-l-transparent"></div>
+              <p className="font-medium text-primary">Chargement en cours...</p>
             </div>
           </div>
         ) : (
@@ -705,6 +776,9 @@ const ComponentsAppsUsers: React.FC = () => {
                           Email
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          Poste
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                           Téléphone
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -715,6 +789,9 @@ const ComponentsAppsUsers: React.FC = () => {
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                           Secteurs
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          Statut
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                           Actions
@@ -744,6 +821,9 @@ const ComponentsAppsUsers: React.FC = () => {
                             {user.email}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
+                            {user.poste}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                             {user.phoneNumber}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3">
@@ -760,6 +840,13 @@ const ComponentsAppsUsers: React.FC = () => {
                           <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                             {renderLimitedItems(user.secteurs, user.id)}
                           </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
+                            {user.isActif === 1 ? (
+                              <span className="text-green-600">Actif</span>
+                            ) : (
+                              <span className="text-red-600">Inactif</span>
+                            )}
+                          </td>
                           <td className="whitespace-nowrap px-4 py-3 text-sm">
                             <div className="flex items-center justify-center gap-2">
                               <button
@@ -771,6 +858,42 @@ const ComponentsAppsUsers: React.FC = () => {
                               </button>
                               <button
                                 type="button"
+                                className={clsx(
+                                  "group relative flex items-center justify-center rounded-full p-2.5 transition-all duration-200",
+                                  user.isActif === 1
+                                    ? "bg-red-100/80 text-red-600 hover:bg-red-200 hover:shadow-md"
+                                    : "bg-emerald-100/80 text-emerald-600 hover:bg-emerald-200 hover:shadow-md"
+                                )}
+                                onClick={() =>
+                                  openConfirmToggleModal(user.id, user.isActif)
+                                }
+                                title={
+                                  user.isActif === 1
+                                    ? "Désactiver l'utilisateur"
+                                    : "Activer l'utilisateur"
+                                }
+                              >
+                                <div className="flex items-center justify-center w-8 h-8 relative">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    {user.isActif === 1 ? (
+                                      <IconLock className="h-5 w-5" />
+                                    ) : (
+                                      <IconLockOpen className="h-5 w-5" />
+                                    )}
+                                  </div>
+                                  <div className="absolute -top-1 -right-1">
+                                    <div className={`flex h-4 w-4 items-center justify-center rounded-full ${
+                                      user.isActif === 1
+                                        ? 'bg-red-500'
+                                        : 'bg-emerald-500'
+                                    } text-[10px] font-bold text-white`}>
+                                      {user.isActif === 1 ? '✕' : '✓'}
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                              {/* <button
+                                type="button"
                                 className="inline-flex items-center rounded-md bg-red-50 px-3 py-1 text-sm font-medium text-red-600 transition-colors hover:bg-red-600 hover:text-white dark:bg-red-500/10 dark:text-red-500 dark:hover:bg-red-600 dark:hover:text-white"
                                 onClick={() => {
                                   setSelectedUserToDelete(user);
@@ -778,7 +901,7 @@ const ComponentsAppsUsers: React.FC = () => {
                                 }}
                               >
                                 Supprimer
-                              </button>
+                              </button> */}
                             </div>
                           </td>
                         </tr>
@@ -829,7 +952,7 @@ const ComponentsAppsUsers: React.FC = () => {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth="2"
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"
                               />
                             </svg>
                           </div>
@@ -849,7 +972,7 @@ const ComponentsAppsUsers: React.FC = () => {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth="2"
-                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 011.21-.502l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                               />
                             </svg>
                           </div>
@@ -892,6 +1015,42 @@ const ComponentsAppsUsers: React.FC = () => {
                       </button>
                       <button
                         type="button"
+                        className={clsx(
+                          "group relative flex items-center justify-center rounded-full p-2.5 transition-all duration-200",
+                          user.isActif === 1
+                            ? "bg-red-100/80 text-red-600 hover:bg-red-200 hover:shadow-md"
+                            : "bg-emerald-100/80 text-emerald-600 hover:bg-emerald-200 hover:shadow-md"
+                        )}
+                        onClick={() =>
+                          openConfirmToggleModal(user.id, user.isActif)
+                        }
+                        title={
+                          user.isActif === 1
+                            ? "Désactiver l'utilisateur"
+                            : "Activer l'utilisateur"
+                        }
+                      >
+                        <div className="flex items-center justify-center w-8 h-8 relative">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            {user.isActif === 1 ? (
+                              <IconLock className="h-5 w-5" />
+                            ) : (
+                              <IconLockOpen className="h-5 w-5" />
+                            )}
+                          </div>
+                          <div className="absolute -top-1 -right-1">
+                            <div className={`flex h-4 w-4 items-center justify-center rounded-full ${
+                              user.isActif === 1
+                                ? 'bg-red-500'
+                                : 'bg-emerald-500'
+                            } text-[10px] font-bold text-white`}>
+                              {user.isActif === 1 ? '✕' : '✓'}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
                         className="flex-1 rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-600 hover:text-white dark:bg-red-500/10 dark:text-red-500 dark:hover:bg-red-600 dark:hover:text-white"
                         onClick={() => {
                           setSelectedUserToDelete(user);
@@ -906,58 +1065,124 @@ const ComponentsAppsUsers: React.FC = () => {
               </div>
             )}
 
-            {/* Pagination controls */}
-            {pagination && (
-              <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <div className="flex items-center gap-4">
-                  <button
-                    className={`btn btn-outline-primary ${
-                      currentPage === 1 ? "cursor-not-allowed opacity-50" : ""
-                    }`}
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(1, prev - 1))
-                    }
-                    disabled={currentPage === 1 || loading}
-                  >
-                    Précédent
-                  </button>
-                  <span className="text-sm font-medium">
-                    Page {currentPage} sur {pagination.totalPages}
-                  </span>
-                  <button
-                    className={`btn btn-outline-primary ${
-                      currentPage === pagination.totalPages
-                        ? "cursor-not-allowed opacity-50"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(pagination.totalPages, prev + 1)
-                      )
-                    }
-                    disabled={currentPage === pagination.totalPages || loading}
-                  >
-                    Suivant
-                  </button>
+            {/* Pagination */}
+            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Affichage de{" "}
+                    <span className="font-medium">
+                      {((pagination?.currentPage || 1) - 1) * itemsPerPage + 1}
+                    </span>{" "}
+                    à{" "}
+                    <span className="font-medium">
+                      {Math.min(
+                        (pagination?.currentPage || 1) * itemsPerPage,
+                        pagination?.totalCount || 0
+                      )}
+                    </span>{" "}
+                    sur{" "}
+                    <span className="font-medium">
+                      {pagination?.totalCount || 0}
+                    </span>{" "}
+                    résultats
+                  </p>
                 </div>
-                {/* <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Afficher</span>
-                  <Select
-                    value={pageSizeOptions.find(
-                      (option) => option.value === itemsPerPage
-                    )}
-                    onChange={(option) =>
-                      handleItemsPerPageChange(
-                        Number(option?.value) || itemsPerPage
+                <div className="flex items-center gap-4">
+                  {/* Navigation de pagination */}
+                  <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                        currentPage === 1 ? "cursor-not-allowed" : ""
+                      }`}
+                    >
+                      <span className="sr-only">Précédent</span>
+                      <svg
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 011.04 1.08l-4.5 4.25a.75.75 0 010 1.08l4.5-4.25a.75.75 0 011.06-.02z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+
+                    {/* Pages */}
+                    {Array.from(
+                      {
+                        length: Math.ceil(
+                          (pagination?.totalCount || 0) / itemsPerPage
+                        ),
+                      },
+                      (_, i) => i + 1
+                    )
+                      .filter(
+                        (pageNum) =>
+                          pageNum === 1 ||
+                          pageNum ===
+                            Math.ceil(
+                              (pagination?.totalCount || 0) / itemsPerPage
+                            ) ||
+                          (pageNum >= currentPage - 1 &&
+                            pageNum <= currentPage + 1)
                       )
-                    }
-                    options={pageSizeOptions}
-                    className="w-40"
-                  />
-                  <span className="text-sm font-medium">éléments</span>
-                </div> */}
+                      .map((pageNum, index, array) => (
+                        <React.Fragment key={pageNum}>
+                          {index > 0 && array[index - 1] !== pageNum - 1 && (
+                            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                              ...
+                            </span>
+                          )}
+                          <button
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                              currentPage === pageNum
+                                ? "z-10 bg-primary text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        </React.Fragment>
+                      ))}
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={
+                        currentPage ===
+                        Math.ceil((pagination?.totalCount || 0) / itemsPerPage)
+                      }
+                      className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                        currentPage ===
+                        Math.ceil((pagination?.totalCount || 0) / itemsPerPage)
+                          ? "cursor-not-allowed"
+                          : ""
+                      }`}
+                    >
+                      <span className="sr-only">Suivant</span>
+                      <svg
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 011.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06.02z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
@@ -1280,6 +1505,31 @@ const ComponentsAppsUsers: React.FC = () => {
                                   </p>
                                 )}
                             </div>
+
+                            <div>
+                              <label
+                                htmlFor="poste"
+                                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                              >
+                                <div className="flex items-center gap-1">
+                                  <IconBuildingStore className="h-4 w-4 text-gray-400" />
+                                  Poste
+                                </div>
+                              </label>
+                              <input
+                                id="poste"
+                                type="text"
+                                placeholder="Entrez le poste"
+                                className="form-input w-full rounded-lg border-gray-300 bg-white px-3 py-2 text-sm transition-all focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800"
+                                value={editUserData?.poste || ""}
+                                onChange={(e) =>
+                                  setEditUserData({
+                                    ...editUserData,
+                                    poste: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1511,6 +1761,74 @@ const ComponentsAppsUsers: React.FC = () => {
                           : "Modifier"}
                       </button>
                     </div>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      <Transition appear show={isConfirmModalOpen} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-50"
+          onClose={() => setIsConfirmModalOpen(false)}
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/25" />
+          </Transition.Child>
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900"
+                  >
+                    Confirmation
+                  </Dialog.Title>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Êtes-vous sûr de vouloir{" "}
+                      {selectedUserForToggle?.currentStatus === 1
+                        ? "désactiver"
+                        : "activer"}{" "}
+                      cet utilisateur ?
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                      onClick={() => setIsConfirmModalOpen(false)}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      onClick={handleToggleStatus}
+                    >
+                      Confirmer
+                    </button>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>

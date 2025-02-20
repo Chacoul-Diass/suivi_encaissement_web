@@ -179,9 +179,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
           item.montantRestitutionCaisse - item.montantBordereauBanque,
         "Ecart(B-C)": item.validationEncaissement?.ecartReleve || 0,
         "Observation(A-B)":
-          item.validationEncaissement?.observationCaisse || "RAS",
+          item.validationEncaissement?.observationCaisse || "",
         "Observation(B-C)":
-          item.validationEncaissement?.observationReleve || "RAS",
+          item.validationEncaissement?.observationReleve || "",
         ...(item.validationEncaissement && {
           "Date Validation":
             item.validationEncaissement?.dateValidation || "N/A",
@@ -591,8 +591,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     await swalWithBootstrapButtons
       .fire({
-        title: "Êtes-vous sûr de mettre cet encaissement en reclamation ?",
-        text: "Cette action mettra l'encaissement en reclamation.",
+        title: "Êtes-vous sûr de mettre cet encaissement en litige ?",
+        text: "Cette action mettra l'encaissement en litige.",
         icon: "warning",
         showCancelButton: true,
         confirmButtonText: "Confirmer",
@@ -654,7 +654,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             .then((response) => {
               swalWithBootstrapButtons.fire(
                 "Rejeté",
-                `Votre encaissement est en reclamation avec la raison : "${userInput}"`,
+                `Votre encaissement est en litige avec la raison : "${userInput}"`,
                 "success"
               );
               dispatch(
@@ -797,14 +797,21 @@ const ComponentsDatatablesColumnChooser: React.FC<
     },
     {
       accessor: "modeEtJournee",
-      title: "Journée caisse - Mode de règlement ",
+      title: "Session Caisse",
       sortable: true,
-      render: ({ modeReglement, journeeCaisse }: any) => (
+      render: ({ journeeCaisse }: any) => (
         <div>
-          <p className="text-sm ">
-            {journeeCaisse} -{" "}
-            <span className="text-sm  text-gray-500">{modeReglement}</span>
-          </p>
+          <p className="text-sm ">{journeeCaisse}</p>
+        </div>
+      ),
+    },
+    {
+      accessor: "modeEtJournee",
+      title: "Mode de réglement ",
+      sortable: true,
+      render: ({ modeReglement }: any) => (
+        <div>
+          <p className="text-sm ">{modeReglement}</p>
         </div>
       ),
     },
@@ -1175,8 +1182,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
     // ✅ Construction du payload avec les valeurs mises à jour
     const payload: any = {
       encaissementId: selectedRow.id,
-      observationCaisse: rasChecked1 ? "RAS" : observationCaisse,
-      observationReleve: rasChecked2 ? "RAS" : observationBanque,
+      observationCaisse: rasChecked1 ? "" : observationCaisse,
+      observationReleve: rasChecked2 ? "" : observationBanque,
       montantReleve: updatedRow.montantReleve,
       ecartReleve: updatedRow.ecartReleve,
       statutValidation:
@@ -1281,6 +1288,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
     setMontantBanque(formattedValue);
   };
 
+  console.log(paginate, "paginate");
+
   return (
     <>
       {/* Contenu de la page */}
@@ -1288,7 +1297,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         {/* 10 Encaissements connus */}
         <div className="flex w-full" id="tuto-encaissement-titre">
           <h5 className="mb-8  flex w-full flex-wrap items-center gap-6 text-xl font-thin text-primary">
-            {totalUnvalidatedRecords}
+            {paginate.totalCount}
             {encaissementText}{" "}
             {getStatutLibelle(statutValidation, totalUnvalidatedRecords)}
           </h5>
@@ -1427,47 +1436,56 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     render: (row: DataReverse) => {
                       const canEditComptable =
                         statutValidation === 0 &&
-                        hasPermission("ENCAISSEMENTS REVERSES", "MODIFIER");
+                        hasPermission("ENCAISSEMENTS CHARGES", "MODIFIER");
+
+                      const seeEmailIcon =
+                        (statutValidation === 4 &&
+                          hasPermission("LITIGES", "MODIFIER")) ||
+                        statutValidation === 6;
 
                       return (
                         <div className="flex items-center justify-center gap-3">
-                          {canEditComptable ? (
-                            <div className="flex items-center gap-3">
-                              <Tippy content="Modifier">
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                                  onClick={() => handleOpenModal(row)}
-                                >
-                                  <IconPencil className="h-5 w-5 stroke-[1.5]" />
-                                </button>
-                              </Tippy>
-                              <Tippy content="Envoyer un mail">
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedRow(row); // Sauvegarder la ligne sélectionnée
-                                    setEmailModalOpen(true);
-                                  }}
-                                >
-                                  <IconMail className="h-5 w-5 stroke-[1.5]" />
-                                </button>
-                              </Tippy>
-                            </div>
-                          ) : (
-                            statutValidation !== 0 && (
-                              <Tippy content="Voir">
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                                  onClick={() => handleOpenModal(row)}
-                                >
-                                  <IconEye className="h-5 w-5 stroke-[1.5]" />
-                                </button>
-                              </Tippy>
-                            )
+                          {/* Icône Modifier si l'utilisateur peut modifier */}
+                          {canEditComptable && (
+                            <Tippy content="Modifier">
+                              <button
+                                type="button"
+                                className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                                onClick={() => handleOpenModal(row)}
+                              >
+                                <IconPencil className="h-5 w-5 stroke-[1.5]" />
+                              </button>
+                            </Tippy>
+                          )}
+
+                          {/* Icône Voir si l'utilisateur ne peut pas modifier et statutValidation !== 0 */}
+                          {!canEditComptable && statutValidation !== 0 && (
+                            <Tippy content="Voir">
+                              <button
+                                type="button"
+                                className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                                onClick={() => handleOpenModal(row)}
+                              >
+                                <IconEye className="h-5 w-5 stroke-[1.5]" />
+                              </button>
+                            </Tippy>
+                          )}
+
+                          {/* Icône Envoyer un mail si statutValidation === 4 */}
+                          {seeEmailIcon && (
+                            <Tippy content="Envoyer un mail">
+                              <button
+                                type="button"
+                                className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedRow(row);
+                                  setEmailModalOpen(true);
+                                }}
+                              >
+                                <IconMail className="h-5 w-5 stroke-[1.5]" />
+                              </button>
+                            </Tippy>
                           )}
                         </div>
                       );

@@ -43,7 +43,7 @@ const Filtre = () => {
         setDrData(drData.payload);
         setDrLoading(false);
       } catch (error) {
-        console.error('Error fetching DR data:', error);
+        console.error("Error fetching DR data:", error);
         setDrLoading(false);
       }
     };
@@ -61,7 +61,7 @@ const Filtre = () => {
           setSecteurData(secteurData.payload);
           setSecteurLoading(false);
         } catch (error) {
-          console.error('Error fetching secteur data:', error);
+          console.error("Error fetching secteur data:", error);
           setSecteurLoading(false);
         }
       }
@@ -71,7 +71,9 @@ const Filtre = () => {
   }, [selectedDRIds, dispatch]);
 
   // Récupération des données DR depuis votre token ou l'API
-  const drDataFromStore: any = useSelector((state: TRootState) => state.dr?.data);
+  const drDataFromStore: any = useSelector(
+    (state: TRootState) => state.dr?.data
+  );
 
   useEffect(() => {
     if (drDataFromStore) {
@@ -93,10 +95,10 @@ const Filtre = () => {
   // Générer les années (de l'année actuelle à 5 ans en arrière)
   const currentYear = new Date().getFullYear();
 
-  const selectedDRs = drData.filter((dr: { id: number }) =>
+  const selectedDRs = drData?.filter((dr: { id: number }) =>
     selectedDRIds.includes(dr.id)
   );
-  const selectedSecteurs = secteurData.filter((secteur) =>
+  const selectedSecteurs = secteurData?.filter((secteur) =>
     selectedSecteurIds.includes(secteur.id)
   );
 
@@ -256,9 +258,17 @@ const Filtre = () => {
                   <button
                     type="button"
                     className="text-xs font-medium text-primary hover:text-primary/80"
-                    onClick={() => setSelectedDRIds(selectedDRIds.length === drData.length ? [] : drData.map((dr: any) => dr.id))}
+                    onClick={() =>
+                      setSelectedDRIds(
+                        selectedDRIds.length === drData.length
+                          ? []
+                          : drData.map((dr: any) => dr.id)
+                      )
+                    }
                   >
-                    {selectedDRIds.length === drData.length ? "Tout désélectionner" : "Tout sélectionner"}
+                    {selectedDRIds.length === drData.length
+                      ? "Tout désélectionner"
+                      : "Tout sélectionner"}
                   </button>
                   <span className="text-xs text-gray-500">
                     {selectedDRIds.length} sélectionné(s)
@@ -294,7 +304,9 @@ const Filtre = () => {
                 content={
                   <div className="max-h-[200px] overflow-y-auto p-2">
                     {selectedSecteurIds.map((id) => {
-                      const secteur = secteurData?.find((s: any) => s.id === id);
+                      const secteur = secteurData?.find(
+                        (s: any) => s.id === id
+                      );
                       return (
                         <div key={id} className="whitespace-nowrap text-sm">
                           {secteur ? secteur.name : "Inconnu"}
@@ -316,7 +328,11 @@ const Filtre = () => {
             <Dropdown
               btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${
                 selectedSecteurIds.length > 0 ? "ring-2 ring-primary/30" : ""
-              } ${selectedDRIds.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+              } ${
+                selectedDRIds.length === 0
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
               button={
                 <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
                   <IconOffice className="h-4 w-4 text-gray-400" />
@@ -340,7 +356,8 @@ const Filtre = () => {
                       );
                     }}
                   >
-                    {selectedSecteurIds.length === secteurData.filter((s: any) =>
+                    {selectedSecteurIds.length ===
+                    secteurData.filter((s: any) =>
                       selectedDRIds.includes(s.directionRegionaleId)
                     ).length
                       ? "Tout désélectionner"

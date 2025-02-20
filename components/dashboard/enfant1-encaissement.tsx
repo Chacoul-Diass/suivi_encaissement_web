@@ -5,6 +5,8 @@ import ComponentsDatatablesColumnChooser from "../datatables/components-datatabl
 import IconZipFile from "../icon/icon-zip-file";
 import IconCircleCheck from "../icon/icon-circle-check";
 import { ITotal, Paginations } from "@/utils/interface";
+import EncaissementTutorial from "../tutorial/TutorialTable-encaissement";
+import getUserPermission from "@/utils/user-info";
 
 interface EncaissementComptableProps {
   statutValidation: number;
@@ -39,6 +41,10 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
     return `${day}/${month}/${dt.getFullYear()}`;
   };
 
+  const user = getUserPermission();
+
+  const isFirstLogin = user?.isFirstLogin;
+
   const today = formatDate(new Date());
 
   const formatNumber = (number: number): string => {
@@ -67,7 +73,7 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
     <div>
       <div className="grid pt-5">
         <div className="flex flex-wrap gap-4 lg:gap-6 xl:flex-nowrap">
-          <div className="panel h-full w-full flex-1">
+          <div className="panel h-full w-full flex-1" id="completion">
             <div className="-m-5 mb-5 flex items-center justify-between border-b border-white-light p-5 dark:border-[#1b2e4b]">
               <button type="button" className="flex items-center font-semibold">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-white ltr:mr-4 rtl:ml-4">
@@ -112,7 +118,7 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
             </div>
           </div>
 
-          <div className="panel h-full w-full flex-1">
+          <div className="panel h-full w-full flex-1" id="totalmontant">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-lg font-bold">Total des montants</div>
@@ -128,20 +134,26 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                   <>
                     {/* Skeleton loaders */}
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">Total Montant Caisse</div>
-                      <div className="mt-2 text-lg xl:text-xl font-light">
+                      <div className="text-white-black">
+                        Total Montant Caisse
+                      </div>
+                      <div className="mt-2 text-lg font-light xl:text-xl">
                         <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">Total Montant Bordereau</div>
-                      <div className="mt-2 text-lg xl:text-xl font-light">
+                      <div className="text-white-black">
+                        Total Montant Bordereau
+                      </div>
+                      <div className="mt-2 text-lg font-light xl:text-xl">
                         <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">Total Montant Relevé</div>
-                      <div className="mt-2 text-lg xl:text-xl font-light">
+                      <div className="text-white-black">
+                        Total Montant Relevé
+                      </div>
+                      <div className="mt-2 text-lg font-light xl:text-xl">
                         <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
@@ -149,20 +161,42 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                 ) : (
                   <>
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">Total Montant Caisse</div>
-                      <div className={`mt-2 text-lg xl:text-xl font-light whitespace-nowrap ${getColorClass(total.totalMontantRestitutionCaisse)}`}>
-                        {`${formatNumber(total.totalMontantRestitutionCaisse)} F CFA`}
+                      <div className="text-white-black">
+                        Total Montant Caisse
+                      </div>
+                      <div
+                        className={`mt-2 whitespace-nowrap text-lg font-light xl:text-xl ${getColorClass(
+                          total.totalMontantRestitutionCaisse
+                        )}`}
+                      >
+                        {`${formatNumber(
+                          total.totalMontantRestitutionCaisse
+                        )} F CFA`}
                       </div>
                     </div>
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">Total Montant Bordereau</div>
-                      <div className={`mt-2 text-lg xl:text-xl font-light whitespace-nowrap ${getColorClass(total.totalMontantBordereauBanque)}`}>
-                        {`${formatNumber(total.totalMontantBordereauBanque)} F CFA`}
+                      <div className="text-white-black">
+                        Total Montant Bordereau
+                      </div>
+                      <div
+                        className={`mt-2 whitespace-nowrap text-lg font-light xl:text-xl ${getColorClass(
+                          total.totalMontantBordereauBanque
+                        )}`}
+                      >
+                        {`${formatNumber(
+                          total.totalMontantBordereauBanque
+                        )} F CFA`}
                       </div>
                     </div>
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">Total Montant Relevé</div>
-                      <div className={`mt-2 text-lg xl:text-xl font-light whitespace-nowrap ${getColorClass(total.totalMontantReleve)}`}>
+                      <div className="text-white-black">
+                        Total Montant Relevé
+                      </div>
+                      <div
+                        className={`mt-2 whitespace-nowrap text-lg font-light xl:text-xl ${getColorClass(
+                          total.totalMontantReleve
+                        )}`}
+                      >
                         {`${formatNumber(total.totalMontantReleve)} F CFA`}
                       </div>
                     </div>
@@ -186,6 +220,8 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
           handleLimitChange={handleLimitChange}
         />
       </div>
+
+      {isFirstLogin === 1 && <EncaissementTutorial />}
     </div>
   );
 };

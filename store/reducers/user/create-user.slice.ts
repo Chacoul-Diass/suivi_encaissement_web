@@ -14,6 +14,7 @@ export const addUser = createAsyncThunk(
       profileId,
       directionRegionales,
       secteurs,
+      poste,
     }: {
       email: string;
       firstname: string;
@@ -23,6 +24,7 @@ export const addUser = createAsyncThunk(
       profileId: number;
       directionRegionales: number[];
       secteurs: number[];
+      poste: string;
     },
     { rejectWithValue }
   ) => {
@@ -38,6 +40,7 @@ export const addUser = createAsyncThunk(
           profileId,
           directionRegionales,
           secteurs,
+          poste,
         }
       );
       return response.data;

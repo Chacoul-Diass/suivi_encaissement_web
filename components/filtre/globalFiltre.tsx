@@ -20,6 +20,7 @@ import { fetchBanques } from "@/store/reducers/select/banque.slice";
 import { fetchcaisses } from "@/store/reducers/select/caisse.slice";
 import { fetchmodeReglement } from "@/store/reducers/select/modeReglement.slice";
 import { fetchSecteurs } from "@/store/reducers/select/secteur.slice";
+import { fetchProduit } from "@/store/reducers/select/produit.slice";
 
 interface GlobalFiltreProps {
   drData: any;
@@ -46,6 +47,7 @@ export default function GlobalFiltre({
   const [searchQueries, setSearchQueries] = useState({
     banques: "",
     caisses: "",
+    produit:"",
     modes: "",
     drs: "",
     secteurs: "",
@@ -57,16 +59,20 @@ export default function GlobalFiltre({
   const [selectedItems, setSelectedItems] = useState<{
     banques: { libelle: string }[];
     caisses: { libelle: string }[];
+    produit:{libelle: string }[]
     modes: { libelle: string }[];
   }>({
     banques: [],
     caisses: [],
+    produit:[],
     modes: [],
   });
 
   // Récupération des données via Redux
-  const { caisses, banques, modes, secteurs, drLoading, secteurLoading } =
+  const {produit, caisses, banques, modes, secteurs, drLoading, secteurLoading } =
     useSelector((state: TRootState) => ({
+      produit:  state.produit.data?.map((item: any) => ({ libelle: item.libelle })) ||
+      [],
       caisses:
         state.caisses.data?.map((item: any) => ({ libelle: item.libelle })) ||
         [],
@@ -85,6 +91,7 @@ export default function GlobalFiltre({
   // Charger les données initiales (caisse, banque, modes)
   useEffect(() => {
     dispatch(fetchcaisses());
+    dispatch(fetchProduit());
     dispatch(fetchBanques());
     dispatch(fetchmodeReglement());
   }, [dispatch]);
@@ -112,7 +119,7 @@ export default function GlobalFiltre({
   // Ajout/suppression d’un item (banque, caisse, mode)
   const toggleSelection = (
     libelle: string,
-    type: "banques" | "caisses" | "modes"
+    type: "produit" | "banques" | "caisses" | "modes"
   ) => {
     setSelectedItems((prev) => ({
       ...prev,
@@ -147,7 +154,7 @@ export default function GlobalFiltre({
 
   // Sélectionner/dé-sélectionner tout (DRs, Secteurs, banques, caisses, modes)
   const toggleAll = (
-    type: "banques" | "caisses" | "modes" | "drs" | "secteurs",
+    type: "produit" | "banques" | "caisses" | "modes" | "drs" | "secteurs",
     items: any[],
     isAllSelected: boolean
   ) => {
@@ -200,6 +207,7 @@ export default function GlobalFiltre({
         .map((code) => code.trim()),
       banque: selectedItems.banques.map((banque) => banque.libelle.trim()),
       caisse: selectedItems.caisses.map((caisse) => caisse.libelle.trim()),
+      produit: selectedItems.produit.map((produit) => produit.libelle.trim()),
       modeReglement: selectedItems.modes.map((mode) => mode.libelle.trim()),
       startDate: start ? formatDate(start) : "", // vide => pas de filtre
       endDate: end ? formatDate(end) : "", // vide => pas de filtre
@@ -218,9 +226,10 @@ export default function GlobalFiltre({
     setDateRangeKey(Date.now());
     setSelectedDRIds([]);
     setSelectedSecteurIds([]);
-    setSelectedItems({ banques: [], caisses: [], modes: [] });
+    setSelectedItems({ produit : [] ,banques: [], caisses: [], modes: [] });
 
     setSearchQueries({
+      produit:"",
       banques: "",
       caisses: "",
       modes: "",
@@ -244,7 +253,7 @@ export default function GlobalFiltre({
   // Petite fonction utilitaire pour générer un Dropdown
   const renderDropdown = (
     label: React.ReactNode,
-    type: "banques" | "caisses" | "modes" | "drs" | "secteurs",
+    type: "produit" |"banques" | "caisses" | "modes" | "drs" | "secteurs",
     items: any[],
     selected: any[],
     onToggle: (id: any | string) => void
@@ -429,11 +438,23 @@ export default function GlobalFiltre({
 
         {/* Dropdowns avec icônes */}
         <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+         <div className="w-full">
+            {renderDropdown(
+              <>
+                <IconCash className="h-4 w-4 text-gray-400" />
+                <span>Produits</span>
+              </>,
+              "produit",
+              produit,
+              selectedItems.produit,
+              (libelle) => toggleSelection(libelle, "produit")
+            )}
+          </div>
           <div className="w-full">
             {renderDropdown(
               <>
                 <IconCash className="h-4 w-4 text-gray-400" />
-                <span>Caisse</span>
+                <span>Caisses</span>
               </>,
               "caisses",
               caisses,

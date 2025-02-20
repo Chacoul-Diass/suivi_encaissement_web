@@ -32,6 +32,8 @@ import {
   IconDeviceDesktop,
   IconInfoCircle,
   IconRefresh,
+  IconFilter,
+  IconCalendar,
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { format, isValid } from "date-fns";
@@ -40,6 +42,8 @@ import axios from "axios";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import axiosInstance from "@/utils/axios";
 import { useRouter, useSearchParams } from "next/navigation";
+import { French } from "flatpickr/dist/l10n/fr.js";
+import Flatpickr from "react-flatpickr";
 
 interface ConnectionHistory {
   id: number;
@@ -109,6 +113,8 @@ const formatDateSafely = (
     : "Date invalide";
 };
 
+const NO_DATES_SELECTED: Date[] = [];
+
 const ConnectionHistoryPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -136,30 +142,45 @@ const ConnectionHistoryPage = () => {
     {} as PaginationData
   );
 
-  const updateUrl = (page: number, search: string) => {
+  const [dateRange, setDateRange] = useState<Date[]>(NO_DATES_SELECTED);
+  const [dateRangeKey, setDateRangeKey] = useState(Date.now());
+
+  const updateUrl = (
+    page: number,
+    search: string,
+    startDate?: string,
+    endDate?: string
+  ) => {
     const params = new URLSearchParams();
     params.set("page", page.toString());
     params.set("limit", itemsPerPage.toString());
     if (search) params.set("search", search);
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
+
     router.push(`?${params.toString()}`);
   };
 
-  const fetchData = async (page: number, limit: number, search?: string) => {
+  const fetchData = async (
+    page: number,
+    limit: number,
+    search?: string,
+    startDate?: string,
+    endDate?: string
+  ) => {
     try {
       setIsLoading(true);
       if (search) setSearchLoading(true);
+
       const response: any = await axiosInstance.get<ApiResponse>(
         `${API_AUTH_SUIVI}/log-history`,
         {
-          params: {
-            page,
-            limit,
-            search,
-          },
+          params: { page, limit, search, startDate, endDate },
         }
       );
+
       setData(response.data);
-      updateUrl(page, search || "");
+      updateUrl(page, search || "", startDate, endDate);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
@@ -168,18 +189,22 @@ const ConnectionHistoryPage = () => {
     }
   };
 
-  const fetchUserDetails = async (userId: number, page: number = 1) => {
+  const fetchUserDetails = async (
+    userId: number,
+    page: number,
+    startDate?: string,
+    endDate?: string
+  ) => {
     try {
       setDetailsLoading(true);
+
       const response: any = await axiosInstance.get<DetailedConnectionResponse>(
         `${API_AUTH_SUIVI}/log-history/${userId}`,
         {
-          params: {
-            page,
-            limit: 4,
-          },
+          params: { page, limit: 3, startDate, endDate },
         }
       );
+
       setDetailsData(response.data.result);
       setDetailsPagination(response.data.pagination);
     } catch (err) {
@@ -193,14 +218,80 @@ const ConnectionHistoryPage = () => {
     fetchData(currentPage, itemsPerPage, searchTerm);
   }, [currentPage, searchTerm]);
 
+  useEffect(() => {
+    if (selectedUserId) {
+      const { startDate, endDate } = getFilterParams();
+      fetchUserDetails(selectedUserId, detailsCurrentPage, startDate, endDate);
+    }
+  }, [selectedUserId, detailsCurrentPage]);
+
   const handleRefresh = () => {
     fetchData(currentPage, itemsPerPage, searchTerm);
   };
 
+  const formatDate = (date: Date | undefined): string => {
+    if (!date) return "";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const getFilterParams = () => {
+    const [start, end] = dateRange; // 0, 1, ou 2 dates
+    return {
+      startDate: start ? formatDate(start) : "", // vide => pas de filtre
+      endDate: end ? formatDate(end) : "", // vide => pas de filtre
+    };
+  };
+
+  useEffect(() => {
+    const { startDate, endDate } = getFilterParams();
+    fetchData(currentPage, itemsPerPage, searchTerm, startDate, endDate);
+  }, [currentPage, searchTerm]);
+
+  // Effet pour récupérer les détails utilisateur quand on change d'utilisateur ou de page
+  useEffect(() => {
+    if (selectedUserId) {
+      const { startDate, endDate } = getFilterParams();
+      fetchUserDetails(selectedUserId, detailsCurrentPage, startDate, endDate);
+    }
+  }, [selectedUserId, detailsCurrentPage]);
+
+  // Gérer l'affichage des détails utilisateur
+  const handleUserDetails = (userId: number) => {
+    setSelectedUserId(userId);
+    setDetailsCurrentPage(1);
+  };
+
+  // Gérer la recherche
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
-    fetchData(1, itemsPerPage, value);
+    const { startDate, endDate } = getFilterParams();
+    fetchData(1, itemsPerPage, value, startDate, endDate);
+  };
+
+  // Appliquer les filtres
+  const applyFilters = () => {
+    const { startDate, endDate } = getFilterParams();
+    fetchData(currentPage, itemsPerPage, searchTerm, startDate, endDate);
+  };
+
+  // Réinitialiser les filtres
+  const resetFilters = () => {
+    setDateRange(NO_DATES_SELECTED);
+    setDateRangeKey(Date.now());
+    fetchData(currentPage, itemsPerPage, searchTerm);
+  };
+
+  // Gérer le changement de dates
+  const handleDateChange = (dates: Date[]) => {
+    if (dates.length < 2) {
+      setDateRange(NO_DATES_SELECTED);
+    } else {
+      setDateRange(dates);
+    }
   };
 
   return (
@@ -357,7 +448,7 @@ const ConnectionHistoryPage = () => {
                   leftIcon={<IconInfoCircle size={20} />}
                   onClick={() => {
                     setSelectedUserId(history.id);
-                    fetchUserDetails(history.id);
+                    fetchUserDetails(history.id, 1);
                     setDetailModalOpened(true);
                   }}
                 >
@@ -385,6 +476,51 @@ const ConnectionHistoryPage = () => {
           header: "border-b border-gray-200 dark:border-gray-700",
         }}
       >
+        <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <IconFilter className="h-5 w-5 text-primary" />
+            <div className="group relative w-full sm:w-auto">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <IconCalendar className="h-5 w-5 text-gray-400 transition-colors duration-200 group-hover:text-primary" />
+              </div>
+              <Flatpickr
+                key={dateRangeKey}
+                options={{
+                  mode: "range",
+                  dateFormat: "Y-m-d",
+                  locale: French,
+                  allowInput: true,
+                  defaultDate: dateRange.map((date) => new Date(date)),
+                }}
+                className="form-input w-full min-w-[270px] rounded-lg border-gray-200 pl-10 text-sm transition-all duration-200 focus:border-primary focus:ring-primary group-hover:border-primary dark:border-gray-600 dark:bg-gray-700"
+                onChange={handleDateChange}
+                placeholder="Sélectionner la période"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="group flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            >
+              <IconRefresh className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
+              Réinitialiser
+            </button>
+            <button
+              type="button"
+              onClick={applyFilters}
+              className="group flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-primary/90 hover:shadow-sm"
+            >
+              <IconFilter className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+              Appliquer
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-start gap-4 lg:flex-nowrap lg:items-center">
+          {/* Flatpickr avec icône et animation */}
+        </div>
         {detailsLoading ? (
           <div className="flex h-40 items-center justify-center">
             <Loader color="red" size="xl" variant="bars" />
