@@ -38,6 +38,9 @@ import dataRapprochementJadeReducer from "./rapprochement/rapprochementJade.slic
 //dashboard
 import dashboardReducer from "./dashboard/dashbord.slice";
 
+//parametre
+import parametreReducer from "./parametres/parametre.slice";
+
 import themeConfigSlice from "../themeConfigSlice";
 
 const persistConfig = {
@@ -86,6 +89,9 @@ const topReducer = combineReducers({
 
   //dashboard
   dashboard: dashboardReducer,
+
+  //parametre
+  parametres: parametreReducer,
 });
 
 const rootReducer = (state: any, action: any) => {
