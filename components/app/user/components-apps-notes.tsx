@@ -37,6 +37,10 @@ import IconAlertCircle from "@/components/icon/icon-alert-circle";
 import IconDeviceFloppy from "@/components/icon/icon-device-floppy";
 import IconBook from "@/components/icon/icon-book";
 import IconBuildingStore from "@/components/icon/icon-building-store";
+import { IconLock, IconLockOpen } from "@tabler/icons-react";
+import axiosInstance from "@/utils/axios";
+import { API_AUTH_SUIVI } from "@/config/constants";
+import { clsx } from "@mantine/core";
 
 type User = {
   id: number;
@@ -49,6 +53,7 @@ type User = {
   poste: string;
   directionRegionales: string[];
   secteurs: string[];
+  isActif: number;
 };
 
 interface Option {
@@ -68,7 +73,7 @@ const ComponentsAppsUsers: React.FC = () => {
     (state: TRootState) => state?.profile?.data
   );
 
-  console.log(pagination, "pagination");
+  console.log(users, "users");
 
   const [addUserModal, setAddUserModal] = useState(false);
   const [isDeleteUserModal, setIsDeleteUserModal] = useState(false);
@@ -511,6 +516,7 @@ const ComponentsAppsUsers: React.FC = () => {
       </div>
     );
   };
+
   const editUser = (user: User) => {
     if (!user?.id) {
       console.error("ID utilisateur manquant !");
@@ -539,6 +545,36 @@ const ComponentsAppsUsers: React.FC = () => {
   const loadingUpdate = useSelector(
     (state: TRootState) => state.userUpdate.loading
   );
+
+  const handleToggleStatus = async (userId: number, currentStatus: number) => {
+    try {
+      // Si isActif est 1, on désactive (0), si isActif est 0, on active (1)
+      const endpoint = currentStatus === 1 ? "deactivate" : "activate";
+      const response: any = await axiosInstance.patch(
+        `${API_AUTH_SUIVI}/users/${userId}/${endpoint}`
+      );
+
+      if (!response.data.error) {
+        Toastify(
+          "success",
+          `Utilisateur ${
+            currentStatus === 1 ? "désactivé" : "activé"
+          } avec succès`
+        );
+
+        // Rafraîchir la liste des utilisateurs
+        dispatch(fetchUsers({}));
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (error: any) {
+      console.error("Erreur lors du changement de statut:", error);
+      Toastify(
+        "error",
+        error.response?.data?.message || "Erreur lors du changement de statut"
+      );
+    }
+  };
 
   return (
     <>
@@ -662,7 +698,7 @@ const ComponentsAppsUsers: React.FC = () => {
                   onChange={(e) =>
                     handleItemsPerPageChange(Number(e.target.value))
                   }
-                  className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-600 transition-all duration-200 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
+                  className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-600 transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
                 >
                   <option value="5">5 par page</option>
                   <option value="10">10 par page</option>
@@ -738,6 +774,9 @@ const ComponentsAppsUsers: React.FC = () => {
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                           Secteurs
                         </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          Statut
+                        </th>
                         <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                           Actions
                         </th>
@@ -785,6 +824,13 @@ const ComponentsAppsUsers: React.FC = () => {
                           <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                             {renderLimitedItems(user.secteurs, user.id)}
                           </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
+                            {user.isActif === 1 ? (
+                              <span className="text-green-600">Actif</span>
+                            ) : (
+                              <span className="text-red-600">Inactif</span>
+                            )}
+                          </td>
                           <td className="whitespace-nowrap px-4 py-3 text-sm">
                             <div className="flex items-center justify-center gap-2">
                               <button
@@ -796,6 +842,24 @@ const ComponentsAppsUsers: React.FC = () => {
                               </button>
                               <button
                                 type="button"
+                                className={clsx(
+                                  "inline-flex items-center rounded-md p-2 transition-colors",
+                                  user.isActif === 1
+                                    ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                    : "text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                                )}
+                                onClick={() =>
+                                  handleToggleStatus(user.id, user.isActif)
+                                }
+                              >
+                                {user.isActif === 1 ? (
+                                  <IconLock className="h-4 w-4" />
+                                ) : (
+                                  <IconLockOpen className="h-4 w-4" />
+                                )}
+                              </button>
+                              {/* <button
+                                type="button"
                                 className="inline-flex items-center rounded-md bg-red-50 px-3 py-1 text-sm font-medium text-red-600 transition-colors hover:bg-red-600 hover:text-white dark:bg-red-500/10 dark:text-red-500 dark:hover:bg-red-600 dark:hover:text-white"
                                 onClick={() => {
                                   setSelectedUserToDelete(user);
@@ -803,7 +867,7 @@ const ComponentsAppsUsers: React.FC = () => {
                                 }}
                               >
                                 Supprimer
-                              </button>
+                              </button> */}
                             </div>
                           </td>
                         </tr>
@@ -854,7 +918,7 @@ const ComponentsAppsUsers: React.FC = () => {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth="2"
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"
                               />
                             </svg>
                           </div>
@@ -914,6 +978,24 @@ const ComponentsAppsUsers: React.FC = () => {
                         onClick={() => editUser(user)}
                       >
                         Modifier
+                      </button>
+                      <button
+                        type="button"
+                        className={clsx(
+                          "flex-1 rounded-lg p-2 transition-colors",
+                          user.isActif === 1
+                            ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                            : "text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                        )}
+                        onClick={() =>
+                          handleToggleStatus(user.id, user.isActif)
+                        }
+                      >
+                        {user.isActif === 1 ? (
+                          <IconLockOpen className="h-4 w-4" />
+                        ) : (
+                          <IconLock className="h-4 w-4" />
+                        )}
                       </button>
                       <button
                         type="button"
