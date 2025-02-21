@@ -27,6 +27,7 @@ import { fr } from "date-fns/locale";
 import axios from "axios";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import axiosInstance from "@/utils/axios";
+import FicheDette from "../factureMoratoire";
 
 const ComponentsDashboardSales = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -445,7 +446,9 @@ const ComponentsDashboardSales = () => {
                 </span>
               </div>
               {activeTab === 2 && (
-                <div className="absolute bottom-0 left-0 h-0.5 w-full bg-primary transition-all duration-300"></div>
+                <>
+                  <div className="absolute bottom-0 left-0 h-0.5 w-full bg-primary transition-all duration-300"></div>
+                </>
               )}
             </button>
           </div>
