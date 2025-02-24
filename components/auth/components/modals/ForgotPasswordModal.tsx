@@ -3,6 +3,8 @@ import ResetPasswordModal from "./ResetPasswordModal";
 import { useDispatch } from "react-redux";
 import { sendResetEmail } from "@/store/reducers/auth/send-email-reset.slice";
 import { Toastify } from "@/utils/toast";
+import { handleApiError } from "@/utils/apiErrorHandler";
+import { toast } from "react-toastify";
 
 interface ForgotPasswordModalProps {
   closeModal: () => void;
@@ -25,15 +27,9 @@ export default function ForgotPasswordModal({
       if (!response.error) {
         Toastify("success", response.message || "E-mail envoyé avec succès !");
         setIsModalResetOpen(true); // Ouvre la modal de reset
-      } else {
-        Toastify("error", response.message || "Une erreur est survenue !");
       }
     } catch (error: any) {
-      // Gestion des erreurs
-      Toastify(
-        "error",
-        error.message || "Une erreur est survenue lors de l'envoi !"
-      );
+      console.log('');
     }
   };
 
@@ -45,7 +41,7 @@ export default function ForgotPasswordModal({
           Veuillez entrer votre adresse e-mail pour réinitialiser votre mot de
           passe.
         </p>
-        <form onSubmit={handleForgotPassword}>
+        <form onSubmit={handleForgotPassword} className="text-black">
           <input
             type="email"
             placeholder="Entrez votre adresse mail"

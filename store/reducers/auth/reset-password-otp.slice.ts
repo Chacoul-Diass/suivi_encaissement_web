@@ -1,8 +1,10 @@
 // src/store/reducers/auth/resetPassword.slice.ts
 
 import { API_AUTH_SUIVI } from "@/config/constants";
+import { handleApiError } from "@/utils/apiErrorHandler";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 // Définir le type des données de réinitialisation du mot de passe
 interface ResetPasswordState {
@@ -48,6 +50,8 @@ export const OTPresetPassword: any = createAsyncThunk(
       const response = await axios(config);
       return response.data; // Retourner la réponse de l'API
     } catch (error: any) {
+      const errorMessage = handleApiError(error); // Utilisation de la fonction
+      toast.error(errorMessage);
       return rejectWithValue(
         error.response?.data?.message || "Erreur inconnue"
       );

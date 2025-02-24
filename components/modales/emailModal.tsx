@@ -31,6 +31,7 @@ interface EmailModalProps {
   setToInput: (value: string) => void;
   handleToKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   removeCcEmail: (index: number) => void;
+  setToEmails: any;
 }
 
 export default function EmailModal({
@@ -46,6 +47,7 @@ export default function EmailModal({
   handleSendEmail,
   emailConnecte,
   numeroBordereau,
+  setToEmails,
   ccEmails,
   removeToEmail,
   emailInput,
@@ -65,6 +67,8 @@ export default function EmailModal({
   const [showAddressBook, setShowAddressBook] = useState(false);
   const [currentType, setCurrentType] = useState<"to" | "cc">("to");
   const [inputValue, setInputValue] = useState("");
+
+  console.log(emailConnecte, "emailConnecte");
 
   useEffect(() => {
     dispatch(fetchParametres({}));
@@ -93,19 +97,42 @@ export default function EmailModal({
 
   const handleSelectEmail = (selectedEmail: string) => {
     if (currentType === "to") {
-      if (!params?.toEmails?.some((e: any) => e.mail === selectedEmail)) {
-        setParams({
-          ...params,
-          toEmails: [...(params?.toEmails || []), { mail: selectedEmail }],
-        });
-      }
+      setParams((prevParams: any) => {
+        const alreadyExists = prevParams?.toEmails?.some(
+          (e: any) => e.mail === selectedEmail
+        );
+
+        if (!alreadyExists) {
+          const updatedEmails = [
+            ...(prevParams?.toEmails || []),
+            { mail: selectedEmail },
+          ];
+
+          setToEmails(updatedEmails.map((item) => item.mail));
+
+          return { ...prevParams, toEmails: updatedEmails };
+        }
+
+        return prevParams;
+      });
     } else {
-      if (!params?.ccEmails?.some((e: any) => e.mail === selectedEmail)) {
-        setParams({
-          ...params,
-          ccEmails: [...(params?.ccEmails || []), { mail: selectedEmail }],
-        });
-      }
+      setParams((prevParams: any) => {
+        const alreadyExists = prevParams?.ccEmails?.some(
+          (e: any) => e.mail === selectedEmail
+        );
+
+        if (!alreadyExists) {
+          return {
+            ...prevParams,
+            ccEmails: [
+              ...(prevParams?.ccEmails || []),
+              { mail: selectedEmail },
+            ],
+          };
+        }
+
+        return prevParams;
+      });
     }
   };
 
@@ -139,6 +166,29 @@ export default function EmailModal({
     }
     handleSendEmail();
   };
+
+  useEffect(() => {
+    if (emailConnecte) {
+      setParams((prevParams: any) => {
+        // Vérifier si emailConnecte est déjà dans ccEmails
+        const alreadyExists = prevParams?.ccEmails?.some(
+          (e: any) => e.mail === emailConnecte
+        );
+
+        if (!alreadyExists) {
+          return {
+            ...prevParams,
+            ccEmails: [
+              { mail: emailConnecte },
+              ...(prevParams?.ccEmails || []),
+            ],
+          };
+        }
+
+        return prevParams;
+      });
+    }
+  }, [emailConnecte, setParams]);
 
   return (
     <Transition appear show={emailModalOpen} as={Fragment}>
@@ -179,6 +229,7 @@ export default function EmailModal({
                 </button>
               </div>
               <div className="p-6">
+                {/* À (Emails principaux) */}
                 <div className="mb-5">
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
                     À (Emails principaux)
@@ -208,7 +259,7 @@ export default function EmailModal({
                     <input
                       type="text"
                       value={currentType === "to" ? inputValue : ""}
-                      onChange={(e) => setInputValue(e.target.value)}
+                      onChange={(e) => setToEmails(e.target.value)}
                       onKeyDown={handleKeyDown}
                       onFocus={() => setCurrentType("to")}
                       placeholder="Ajouter un email"
@@ -229,9 +280,8 @@ export default function EmailModal({
                             position: "absolute",
                             right: 0,
                             top: "100%",
-                            zIndex: 999999,
                           }}
-                          className="address-book-menu mt-1 w-80 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                          className="address-book-menu z-50 mt-1 w-80 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
                         >
                           <div className="flex items-center justify-between border-b border-gray-100 p-3">
                             <h3 className="font-medium text-gray-900">
@@ -251,7 +301,7 @@ export default function EmailModal({
                               </svg>
                             </button>
                           </div>
-                          <div className="z-[999999] max-h-60 divide-y divide-gray-100 overflow-y-auto">
+                          <div className="z-50 max-h-60 divide-y divide-gray-100 overflow-y-auto">
                             {carnetAdresse?.length > 0 ? (
                               carnetAdresse.map((item: any) => {
                                 const isSelected = params?.toEmails?.some(
@@ -296,6 +346,7 @@ export default function EmailModal({
                     </div>
                   </div>
                 </div>
+                {/* CC (Emails supplémentaires) */}
                 <div className="mb-5">
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
                     CC (Emails supplémentaires)
@@ -308,6 +359,7 @@ export default function EmailModal({
                           className="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-sm font-medium text-gray-700"
                         >
                           <span>{emailObj.mail}</span>
+                          {/* Empêcher la suppression de emailConnecte */}
                           {emailObj.mail !== emailConnecte && (
                             <button
                               type="button"
@@ -330,9 +382,12 @@ export default function EmailModal({
                         </div>
                       )
                     )}
+
                     <input
                       type="text"
-                      value={currentType === "cc" ? inputValue : ""}
+                      value={
+                        currentType === "cc" ? inputValue : ""
+                      }
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyDown={handleKeyDown}
                       onFocus={() => setCurrentType("cc")}
@@ -354,9 +409,8 @@ export default function EmailModal({
                             position: "absolute",
                             right: 0,
                             top: "100%",
-                            zIndex: 999999,
                           }}
-                          className="address-book-menu mt-1 w-80 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                          className="address-book-menu z-50 mt-1 w-80 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
                         >
                           <div className="flex items-center justify-between border-b border-gray-100 p-3">
                             <h3 className="font-medium text-gray-900">
@@ -421,16 +475,14 @@ export default function EmailModal({
                     </div>
                   </div>
                 </div>
+                {/* Objet */}
                 <div className="mb-5">
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
                     Objet
                   </label>
                   <input
                     type="text"
-                    value={
-                      emailSubject ||
-                      `Retard sur le bordereau N°${numeroBordereau || ""}`
-                    }
+                    value={emailSubject}
                     onChange={(e) => setEmailSubject(e.target.value)}
                     placeholder="Retard sur le bordereau N°..."
                     className="form-input w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-primary focus:ring-primary"
@@ -456,6 +508,7 @@ export default function EmailModal({
                     />
                   </div>
                 </div>
+                {/* Message */}
                 <div className="mb-5">
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
                     Pièces jointes
@@ -552,6 +605,7 @@ export default function EmailModal({
                   )}
                 </div>
               </div>
+              {/* button */}
               <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
                 <button
                   type="button"
