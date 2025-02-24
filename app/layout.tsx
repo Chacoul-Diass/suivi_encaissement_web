@@ -1,4 +1,5 @@
 import ProviderComponent from "@/components/layouts/provider-component";
+import FloatingButton from "@/components/common/FloatingButton";
 import "react-perfect-scrollbar/dist/css/styles.css";
 import "../styles/tailwind.css";
 import { Metadata } from "next";
@@ -25,7 +26,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={nunito.variable}>
-        <ProviderComponent>{children}</ProviderComponent>
+        <ProviderComponent>
+          {children}
+          <FloatingButton />
+        </ProviderComponent>
       </body>
     </html>
   );
