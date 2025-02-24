@@ -2,6 +2,9 @@
 import Dropdown from "@/components/dropdown";
 import IconCaretDown from "@/components/icon/icon-caret-down";
 import IconPencil from "@/components/icon/icon-pencil";
+import IconEye from "@/components/icon/icon-eye";
+import IconMail from "@/components/icon/icon-mail";
+import IconAlertTriangle from "@/components/icon/icon-alert-triangle";
 import { TAppDispatch, TRootState } from "@/store";
 import { fetchDataReleve } from "@/store/reducers/encaissements/releve.slice";
 import { submitEncaissementValidation } from "@/store/reducers/encaissements/soumission.slice";
@@ -23,8 +26,6 @@ import "tippy.js/dist/tippy.css";
 import ExportBtn from "../actionBtn/exportBtn";
 import RefreshBtn from "../actionBtn/refreshBtn";
 import GlobalFiltre from "../filtre/globalFiltre";
-import IconEye from "../icon/icon-eye";
-import IconMail from "../icon/icon-mail";
 import ConfirmationModal from "../modales/confirmationModal";
 import EditModal from "../modales/editModal";
 import EmailModal from "../modales/emailModal";
@@ -128,6 +129,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const [search, setSearch] = useState("");
     const [hideCols, setHideCols] = useState<string[]>([]);
     const [modalOpen, setModalOpen] = useState(false);
+    const [emailModalOpen, setEmailModalOpen] = useState(false);
+    const [preuvePhotoModal, setPreuvePhotoModal] = useState(false);
+    const [photoDocuments, setPhotoDocuments] = useState<DocumentType[]>([]);
+    const [rowToView, setRowToView] = useState<DataReverse | null>(null);
     const formatDateData = (dateString: string | null | undefined): string => {
       if (!dateString) return "N/A";
 
@@ -186,9 +191,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
           "Date Encais": formatDateData(item.dateEncaissement),
           "Montant caisse (A)": item.montantRestitutionCaisse || 0,
           "Montant bordereau (B)": item.montantBordereauBanque || 0,
-          "Montant relevé (C)": statutValidation === 0
-            ? item.montantReleve || 0
-            : item.validationEncaissement?.montantReleve || 0,
+          "Montant relevé (C)":
+            statutValidation === 0
+              ? item.montantReleve || 0
+              : item.validationEncaissement?.montantReleve || 0,
           isCorrect: item?.isCorrect || 0,
           "Date cloture": formatDateData(item.dateRemiseBanque) || "",
           Bordereau: item.numeroBordereau || "",
@@ -196,9 +202,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
           statutValidation: item.validationEncaissement?.statutValidation,
           "Ecart(A-B)":
             item.montantRestitutionCaisse - item.montantBordereauBanque,
-          "Ecart(B-C)": statutValidation === 0
-            ? (item.montantBordereauBanque || 0) - (item.montantReleve || 0)
-            : item.validationEncaissement?.ecartReleve || 0,
+          "Ecart(B-C)":
+            statutValidation === 0
+              ? (item.montantBordereauBanque || 0) - (item.montantReleve || 0)
+              : item.validationEncaissement?.ecartReleve || 0,
           "Observation(A-B)":
             item.validationEncaissement?.observationCaisse || "",
           "Observation(B-C)":
@@ -355,6 +362,37 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     console.log(loading, "loadingdata");
 
+    const refreshTableData = async () => {
+      // Réinitialiser les données
+      setRecordsData([]);
+
+      try {
+        const result = await dispatch(
+          fetchDataReleve({
+            id: statutValidation,
+            page: currentPage,
+            limit: pageSize,
+            search: search || "",
+            ...params,
+          })
+        ).unwrap();
+
+        // Forcer un remontage complet
+        setForceRender((prev) => prev + 1);
+
+        // Mettre à jour la liste manuellement
+        if (result && result.result) {
+          const newData = filterAndMapData(result.result, statutValidation);
+          setRecordsData(newData);
+        }
+
+        return result;
+      } catch (error) {
+        console.error("Erreur lors du rafraîchissement des données:", error);
+        throw error;
+      }
+    };
+
     const showAlertValide = async (encaissementId: number) => {
       const swalWithBootstrapButtons = Swal.mixin({
         customClass: {
@@ -387,24 +425,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Appel à la fonction Redux ou autre logique de soumission
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 swalWithBootstrapButtons.fire(
                   "Valider",
                   "Votre encaissement a été validé avec succès.",
                   "success"
                 );
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -437,8 +471,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
           cancelButtonText: "Annuler",
           reverseButtons: true,
           padding: "2em",
-          // Suppression de la section 'html' avec le textarea
-          // Suppression de 'preConfirm' car il n'y a plus de validation de champ
         })
         .then((result) => {
           if (result.isConfirmed) {
@@ -450,24 +482,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 swalWithBootstrapButtons.fire(
                   "Validé",
                   "Votre encaissement a été ramené avec succès.",
                   "success"
                 );
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -499,7 +527,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         case EStatutEncaissement.TRAITE:
           payloadStatutValidation = EStatutEncaissement.REJETE;
           break;
-        case EStatutEncaissement.DR_DFC:
+        case EStatutEncaissement.DFC:
           payloadStatutValidation = EStatutEncaissement.REJETE;
           break;
         case EStatutEncaissement.RECLAMATION_TRAITES:
@@ -569,7 +597,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // ✅ Envoi de la requête Redux
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 setObeservationRejete(response?.observationRejete);
                 swalWithBootstrapButtons.fire(
                   "Rejeter ✅",
@@ -577,18 +605,13 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -604,96 +627,45 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const showAlertReclamation = async (encaissementId: number) => {
       const swalWithBootstrapButtons = Swal.mixin({
         customClass: {
-          confirmButton:
-            "btn btn-primary disabled:opacity-50 disabled:pointer-events-none",
+          confirmButton: "btn btn-primary",
           cancelButton: "btn btn-dark ltr:mr-3 rtl:ml-3",
           popup: "sweet-alerts",
         },
         buttonsStyling: false,
       });
 
-      let userInput = ""; // Variable pour stocker l'observation saisie
-
       await swalWithBootstrapButtons
         .fire({
-          title: "Êtes-vous sûr de vouloir rejeter cet encaissement ?",
-          text: "Cette action rejetera l'encaissement.",
+          title: "Êtes-vous sûr de vouloir passer cet encaissement en réclamation ?",
+          text: "Cette action passera l'encaissement en réclamation.",
           icon: "warning",
           showCancelButton: true,
           confirmButtonText: "Confirmer",
           cancelButtonText: "Annuler",
           reverseButtons: true,
-          html: `
-          <div>
-            <textarea
-              id="reason-textarea"
-              class="form-control w-full border rounded-md p-2 mt-4"
-              rows="4"
-              placeholder="Veuillez indiquer la raison ici..."
-              style="width: 100%; box-sizing: border-box;"
-            ></textarea>
-          </div>
-        `,
-          preConfirm: () => {
-            const textareaValue = (
-              document.getElementById("reason-textarea") as HTMLTextAreaElement
-            )?.value.trim();
-            if (!textareaValue) {
-              Swal.showValidationMessage("Le champ de texte est requis !");
-              return false; // Empêche la confirmation tant que le champ est vide
-            }
-            userInput = textareaValue; // Stocke l'observation saisie
-            return true;
-          },
-          didOpen: () => {
-            const confirmButton = Swal.getConfirmButton();
-            const textarea = document.getElementById(
-              "reason-textarea"
-            ) as HTMLTextAreaElement;
-
-            // Désactive le bouton de confirmation initialement
-            confirmButton?.setAttribute("disabled", "true");
-
-            // Écoute les événements d'entrée pour activer/désactiver le bouton
-            textarea?.addEventListener("input", () => {
-              if (textarea.value.trim()) {
-                confirmButton?.removeAttribute("disabled");
-              } else {
-                confirmButton?.setAttribute("disabled", "true");
-              }
-            });
-          },
+          padding: "2em",
         })
         .then((result) => {
-          if (result.isConfirmed && userInput) {
-            // Payload à envoyer
+          if (result.isConfirmed) {
             const payload = {
-              encaissementId: selectedRow?.id, // ID de l'encaissement
-              observationReclamation: userInput, // Observation saisie dans le textarea
-              statutValidation: EStatutEncaissement.REJETE, // Statut Rejeté
+              encaissementId,
+              statutValidation: EStatutEncaissement.RECLAMATION_REVERSES,
             };
 
-            // Appel à la fonction Redux ou autre logique de soumission
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 swalWithBootstrapButtons.fire(
-                  "Rejeté",
-                  `Votre encaissement a été rejeté avec la raison : "${userInput}"`,
+                  "Réclamation",
+                  "Votre encaissement a été passé en réclamation avec succès.",
                   "success"
                 );
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+
+                await refreshTableData();
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -741,24 +713,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Appel à la fonction Redux ou autre logique de soumission
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 swalWithBootstrapButtons.fire(
                   "Clôturer",
                   "Votre encaissement a été clôturé avec succès.",
                   "success"
                 );
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -800,30 +768,26 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Payload à soumettre sans 'observationReclamation'
             const payload = {
               encaissementId, // ID de l'encaissement
-              statutValidation: EStatutEncaissement.DR_DFC, // Statut clôturé
+              statutValidation: EStatutEncaissement.DFC, // Statut clôturé
             };
 
             // Appel à la fonction Redux ou autre logique de soumission
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 swalWithBootstrapButtons.fire(
                   "Valider",
                   "Votre encaissement a été validé avec succès.",
                   "success"
                 );
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -840,7 +804,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
       description: "",
       displayDescription: "",
     });
-
 
     const userInfo = getUserPermission();
 
@@ -873,11 +836,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const [uploadedFiles, setUploadedFiles] = useState<
       { file: File; preview: string }[]
     >([]);
-
-    const [emailModalOpen, setEmailModalOpen] = useState(false);
-    const [preuvePhotoModal, setPreuvePhotoModal] = useState(false);
-
-    const [photoDocuments, setPhotoDocuments] = useState<DocumentType[]>([]);
 
     const baseCols = [
       {
@@ -934,7 +892,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
         title: "Montant Restitution Caisse (A)",
         sortable: true,
         render: (row: DataReverse) => {
-          const montant = row.montantRestitutionCaisse || row["Montant caisse (A)"] || 0;
+          const montant =
+            row.montantRestitutionCaisse || row["Montant caisse (A)"] || 0;
           return `${formatNumber(montant)} F CFA`;
         },
       },
@@ -943,7 +902,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
         title: "Montant Bordereau Banque (B)",
         sortable: true,
         render: (row: DataReverse) => {
-          const montant = row.montantBordereauBanque || row["Montant bordereau (B)"] || 0;
+          const montant =
+            row.montantBordereauBanque || row["Montant bordereau (B)"] || 0;
           return `${formatNumber(montant)} F CFA`;
         },
       },
@@ -956,10 +916,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
           const ecart =
             row.ecartCaisseBanque !== undefined
               ? row.ecartCaisseBanque
-              : (row["Ecart(A-B)"] !== undefined
+              : row["Ecart(A-B)"] !== undefined
                 ? row["Ecart(A-B)"]
-                : ((row.montantRestitutionCaisse || row["Montant caisse (A)"] || 0) -
-                  (row.montantBordereauBanque || row["Montant bordereau (B)"] || 0)));
+                : (row.montantRestitutionCaisse || row["Montant caisse (A)"] || 0) -
+                (row.montantBordereauBanque || row["Montant bordereau (B)"] || 0);
 
           return (
             <div
@@ -986,9 +946,11 @@ const ComponentsDatatablesColumnChooser: React.FC<
             title: "Montant Relevé",
             sortable: true,
             render: (row: DataReverse) => {
-              const montant = row.montantReleve ||
+              const montant =
+                row.montantReleve ||
                 row["Montant relevé (C)"] ||
-                row.validationEncaissement?.montantReleve || 0;
+                row.validationEncaissement?.montantReleve ||
+                0;
               return `${formatNumber(montant)} F CFA`;
             },
           },
@@ -1029,7 +991,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             title: "Observation Relevé",
             sortable: false,
             render: (row: DataReverse) => (
-              <span>{row.validationEncaissement?.observationReleve || ''}</span>
+              <span>{row.validationEncaissement?.observationReleve || ""}</span>
             ),
           },
 
@@ -1038,7 +1000,11 @@ const ComponentsDatatablesColumnChooser: React.FC<
             title: "Observation rejété",
             sortable: false,
             render: (row: DataReverse) => (
-              <span>{row.observationRejete || row.validationEncaissement?.observationRejete || ''}</span>
+              <span>
+                {row.observationRejete ||
+                  row.validationEncaissement?.observationRejete ||
+                  ""}
+              </span>
             ),
           },
           {
@@ -1046,7 +1012,11 @@ const ComponentsDatatablesColumnChooser: React.FC<
             title: "Observation rejet 2",
             sortable: false,
             render: (row: DataReverse) => (
-              <span>{row.observationReclamation || row.validationEncaissement?.observationReclamation || ''}</span>
+              <span>
+                {row.observationReclamation ||
+                  row.validationEncaissement?.observationReclamation ||
+                  ""}
+              </span>
             ),
           },
         ]
@@ -1062,47 +1032,65 @@ const ComponentsDatatablesColumnChooser: React.FC<
             statutValidation === 0 &&
             hasPermission("ENCAISSEMENTS CHARGES", "MODIFIER");
 
+          const seeEmailIcon =
+            (statutValidation === 4 &&
+              hasPermission("LITIGES", "MODIFIER")) ||
+            statutValidation === 6;
+
           return (
             <div className="flex items-center justify-center gap-3">
-              {canEditComptable ? (
-                <div className="flex items-center gap-3">
+              {canEditComptable && (
+                <>
                   <Tippy content="Modifier">
                     <button
                       type="button"
                       className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                      id="tuto-edit-btn"
                       onClick={() => handleOpenModal(row)}
                     >
                       <IconPencil className="h-5 w-5 stroke-[1.5]" />
                     </button>
                   </Tippy>
-                  <Tippy content="Envoyer un mail">
+                  {/* Reclamation action  */}
+                  <Tippy content="Passer en réclamation">
                     <button
                       type="button"
-                      className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                      id="tuto-mail-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedRow(row); // Sauvegarder la ligne sélectionnée
-                        setEmailModalOpen(true);
-                      }}
+                      className="flex items-center justify-center rounded-lg p-2 text-warning hover:text-warning"
+                      onClick={() => showAlertReclamation(row.id)}
                     >
-                      <IconMail className="h-5 w-5 stroke-[1.5]" />
+                      <IconAlertTriangle className="h-5 w-5 stroke-[1.5]" />
                     </button>
                   </Tippy>
-                </div>
-              ) : (
-                statutValidation !== 0 && (
-                  <Tippy content="Voir">
-                    <button
-                      type="button"
-                      className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                      onClick={() => handleOpenModal(row)}
-                    >
-                      <IconEye className="h-5 w-5 stroke-[1.5]" />
-                    </button>
-                  </Tippy>
-                )
+                </>
+              )}
+
+              {/* Icône Voir si l'utilisateur ne peut pas modifier et statutValidation !== 0 */}
+              {!canEditComptable && statutValidation !== 0 && (
+                <Tippy content="Voir">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                    onClick={() => handleOpenModal(row)}
+                  >
+                    <IconEye className="h-5 w-5 stroke-[1.5]" />
+                  </button>
+                </Tippy>
+              )}
+
+              {/* Icône Envoyer un mail si statutValidation === 4 */}
+              {seeEmailIcon && (
+                <Tippy content="Envoyer un mail">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedRow(row);
+                      setEmailModalOpen(true);
+                    }}
+                  >
+                    <IconMail className="h-5 w-5 stroke-[1.5]" />
+                  </button>
+                </Tippy>
               )}
             </div>
           );
@@ -1326,22 +1314,53 @@ const ComponentsDatatablesColumnChooser: React.FC<
         payload.files = files;
       }
 
+      // Ajouter la date du montant banque si présente
+      if (updatedRow.dateMontantBanque) {
+        payload.dateMontantReleve = updatedRow.dateMontantBanque;
+      }
+
       // ✅ Envoi de la requête
       dispatch(submitEncaissementValidation(payload))
         .unwrap()
         .then(() => {
+          // Afficher un toast de succès
+          toast.success("Les modifications ont été enregistrées avec succès.");
+
+          // Réinitialiser les données avant de rafraîchir
+          setRecordsData([]);
+
+          // Rafraîchir les données
           dispatch(
             fetchDataReleve({
               id: statutValidation,
               page: currentPage,
-              limit: 5,
-              search: search,
+              limit: pageSize,
+              search: search || "",
+              ...params,
             })
-          );
-          setModalOpen(false);
+          )
+            .unwrap()
+            .then((result) => {
+              // Forcer un remontage complet
+              setForceRender((prev) => prev + 1);
+
+              // Mettre à jour la liste manuellement
+              if (result && result.result) {
+                const newData = filterAndMapData(result.result, statutValidation);
+                setRecordsData(newData);
+              }
+            })
+            .catch((error) => {
+              console.error(
+                "Erreur lors du rafraîchissement des données:",
+                error
+              );
+            });
+
+          // Le modal sera fermé par le composant EditModal
         })
         .catch((error) => {
-          const errorMessage = handleApiError(error); // Utilisation de la fonction
+          const errorMessage = handleApiError(error);
           toast.error(errorMessage);
         });
     };
@@ -1366,17 +1385,30 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     const handleRefresh = async () => {
       setIsRefreshing(true);
+      // Réinitialiser le tableau avant de recharger les données
+      setRecordsData([]);
       try {
-        await dispatch(
+        const result = await dispatch(
           fetchDataReleve({
             id: statutValidation,
             page: currentPage,
-            limit: 5,
-            search: search,
+            limit: pageSize,
+            search: search || "",
+            ...params,
           })
-        );
+        ).unwrap();
+
+        // Forcer un remontage complet du composant
+        setForceRender((prev) => prev + 1);
+
+        // Mettre à jour la liste manuellement pour s'assurer qu'elle est à jour
+        if (result && result.result) {
+          const newData = filterAndMapData(result.result, statutValidation);
+          setRecordsData(newData);
+        }
       } catch (error) {
         console.error("Erreur lors de l'actualisation :", error);
+        toast.error("Erreur lors de l'actualisation des données");
       } finally {
         setIsRefreshing(false);
       }
@@ -1398,11 +1430,14 @@ const ComponentsDatatablesColumnChooser: React.FC<
         fetchDataReleve({
           id: statutValidation,
           page: currentPage || 1,
-          limit: 5,
+          limit: pageSize,
           search: search || "",
           ...params,
         })
-      );
+      ).then(() => {
+        // Forcer la mise à jour du tableau
+        setForceRender((prev) => prev + 1);
+      });
     };
 
     const [montantBanque, setMontantBanque] = useState("");
@@ -1414,6 +1449,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
     };
 
     console.log(paginate, "paginate");
+
+    // Ajouter un état pour forcer le remontage du composant
+    const [forceRender, setForceRender] = useState(0);
 
     return (
       <>
@@ -1429,9 +1467,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
           </div>
           <GlobalFiltre
             drData={drData}
-            showHideColumns={showHideColumns}
             onApplyFilters={handleApplyFilters}
             statutValidation={statutValidation}
+            showHideColumns={showHideColumns}
           />
 
           <div className="panel datatables">
@@ -1538,21 +1576,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
             <div className="relative" id="tuto-datatable">
               <div className="overflow-x-auto">
-                {loading && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-[#1b2e4b]/70">
-                    <div className="flex flex-col items-center justify-center p-4">
-                      <span className="mb-2 text-primary">Chargement en cours</span>
-                      <div className="flex items-center justify-center space-x-2">
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 <DataTable<DataReverse>
+                  key={`datatable-${forceRender}`}
                   style={{
                     position: "relative",
                     width: "100%",
@@ -1563,7 +1588,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
                       : {}
                   }
                   className="table-hover whitespace-nowrap"
-                  records={!loading && filteredData?.length > 0 ? filteredData : []}
+                  records={
+                    !loading && filteredData?.length > 0 ? filteredData : []
+                  }
                   columns={[
                     ...cols
                       ?.map((col) => ({
@@ -1589,15 +1616,27 @@ const ComponentsDatatablesColumnChooser: React.FC<
                           <div className="flex items-center justify-center gap-3">
                             {/* Icône Modifier si l'utilisateur peut modifier */}
                             {canEditComptable && (
-                              <Tippy content="Modifier">
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                                  onClick={() => handleOpenModal(row)}
-                                >
-                                  <IconPencil className="h-5 w-5 stroke-[1.5]" />
-                                </button>
-                              </Tippy>
+                              <>
+                                <Tippy content="Modifier">
+                                  <button
+                                    type="button"
+                                    className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                                    onClick={() => handleOpenModal(row)}
+                                  >
+                                    <IconPencil className="h-5 w-5 stroke-[1.5]" />
+                                  </button>
+                                </Tippy>
+                                {/* Reclamation action  */}
+                                <Tippy content="Passer en réclamation">
+                                  <button
+                                    type="button"
+                                    className="flex items-center justify-center rounded-lg p-2 text-warning hover:text-warning"
+                                    onClick={() => showAlertReclamation(row.id)}
+                                  >
+                                    <IconAlertTriangle className="h-5 w-5 stroke-[1.5]" />
+                                  </button>
+                                </Tippy>
+                              </>
                             )}
 
                             {/* Icône Voir si l'utilisateur ne peut pas modifier et statutValidation !== 0 */}
@@ -1685,13 +1724,18 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     modalOpen={modalOpen}
                     selectedRow={{
                       ...selectedRow,
-                      "Montant caisse (A)": selectedRow["Montant caisse (A)"] || 0,
-                      "Montant bordereau (B)": selectedRow["Montant bordereau (B)"] || 0,
-                      "Montant revelé (C)": selectedRow["Montant relevé (C)"] || selectedRow.montantReleve || 0,
+                      "Montant caisse (A)":
+                        selectedRow["Montant caisse (A)"] || 0,
+                      "Montant bordereau (B)":
+                        selectedRow["Montant bordereau (B)"] || 0,
+                      "Montant revelé (C)":
+                        selectedRow["Montant relevé (C)"] ||
+                        selectedRow.montantReleve ||
+                        0,
                       "Date cloture": selectedRow["Date cloture"] || "",
                       banque: selectedRow.banque || "",
                       Produit: selectedRow.produit || selectedRow.Produit || "",
-                      numeroBordereau: selectedRow.numeroBordereau || ""
+                      numeroBordereau: selectedRow.numeroBordereau || "",
                     }}
                     rasChecked1={rasChecked1}
                     handleRasChecked1Change={handleRasChecked1Change}
@@ -1720,28 +1764,28 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     statutValidation={statutValidation}
                     observationCaisse={observationCaisse}
                     setObservationCaisse={setObservationCaisse}
+                    observationBanque={observationBanque}
+                    setObservationBanque={setObservationBanque}
                     handleAmountChange={handleAmountChange}
                     showAlertReclamation={showAlertReclamation}
                     showAlertCloture={showAlertCloture}
                     showAlertDRDFC={showAlertDRDFC}
                     rasChecked2={rasChecked2}
                     handleRasChecked2Change={handleRasChecked2Change}
-                    observationBanque={observationBanque}
-                    setObservationBanque={setObservationBanque}
                     showAlertRejete={showAlertRejete}
                     showAlertValide={showAlertValide}
                     showAlertRamener={showAlertRamener}
-                    handleSubmit={handleSubmit}
                     today={today}
                     setPreuvePhotoModal={setPreuvePhotoModal}
-                    observationRejete={observationRejete}
-                    handleSendEmail={handleSubmit}
+                    handleSendEmail={handleSendEmail}
                     handleMultipleFileUpload={handleMultipleFileUpload}
                     uploadedFiles={uploadedFiles}
                     removeFile={removeFile}
                     params={params}
                     setParams={setParams}
+                    observationRejete={observationRejete}
                     handleOpenConfirmationModal={handleOpenConfirmationModal}
+                    handleSubmit={handleSubmit}
                     setPhotoDocuments={setPhotoDocuments}
                     setImages2={setImages2}
                     images2={images2}
