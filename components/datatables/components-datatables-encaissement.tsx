@@ -1453,6 +1453,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
     // Ajouter un état pour forcer le remontage du composant
     const [forceRender, setForceRender] = useState(0);
 
+    // Ajouter un état pour forcer le remontage du composant
+    const [forceRender, setForceRender] = useState(0);
+
     return (
       <>
         {/* Contenu de la page */}
@@ -1469,6 +1472,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             drData={drData}
             onApplyFilters={handleApplyFilters}
             statutValidation={statutValidation}
+            showHideColumns={showHideColumns}
           />
 
           <div className="panel datatables">
