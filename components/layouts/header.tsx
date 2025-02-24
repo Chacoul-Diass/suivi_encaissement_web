@@ -110,11 +110,11 @@ const Header = () => {
     } catch (error: any) {
       // Journaliser l'erreur pour le débogage
       console.error("Erreur lors de la déconnexion:", error);
-      
+
       // Afficher un message d'erreur
       const errorMessage = handleApiError(error);
       toast.error(errorMessage);
-      
+
       // Même en cas d'erreur, déconnecter l'utilisateur
       cleanSessionAndRedirect();
     }

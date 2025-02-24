@@ -1391,7 +1391,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         const result = await dispatch(
           fetchDataReleve({
             id: statutValidation,
-            page: currentPage || 1,
+            page: currentPage,
             limit: pageSize,
             search: search || "",
             ...params,
@@ -1448,7 +1448,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
       setMontantBanque(formattedValue);
     };
 
-    console.log(paginate, "paginate");
+
 
     // Ajouter un état pour forcer le remontage du composant
     const [forceRender, setForceRender] = useState(0);
