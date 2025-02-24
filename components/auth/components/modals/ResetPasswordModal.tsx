@@ -47,8 +47,6 @@ export default function ResetPasswordModal({
       Toastify("success", result.payload.message || "Mot de passe modifié !");
       closeModal();
       router.push("/login");
-    } else {
-      Toastify("error", error || "Une erreur est survenue !");
     }
   };
 
@@ -61,7 +59,7 @@ export default function ResetPasswordModal({
         <p className="mb-4 text-gray-500">
           Votre nouveau mot de passe doit être différent des précédents.
         </p>
-        <form onSubmit={handleResetPassword}>
+        <form onSubmit={handleResetPassword} className="text-black">
           <div>
             <label
               htmlFor="otpCode"

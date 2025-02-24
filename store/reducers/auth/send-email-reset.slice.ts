@@ -1,6 +1,8 @@
 import { API_AUTH_SUIVI } from "@/config/constants";
+import { handleApiError } from "@/utils/apiErrorHandler";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 type ResetEmailState = {
   loading: boolean;
@@ -32,6 +34,8 @@ export const sendResetEmail: any = createAsyncThunk<
     );
     return response.data;
   } catch (error: any) {
+    const errorMessage = handleApiError(error); // Utilisation de la fonction
+    toast.error(errorMessage);
     return rejectWithValue(
       error.response?.data?.message || "Une erreur est survenue"
     );

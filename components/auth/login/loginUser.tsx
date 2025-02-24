@@ -18,6 +18,8 @@ import getUserHabilitation from "@/utils/getHabilitation";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import axiosInstance from "@/utils/axios";
 import { decodeTokens } from "@/utils/tokendecod";
+import { handleApiError } from "@/utils/apiErrorHandler";
+import { toast } from "react-toastify";
 
 const ComponentsAuthLoginForm = () => {
   const router = useRouter();
@@ -226,11 +228,8 @@ const ComponentsAuthLoginForm = () => {
       }
     } catch (error: any) {
       setIsLoading(false);
-      Toastify(
-        "error",
-        error.response?.data?.message ||
-          "Erreur lors du changement de mot de passe"
-      );
+      const errorMessage = handleApiError(error); // Utilisation de la fonction
+      toast.error(errorMessage);
     }
   };
 
@@ -255,7 +254,7 @@ const ComponentsAuthLoginForm = () => {
         }
 
         // Attendre un peu que le token soit bien enregistré
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
         // Faire plusieurs tentatives pour récupérer les habilitations
         let habilitation = null;
@@ -265,7 +264,7 @@ const ComponentsAuthLoginForm = () => {
         while (!habilitation && attempts < maxAttempts) {
           habilitation = getUserHabilitation();
           if (!habilitation) {
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            await new Promise((resolve) => setTimeout(resolve, 300));
             attempts++;
           }
         }
@@ -309,12 +308,13 @@ const ComponentsAuthLoginForm = () => {
         window.location.replace(cleanPath);
       } else {
         setIsAnimating(false);
-        Toastify("error", "Échec de la connexion. Vérifiez vos identifiants.");
+        console.log(
+          "error",
+          "Échec de la connexion. Vérifiez vos identifiants."
+        );
       }
     } catch (error) {
       setIsAnimating(false);
-      Toastify("error", "Une erreur est survenue lors de la connexion");
-      console.error("Erreur de connexion:", error);
     }
   };
 

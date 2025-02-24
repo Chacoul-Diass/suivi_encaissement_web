@@ -3,6 +3,8 @@ import { decodeTokens } from "@/utils/tokendecod";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import { TokenService } from "@/services/tokenService";
+import { handleApiError } from "@/utils/apiErrorHandler";
+import { toast } from "react-toastify";
 
 // Typage de la réponse de l'API et de l'état d'authentification
 interface AuthResponse {
@@ -53,14 +55,14 @@ export const login = createAsyncThunk(
         // Store tokens
         const tokens = {
           accessToken: response.data.data.acces_token,
-          refreshToken: response.data.data.refresh_token
+          refreshToken: response.data.data.refresh_token,
         };
         return tokens;
       }
       throw new Error("Tokens non reçus du serveur");
     } catch (error: any) {
-      console.error("Erreur lors de la connexion :", error);
-      console.log(error);
+      const errorMessage = handleApiError(error); // Utilisation de la fonction
+      toast.error(errorMessage);
       return rejectWithValue(
         error.response?.data || "Une erreur est survenue."
       );
@@ -94,27 +96,33 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action: PayloadAction<{ accessToken: string, refreshToken: string }>) => {
-        state.accessToken = action.payload.accessToken;
-        state.refresh_token = action.payload.refreshToken;
-        state.loading = false;
-        state.success = true;
+      .addCase(
+        login.fulfilled,
+        (
+          state,
+          action: PayloadAction<{ accessToken: string; refreshToken: string }>
+        ) => {
+          state.accessToken = action.payload.accessToken;
+          state.refresh_token = action.payload.refreshToken;
+          state.loading = false;
+          state.success = true;
 
-        // Stocker les tokens
-        TokenService.setAccessToken(action.payload.accessToken);
-        TokenService.setRefreshToken(action.payload.refreshToken);
+          // Stocker les tokens
+          TokenService.setAccessToken(action.payload.accessToken);
+          TokenService.setRefreshToken(action.payload.refreshToken);
 
-        // Décoder le token pour extraire les informations utilisateur
-        const decodedUser = decodeTokens(action.payload.accessToken);
-        state.user = decodedUser;
+          // Décoder le token pour extraire les informations utilisateur
+          const decodedUser = decodeTokens(action.payload.accessToken);
+          state.user = decodedUser;
 
-        if (process.env.NODE_ENV === "development") {
-          console.log("Tokens stockés et utilisateur décodé :", {
-            tokens: action.payload,
-            user: decodedUser,
-          });
+          if (process.env.NODE_ENV === "development") {
+            console.log("Tokens stockés et utilisateur décodé :", {
+              tokens: action.payload,
+              user: decodedUser,
+            });
+          }
         }
-      })
+      )
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;

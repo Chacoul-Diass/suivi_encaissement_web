@@ -32,6 +32,8 @@ import PreuvePhotoModal from "../modales/preuvePhotoModal";
 import ViewModal from "../modales/viewModal";
 import { fetchDirectionRegionales } from "@/store/reducers/select/dr.slice";
 import EncaissementTutorial from "../tutorial/TutorialTable-encaissement";
+import { handleApiError } from "@/utils/apiErrorHandler";
+import { toast } from "react-toastify";
 
 export interface DataReverse {
   id: number;
@@ -345,7 +347,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
       .then((result) => {
         if (result.isConfirmed) {
           // Payload à soumettre
-          const payload = {
+          const payload: any = {
             encaissementId,
             statutValidation: EStatutEncaissement.VALIDE,
           };
@@ -370,12 +372,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
               setModalOpen(false);
             })
             .catch((error) => {
-              swalWithBootstrapButtons.fire(
-                "Erreur",
-                "Une erreur est survenue lors de la validation.",
-                "error"
-              );
-              console.error("Erreur lors de la soumission :", error);
+              const errorMessage = handleApiError(error); // Utilisation de la fonction
+              toast.error(errorMessage);
             });
         } else if (result.dismiss === Swal.DismissReason.cancel) {
           swalWithBootstrapButtons.fire(
@@ -437,12 +435,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
               setModalOpen(false);
             })
             .catch((error) => {
-              swalWithBootstrapButtons.fire(
-                "Erreur",
-                "Une erreur est survenue lors de la validation.",
-                "error"
-              );
-              console.error("Erreur lors de la soumission :", error);
+              const errorMessage = handleApiError(error); // Utilisation de la fonction
+              toast.error(errorMessage);
             });
         } else if (result.dismiss === Swal.DismissReason.cancel) {
           swalWithBootstrapButtons.fire(
@@ -559,12 +553,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
               setModalOpen(false);
             })
             .catch((error) => {
-              swalWithBootstrapButtons.fire(
-                "Erreur ❌",
-                "Une erreur est survenue lors de la soumission.",
-                "error"
-              );
-              console.error("❌ Erreur lors de la validation :", error);
+              const errorMessage = handleApiError(error); // Utilisation de la fonction
+              toast.error(errorMessage);
             });
         } else if (result.dismiss === Swal.DismissReason.cancel) {
           swalWithBootstrapButtons.fire(
@@ -668,11 +658,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
               setModalOpen(false);
             })
             .catch((error) => {
-              swalWithBootstrapButtons.fire(
-                "Erreur",
-                "Une erreur est survenue lors de la soumission.",
-                "error"
-              );
+              const errorMessage = handleApiError(error); // Utilisation de la fonction
+              toast.error(errorMessage);
             });
         } else if (result.dismiss === Swal.DismissReason.cancel) {
           swalWithBootstrapButtons.fire(
@@ -736,12 +723,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
               setModalOpen(false);
             })
             .catch((error) => {
-              swalWithBootstrapButtons.fire(
-                "Erreur",
-                "Une erreur est survenue lors de la clôture.",
-                "error"
-              );
-              console.error("Erreur lors de la soumission :", error);
+              const errorMessage = handleApiError(error); // Utilisation de la fonction
+              toast.error(errorMessage);
             });
         } else if (result.dismiss === Swal.DismissReason.cancel) {
           swalWithBootstrapButtons.fire(
@@ -753,10 +736,12 @@ const ComponentsDatatablesColumnChooser: React.FC<
       });
   };
 
-  const [params, setParams] = useState({
+  const [params, setParams] = useState<any>({
     description: "",
     displayDescription: "",
   });
+
+  console.log(params, "params");
 
   const userInfo = getUserPermission();
 
@@ -769,10 +754,23 @@ const ComponentsDatatablesColumnChooser: React.FC<
   }, [dispatch]);
 
   const [toEmails, setToEmails] = useState<{ mail: string }[]>([]);
+  console.log(toEmails, "toEmails");
 
   const [toInput, setToInput] = useState<string>("");
   const [ccEmails, setCcEmails] = useState<Array<{ mail: string }>>([]);
-  const [emailSubject, setEmailSubject] = useState<string>("");
+  const numeroBordereau = selectedRow?.numeroBordereau;
+  const [emailSubject, setEmailSubject] = useState<string>(
+    `Retard sur le bordereau N°${numeroBordereau || ""}`
+  );
+
+  useEffect(() => {
+    if (!emailSubject) {
+      setEmailSubject(`Retard sur le bordereau N°${numeroBordereau || ""}`);
+    }
+  }, [emailSubject, numeroBordereau]);
+
+  console.log(emailSubject, "emailSubject");
+
   const [uploadedFiles, setUploadedFiles] = useState<
     { file: File; preview: string }[]
   >([]);
@@ -1082,7 +1080,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
   };
 
   const handleSendEmail = async () => {
-    if (toEmails.length === 0) {
+    if (!params?.toEmails || params.toEmails.length === 0) {
       ToastError.fire({
         text: "Veuillez ajouter au moins une adresse email dans le champ 'À'.",
       });
@@ -1090,7 +1088,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
     }
 
     // ✅ Vérification des emails "À"
-    for (const emailObj of toEmails) {
+    for (const emailObj of params.toEmails) {
       if (!validateEmail(emailObj.mail)) {
         ToastError.fire({
           text: `L'adresse email "À" ${emailObj.mail} est invalide.`,
@@ -1100,12 +1098,14 @@ const ComponentsDatatablesColumnChooser: React.FC<
     }
 
     // ✅ Vérification des emails "CC"
-    for (const emailObj of ccEmails) {
-      if (!validateEmail(emailObj.mail)) {
-        ToastError.fire({
-          text: `L'adresse email CC ${emailObj.mail} est invalide.`,
-        });
-        return;
+    if (params?.ccEmails) {
+      for (const emailObj of params.ccEmails) {
+        if (!validateEmail(emailObj.mail)) {
+          ToastError.fire({
+            text: `L'adresse email CC ${emailObj.mail} est invalide.`,
+          });
+          return;
+        }
       }
     }
 
@@ -1113,8 +1113,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
       const attachments = uploadedFiles.map((item) => item.file);
 
       const payload: any = {
-        to: toEmails.map((emailObj) => emailObj.mail).join(","),
-        cc: ccEmails.map((emailObj) => emailObj.mail).join(","),
+        to: params.toEmails.map((emailObj: any) => emailObj.mail).join(","),
+        cc:
+          params.ccEmails?.map((emailObj: any) => emailObj.mail).join(",") ||
+          "",
         subject: emailSubject,
         text: params.description,
         attachments,
@@ -1126,11 +1128,16 @@ const ComponentsDatatablesColumnChooser: React.FC<
         setEmailModalOpen(false);
         ToastSuccess.fire({ text: "Email envoyé avec succès !" });
 
-        setToEmails([]);
-        resetCcEmails(); // Utilisation de la nouvelle fonction
-        setEmailSubject("");
-        setParams({ description: "", displayDescription: "" });
+        // ✅ Réinitialisation correcte des états
+        setParams({
+          toEmails: [],
+          ccEmails: [],
+          description: "",
+          displayDescription: "",
+        });
+
         setUploadedFiles([]);
+        setEmailSubject("");
       } else {
         console.error("❌ Échec lors de l'envoi de l'email :", resultAction);
         ToastError.fire({ text: "Échec lors de l'envoi de l'email." });
@@ -1145,7 +1152,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
     if (emailConnecte && ccEmails.length === 0) {
       setCcEmails([{ mail: emailConnecte }]);
     }
-  }, [emailConnecte]);
+  }, [ccEmails.length, emailConnecte]);
 
   const resetCcEmails = () => {
     if (emailConnecte) {
@@ -1217,7 +1224,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
         setModalOpen(false);
       })
       .catch((error) => {
-        console.error("❌ Erreur lors de la validation :", error);
+        const errorMessage = handleApiError(error); // Utilisation de la fonction
+        toast.error(errorMessage);
       });
   };
 
@@ -1632,7 +1640,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
             removeCcEmail={removeCcEmail}
             toEmails={toEmails}
             toInput={toInput}
-            numeroBordereau={selectedRow?.numeroBordereau}
+            numeroBordereau={numeroBordereau}
+            setToEmails={setToEmails}
           />
           {/* PreuvePhoto */}
           <PreuvePhotoModal

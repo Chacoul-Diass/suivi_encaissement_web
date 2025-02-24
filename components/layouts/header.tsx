@@ -107,22 +107,28 @@ const Header = () => {
         payload
       );
 
-      if (response.statusCode === 201) {
-        // Dispatch l'action logout du reducer
-        dispatch(logout());
-        // Supprimer le cookie
-        document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-        // Nettoyer le localStorage
-        localStorage.clear();
-        // Rediriger vers la page de login
-        window.location.href = "/login";
-      }
+      document.cookie =
+        "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+      localStorage.clear();
+      window.location.href = "/login";
+
+      // if (response.statusCode === 201) {
+      //   // Dispatch l'action logout du reducer
+      //   dispatch(logout());
+      //   // Supprimer le cookie
+      //   document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+      //   // Nettoyer le localStorage
+      //   localStorage.clear();
+      //   // Rediriger vers la page de login
+      //   window.location.href = "/login";
+      // }
     } catch (error: any) {
       const errorMessage = handleApiError(error);
       toast.error(errorMessage);
       // En cas d'erreur, on déconnecte quand même l'utilisateur
       dispatch(logout());
-      document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+      document.cookie =
+        "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
       localStorage.clear();
       window.location.href = "/login";
     }
