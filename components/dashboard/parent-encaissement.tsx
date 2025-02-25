@@ -90,6 +90,8 @@ const ComponentsDashboardValider = () => {
     }
   };
 
+  console.log(activeTab, "activeTab");
+
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setPage(1);

@@ -42,7 +42,7 @@ export interface DataReverse {
   banque: string;
   "Montant caisse (A)": number;
   "Montant bordereau (B)": number;
-  "Montant revelé (C)": number;
+  "Montant relevé (C)": number;
   "Date cloture": string;
   "Date Validation": string;
   Bordereau: string;
@@ -172,7 +172,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         "Date Encais": formatDateData(item.dateEncaissement),
         "Montant caisse (A)": item.montantRestitutionCaisse || 0,
         "Montant bordereau (B)": item.montantBordereauBanque || 0,
-        "Montant revelé (C)": item.validationEncaissement?.montantReleve || 0,
+        "Montant relevé (C)": item.validationEncaissement?.montantReleve || 0,
         "Date cloture": formatDateData(item.dateRemiseBanque) || "",
         Bordereau: item.numeroBordereau || "",
         caisse: item.caisse || "",
@@ -185,20 +185,19 @@ const ComponentsDatatablesColumnChooser: React.FC<
         "Observation(B-C)":
           item.validationEncaissement?.observationReleve || "",
         ...(item.validationEncaissement && {
-          "Date Validation":
-            item.validationEncaissement?.dateValidation || "N/A",
+          "Date Validation": item.validationEncaissement?.dateValidation || "",
           "Observation caisse":
-            item.validationEncaissement?.observationCaisse || "N/A",
+            item.validationEncaissement?.observationCaisse || "",
           "Observation réclamation":
-            item.validationEncaissement?.observationReclamation || "N/A",
+            item.validationEncaissement?.observationReclamation || "",
           "Observation relevé":
-            item.validationEncaissement?.observationReleve || "N/A",
+            item.validationEncaissement?.observationReleve || "",
           "Ecart relevé": item.validationEncaissement?.ecartReleve || "0",
           "Montant relevé": item.validationEncaissement?.montantReleve || "0",
           observationReclamation:
-            item.validationEncaissement?.observationReclamation || "N/A",
+            item.validationEncaissement?.observationReclamation || "",
           observationRejete:
-            item.validationEncaissement?.observationRejete || "N/A",
+            item.validationEncaissement?.observationRejete || "",
         }),
         documents: item.documents,
       }));
@@ -900,27 +899,18 @@ const ComponentsDatatablesColumnChooser: React.FC<
               formatDateData(dateValidation) || "N/A",
           },
           {
-            accessor: "Observation caisse",
-            title: "Observation Caisse",
-            sortable: false,
-            render: ({ "Observation caisse": observation }: any) => (
-              <span>{observation}</span>
-            ),
-          },
-          {
-            accessor: "Observation relevé",
+            accessor: "observationReleve",
             title: "Observation Relevé",
             sortable: false,
-            render: ({ "Observation relevé": observation }: any) => (
+            render: ({ observationReleve: observation }: any) => (
               <span>{observation}</span>
             ),
           },
-
           {
-            accessor: "Observation réclamation",
+            accessor: "observationReclamation",
             title: "Observation réclamation",
             sortable: false,
-            render: ({ "Observation réclamation": observation }: any) => (
+            render: ({ observationReclamation: observation }: any) => (
               <span>{observation}</span>
             ),
           },
@@ -1426,6 +1416,11 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   position: "relative",
                   width: "100%",
                 }}
+                rowStyle={(row) =>
+                  row.observationRejete || row.observationReclamation
+                    ? { backgroundColor: "#fee2e2" }
+                    : {}
+                }
                 className="table-hover whitespace-nowrap"
                 records={
                   !loading && filteredData?.length > 0 ? filteredData : []

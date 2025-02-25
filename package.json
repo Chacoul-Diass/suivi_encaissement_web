@@ -82,6 +82,7 @@
     "react-sortablejs": "^6.1.4",
     "react-text-mask": "^5.5.0",
     "react-toastify": "^10.0.6",
+    "react-windowed-select": "^5.2.0",
     "redux-logger": "^3.0.6",
     "redux-persist": "^6.0.0",
     "sharp": "^0.33.5",
