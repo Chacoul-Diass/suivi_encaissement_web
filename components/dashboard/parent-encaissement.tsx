@@ -17,6 +17,8 @@ import { EStatutEncaissement } from "@/utils/enums";
 import getUserHabilitation from "@/utils/getHabilitation";
 import IconArchive from "../icon/icon-archive";
 import { fetchDataReleve } from "@/store/reducers/encaissements/releve.slice";
+import axiosInstance from "@/utils/axios";
+import { API_AUTH_SUIVI } from "@/config/constants";
 
 const ComponentsDashboardValider = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -90,7 +92,58 @@ const ComponentsDashboardValider = () => {
     }
   };
 
-  console.log(activeTab, "activeTab");
+  const [ecartDataEncaissement, setEcartDataEncaissement] = useState<any>(null);
+
+  const fetchData = async (filters?: Record<string, any>) => {
+    try {
+      const cleanArray = (arr?: string[]): string[] =>
+        arr ? arr.map((item) => item.trim()) : [];
+
+      const formatArray = (arr?: string[]): string =>
+        JSON.stringify(cleanArray(arr));
+
+      const formatDate = (date?: string): string | undefined => {
+        if (!date) return undefined;
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return undefined;
+        return `${d.getFullYear()}-${(d.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+      };
+
+      const params: Record<string, any> = {
+        directionRegional: filters?.directionRegional
+          ? formatArray(filters.directionRegional)
+          : undefined,
+        codeExpl: filters?.codeExpl ? formatArray(filters.codeExpl) : undefined,
+        startDate: filters?.startDate
+          ? formatDate(filters.startDate)
+          : undefined,
+        endDate: filters?.endDate ? formatDate(filters.endDate) : undefined,
+        banque: filters?.banque ? formatArray(filters.banque) : undefined,
+        caisse: filters?.caisse ? formatArray(filters.caisse) : undefined,
+        produit: filters?.produit ? formatArray(filters.produit) : undefined,
+        modeReglement: filters?.modeReglement
+          ? formatArray(filters.modeReglement)
+          : undefined,
+      };
+
+      Object.entries(params).forEach(([key, value]) => {
+        if (value === undefined) delete params[key];
+      });
+
+      const response: any = await axiosInstance.get(
+        `${API_AUTH_SUIVI}/encaissements/${activeTab}?page=${page}&search=${search}&limit=${limit}`,
+        { params }
+      );
+
+      if (response?.error === false) {
+        setEcartDataEncaissement(response.data);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération :", error);
+    }
+  };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -104,20 +157,18 @@ const ComponentsDashboardValider = () => {
 
   useEffect(() => {
     if (isMounted) {
-      dispatch(
-        fetchDataReleve({
-          id: activeTab.toString(),
-          page: page || 1,
-          search: search || "",
-          limit: limit || 5,
-        })
-      );
+      fetchData({
+        id: activeTab.toString(),
+        page: page || 1,
+        search: search || "",
+        limit: limit || 5,
+      });
     }
-  }, [dispatch, activeTab, isMounted, page, search, limit]);
+  }, [activeTab, isMounted, page, search, limit]);
 
-  const dataEncaissementReverse = dataReverse?.result || [];
-  const Totaldata = dataReverse?.totals || [];
-  const paginate = dataReverse?.pagination || [];
+  const dataEncaissementReverse = ecartDataEncaissement?.result || [];
+  const Totaldata = ecartDataEncaissement?.totals || [];
+  const paginate = ecartDataEncaissement?.pagination || [];
 
   return (
     <div>
@@ -170,7 +221,11 @@ const ComponentsDashboardValider = () => {
                     data={dataEncaissementReverse || []}
                     total={Totaldata}
                     paginate={paginate}
-                    loading={dataReverseloading}
+                    loading={
+                      dataReverseloading !== undefined
+                        ? dataReverseloading
+                        : false
+                    }
                     habilitation={habilitation}
                     handlePageChange={handlePageChange}
                     handleSearchChange={handleSearchChange}

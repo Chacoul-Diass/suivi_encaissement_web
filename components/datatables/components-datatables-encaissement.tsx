@@ -322,6 +322,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
     }
   };
 
+  console.log(data, "data");
+
+  console.log(loading, "loadingdata");
+
   const showAlertValide = async (encaissementId: number) => {
     const swalWithBootstrapButtons = Swal.mixin({
       customClass: {
@@ -793,8 +797,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
       ),
     },
     {
-      accessor: "modeEtJournee",
-      title: "Session Caisse",
+      accessor: "journeeCaisse",
+      title: "Journee caisse",
       sortable: true,
       render: ({ journeeCaisse }: any) => (
         <div>
@@ -803,7 +807,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
       ),
     },
     {
-      accessor: "modeEtJournee",
+      accessor: "modeReglement",
       title: "Mode de réglement ",
       sortable: true,
       render: ({ modeReglement }: any) => (

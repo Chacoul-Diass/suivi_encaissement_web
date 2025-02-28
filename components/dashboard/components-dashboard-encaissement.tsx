@@ -14,20 +14,19 @@ import IconCreditCard from "../icon/icon-credit-card";
 import IconTag from "../icon/icon-tag";
 import IconInbox from "../icon/icon-inbox";
 import IconCaretDown from "../icon/icon-caret-down";
-import { fetchDashbord } from "@/store/reducers/dashboard/dashbord.slice";
+
 import getUserPermission from "@/utils/user-info";
 import { fetchSecteurs } from "@/store/reducers/select/secteur.slice";
 import IconRefresh from "../icon/icon-refresh";
 import { fetchDirectionRegionales } from "@/store/reducers/select/dr.slice";
 import IconFilter from "../icon/icon-filter";
-import ComponentsDashboardTables from "./components-dashboard-tables";
+
 import DashboardTutorial from "../tutorial/TutorialTable-dashboard";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import axios from "axios";
+
 import { API_AUTH_SUIVI } from "@/config/constants";
 import axiosInstance from "@/utils/axios";
-import FicheDette from "../factureMoratoire";
 
 const ComponentsDashboardSales = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -36,24 +35,76 @@ const ComponentsDashboardSales = () => {
 
   const isFirstLogin = user?.isFirstLogin;
 
-  const dataDashboard: any = useSelector(
-    (state: TRootState) => state?.dashboard?.data
-  );
+  const [ecartDataDashboard, setEcartDataDashboard] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const loadingDashboard = useSelector(
-    (state: TRootState) => state?.dashboard?.loading ?? false
-  );
+  const fetchDashboardData = async (filters?: any) => {
+    const cleanArray = (arr: string[] | undefined) =>
+      arr?.map((item) => item.trim()).filter(Boolean) || [];
+
+    const formatArray = (arr: string[] | undefined) => {
+      const cleaned = cleanArray(arr);
+      return cleaned.length ? JSON.stringify(cleaned) : undefined;
+    };
+
+    const params: Record<string, any> = {};
+
+    if (filters?.selectedDRIds?.length) {
+      params["directionRegional"] = formatArray(
+        filters.selectedDRIds.map(String)
+      );
+    }
+
+    if (filters?.selectedSecteurIds?.length) {
+      params["codeExpl"] = formatArray(filters.selectedSecteurIds.map(String));
+    }
+
+    if (filters?.startDate) {
+      params["startDate"] = filters.startDate;
+    }
+
+    if (filters?.endDate) {
+      params["endDate"] = filters.endDate;
+    }
+
+    // Supprimer les paramètres undefined
+    Object.keys(params).forEach((key) => {
+      if (params[key] === undefined) {
+        delete params[key];
+      }
+    });
+
+    try {
+      setLoading(true);
+      const response: any = await axiosInstance.get(
+        `${API_AUTH_SUIVI}/dashboard/get-dashboard-data`,
+        { params }
+      );
+
+      if (response?.error === false) {
+        setEcartDataDashboard(response?.data);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération :", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    dispatch(fetchDashbord({}));
+    fetchDashboardData();
+  }, []);
+
+  useEffect(() => {
+    // dispatch(fetchDashboardData({}));
     dispatch(fetchDirectionRegionales());
   }, [dispatch]);
 
-  const caisses = dataDashboard?.caisses || {};
-  const banques = dataDashboard?.banques || [];
-  const completionRate = dataDashboard?.completionRate || {};
-  const ecart = dataDashboard?.ecart || {};
-  const graph = dataDashboard?.graph || {};
+  const caisses = ecartDataDashboard?.caisses || {};
+  const banques = ecartDataDashboard?.banques || [];
+  const completionRate = ecartDataDashboard?.completionRate || {};
+  const ecart = ecartDataDashboard?.ecart || {};
+  const graph = ecartDataDashboard?.graph || {};
 
   const isDark = useSelector(
     (state: TRootState) =>
@@ -203,7 +254,6 @@ const ComponentsDashboardSales = () => {
   const [showAllRestitution, setShowAllRestitution] = useState(false);
   const [showAllBordereau, setShowAllBordereau] = useState(false);
   const [ecartData, setEcartData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
 
   const drData: any = useSelector((state: TRootState) => state.dr?.data);
   const drOptions = drData?.map((dr: any) => ({
@@ -265,18 +315,9 @@ const ComponentsDashboardSales = () => {
     }
   };
 
-  const handleReset = () => {
-    setSelectedDR([]);
-    setSelectedSecteur([]);
-    setSecteurOptions([]);
-    setSelectedDRLabel([]);
-    dispatch(fetchDashbord({}));
-    fetchEcartData({});
-  };
-
   const handleRefresh = () => {
     if (selectedDR.length === 0) {
-      dispatch(fetchDashbord({}));
+      dispatch(fetchDashboardData({}));
       fetchEcartData({});
     } else {
       const filters = {
@@ -289,45 +330,53 @@ const ComponentsDashboardSales = () => {
         codeExpl: selectedCodeExpl.map(String),
       };
 
-      dispatch(fetchDashbord(dashboardFilters));
+      fetchDashboardData(dashboardFilters);
       fetchEcartData(filters);
     }
-  };
-
-  const handleSearch = () => {
-    const filters = {
-      selectedDRIds: selectedDRIds,
-      selectedSecteurIds: selectedCodeExpl,
-    };
-
-    const dashboardFilters = {
-      directionRegional: selectedDRIds.map(String),
-      codeExpl: selectedCodeExpl.map(String),
-    };
-
-    dispatch(fetchDashbord(dashboardFilters));
-    fetchEcartData(filters);
   };
 
   useEffect(() => {
     fetchEcartData();
   }, []);
 
-  console.log(ecartData, "ecartData");
-
-  // Gestion des sélections DR
   const handleDRChange = (selected: any) => {
     setSelectedDR(selected);
     const ids = selected ? selected.map((dr: any) => dr.value) : [];
-    const label = selected ? selected.map((dr: any) => dr.label) : [];
     setSelectedDRIds(ids);
-    setSelectedDRLabel(label);
+    const labels = selected ? selected.map((dr: any) => dr.label) : [];
+    setSelectedDRLabel(labels);
+
+    // Récupérer les secteurs pour les DR sélectionnées
+    if (ids.length > 0) {
+      dispatch(fetchSecteurs(ids));
+    } else {
+      setSecteurOptions([]);
+      setSelectedSecteur([]);
+    }
+
+    // Mettre à jour le dashboard avec les filtres
+    const filters = {
+      selectedDRIds: ids,
+      selectedSecteurIds: selectedCodeExpl,
+    };
+
+    // fetchDashboardData(filters);
+    // fetchEcartData(filters);
   };
 
   const handleSecteurChange = (selected: any) => {
     setSelectedSecteur(selected);
-    const ids = selected ? selected.map((expl: any) => expl.value) : [];
+    const ids = selected ? selected.map((secteur: any) => secteur.value) : [];
     setSelectedCodeExpl(ids);
+
+    // Mettre à jour le dashboard avec les filtres
+    const filters = {
+      selectedDRIds: selectedDRIds,
+      selectedSecteurIds: ids,
+    };
+
+    fetchDashboardData(filters);
+    fetchEcartData(filters);
   };
 
   const handleApplyFilters = () => {
@@ -336,7 +385,7 @@ const ComponentsDashboardSales = () => {
       selectedSecteurIds: selectedCodeExpl,
     };
     dispatch(
-      fetchDashbord({
+      fetchDashboardData({
         directionRegional: selectedDRLabel?.length
           ? selectedDRLabel?.map(String)
           : undefined,
@@ -362,7 +411,7 @@ const ComponentsDashboardSales = () => {
     setSelectedCodeExpl([]);
     setSecteurOptions([]);
     setSelectedDRLabel([]);
-    dispatch(fetchDashbord({}));
+    dispatch(fetchDashboardData({}));
     fetchEcartData({});
   };
 
@@ -592,7 +641,7 @@ const ComponentsDashboardSales = () => {
                       </div>
                     </div>
 
-                    {loadingDashboard ? (
+                    {loading ? (
                       <div className="relative">
                         <div className="rounded-lg bg-white p-4 dark:bg-black">
                           <div className="h-[325px] w-full animate-pulse rounded-lg bg-gray-300 dark:bg-gray-700"></div>
@@ -714,7 +763,7 @@ const ComponentsDashboardSales = () => {
                     </div>
 
                     <div className="space-y-9">
-                      {loadingDashboard ? (
+                      {loading ? (
                         // Skeleton Loader pour le résumé catégoriel
                         <div className="space-y-6">
                           {Array.from({ length: 4 }).map((_, index) => (
@@ -855,7 +904,7 @@ const ComponentsDashboardSales = () => {
                       Banques avec le plus d'écart
                     </h5>
 
-                    {loadingDashboard ? (
+                    {loading ? (
                       <div className="space-y-3">
                         {Array.from({ length: 5 }).map((_, index) => (
                           <div
@@ -920,7 +969,7 @@ const ComponentsDashboardSales = () => {
                     </div>
                     <div>
                       <div className="space-y-6">
-                        {loadingDashboard
+                        {loading
                           ? Array.from({ length: 4 }).map((_, index) => (
                               <div
                                 key={index}
@@ -980,7 +1029,7 @@ const ComponentsDashboardSales = () => {
                       </div>
                     </div>
                     <div className="-mt-6 grid grid-cols-2 gap-2 px-8">
-                      {loadingDashboard ? (
+                      {loading ? (
                         Array.from({ length: 2 }).map((_, index) => (
                           <div
                             key={index}
@@ -1032,7 +1081,7 @@ const ComponentsDashboardSales = () => {
                         </span>
                       </div>
                       <div className="mb-5 space-y-1">
-                        {loadingDashboard
+                        {loading
                           ? Array.from({ length: 5 }).map((_, index) => (
                               <div
                                 key={index}

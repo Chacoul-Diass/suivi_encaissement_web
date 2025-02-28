@@ -89,7 +89,7 @@ const initialState = {
     totalAmount: 0,
     totalCount: 0,
   },
-  loading: true,
+  loading: false,
   error: null as string | null,
 };
 
