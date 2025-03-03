@@ -89,6 +89,7 @@ const formatNumber = (num: number | undefined): string => {
 interface EncaissementComptableProps {
   statutValidation: number;
   data: any[];
+  fetchData:any;
   loading: boolean;
   paginate: Paginations;
   habilitation: any[];
@@ -104,6 +105,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
   data,
   loading,
   paginate,
+  fetchData,
   habilitation,
   handlePageChange,
   handleSearchChange,
@@ -1239,24 +1241,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
     setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await dispatch(
-        fetchDataReleve({
-          id: statutValidation,
-          page: currentPage,
-          limit: 5,
-          search: search,
-        })
-      );
-    } catch (error) {
-      console.error("Erreur lors de l'actualisation :", error);
-    } finally {
-      setIsRefreshing(false);
-    }
+    fetchData();
   };
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
@@ -1315,7 +1301,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
           <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
             {/* Actualisation */}
             <RefreshBtn
-              isRefreshing={isRefreshing}
+              isRefreshing={loading}
               handleRefresh={handleRefresh}
             />
             <div className="flex flex-wrap items-center gap-2">

@@ -17,24 +17,16 @@ import getUserHabilitation from "@/utils/getHabilitation";
 import IconArchive from "../icon/icon-archive";
 import EncaissementComptable from "../dashboard/enfant1-encaissement";
 import { fetchDataReleve } from "@/store/reducers/encaissements/releve.slice";
+import axiosInstance from "@/utils/axios";
+import { API_AUTH_SUIVI } from "@/config/constants";
 
-export default function Reclamation() {
-  const dispatch = useDispatch<TAppDispatch>();
-
+export default function Litige() {
   const habilitation = getUserHabilitation();
 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const dataReverse: DataReverse = useSelector(
-    (state: any) => state.encaissementReleve.data
-  );
-
-  const dataReverseloading: any = useSelector(
-    (state: any) => state.encaissementReleve.loading
-  );
 
   const [activeTab, setActiveTab] = useState<EStatutEncaissement>(
     EStatutEncaissement.RECLAMATION_REVERSES
@@ -43,6 +35,12 @@ export default function Reclamation() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLimit, setPageLimit] = useState(5);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const handlePageChange = (page: number) => {
+    if (page > 0 && page <= paginate.totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const allTabs = [
     {
@@ -69,22 +67,87 @@ export default function Reclamation() {
     )
   );
 
+  const [ecartDataEncaissement, setEcartDataEncaissement] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchData = async (filters?: Record<string, any>) => {
+    setLoading(true);
+    try {
+      const cleanArray = (arr?: string[]): string[] =>
+        arr ? arr.map((item) => item.trim()) : [];
+
+      const formatArray = (arr?: string[]): string =>
+        JSON.stringify(cleanArray(arr));
+
+      const formatDate = (date?: string): string | undefined => {
+        if (!date) return undefined;
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return undefined;
+        return `${d.getFullYear()}-${(d.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+      };
+
+      const params: Record<string, any> = {
+        directionRegional: filters?.directionRegional
+          ? formatArray(filters.directionRegional)
+          : undefined,
+        codeExpl: filters?.codeExpl ? formatArray(filters.codeExpl) : undefined,
+        startDate: filters?.startDate
+          ? formatDate(filters.startDate)
+          : undefined,
+        endDate: filters?.endDate ? formatDate(filters.endDate) : undefined,
+        banque: filters?.banque ? formatArray(filters.banque) : undefined,
+        caisse: filters?.caisse ? formatArray(filters.caisse) : undefined,
+        produit: filters?.produit ? formatArray(filters.produit) : undefined,
+        modeReglement: filters?.modeReglement
+          ? formatArray(filters.modeReglement)
+          : undefined,
+      };
+
+      Object.entries(params).forEach(([key, value]) => {
+        if (value === undefined) delete params[key];
+      });
+
+      const response: any = await axiosInstance.get(
+        `${API_AUTH_SUIVI}/encaissements/${activeTab}?page=${currentPage}&search=${searchTerm}&limit=${pageLimit}`,
+        { params }
+      );
+
+      if (response?.error === false) {
+        setEcartDataEncaissement(response.data);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération :", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleLimitChange = (value: number) => {
+    setPageLimit(value);
+    setCurrentPage(1);
+  };
+
   useEffect(() => {
     if (isMounted) {
-      dispatch(
-        fetchDataReleve({
-          id: activeTab?.toString(),
-          page: currentPage,
-          limit: pageLimit,
-          search: searchTerm,
-        })
-      );
+      fetchData({
+        id: activeTab.toString(),
+        page: currentPage || 1,
+        search: searchTerm || "",
+        limit: pageLimit || 5,
+      });
     }
-  }, [dispatch, activeTab, isMounted, currentPage, pageLimit, searchTerm]);
+  }, [activeTab, isMounted, currentPage, pageLimit, searchTerm]);
 
-  const dataEncaissementReverse = dataReverse?.result || [];
-  const Totaldata = dataReverse?.totals || [];
-  const paginate = dataReverse?.pagination || [];
+  const dataEncaissementReverse = ecartDataEncaissement?.result || [];
+  const Totaldata = ecartDataEncaissement?.totals || [];
+  const paginate = ecartDataEncaissement?.pagination || [];
 
   return (
     <div>
@@ -92,9 +155,9 @@ export default function Reclamation() {
         <ol className="flex flex-wrap items-center gap-y-4 font-semibold text-gray-500 dark:text-white-dark">
           <li>
             <button className="flex items-center justify-center rounded-md border border-gray-500/20 p-2.5 shadow hover:text-gray-500/70 dark:border-0 dark:bg-[#191e3a] dark:hover:text-white-dark/70">
-              <Link className="flex" href="/reclamation">
+              <Link className="flex" href="/litige">
                 <IconHome className="shrink-0 ltr:mr-2 rtl:ml-2" />
-                Réclamation
+                Litige
               </Link>
             </button>
           </li>
@@ -132,13 +195,26 @@ export default function Reclamation() {
             <Tab.Panels>
               {filteredTabs.map((tab) => (
                 <Tab.Panel key={tab.id}>
-                  <EncaissementComptable
+                  {/* <EncaissementComptable
                     statutValidation={tab.id}
                     data={dataEncaissementReverse || []}
                     total={Totaldata}
                     paginate={paginate}
                     loading={dataReverseloading}
                     habilitation={habilitation}
+                  /> */}
+
+                  <EncaissementComptable
+                    statutValidation={tab.id}
+                    data={dataEncaissementReverse || []}
+                    total={Totaldata}
+                    paginate={paginate}
+                    loading={loading}
+                    fetchData={fetchData}
+                    habilitation={habilitation}
+                    handlePageChange={handlePageChange}
+                    handleSearchChange={handleSearchChange}
+                    handleLimitChange={handleLimitChange}
                   />
                 </Tab.Panel>
               ))}

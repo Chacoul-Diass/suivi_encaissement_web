@@ -226,6 +226,7 @@ const ComponentsDashboardValider = () => {
                         ? dataReverseloading
                         : false
                     }
+                    fetchData={fetchData}
                     habilitation={habilitation}
                     handlePageChange={handlePageChange}
                     handleSearchChange={handleSearchChange}

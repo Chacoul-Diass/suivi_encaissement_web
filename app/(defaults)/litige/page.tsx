@@ -1,4 +1,4 @@
-import ComponentsAppsMailbox from "@/components/reclamation/reclamation";
+import ComponentsAppsMailbox from "@/components/litige/litige";
 import { Metadata } from "next";
 import React from "react";
 
