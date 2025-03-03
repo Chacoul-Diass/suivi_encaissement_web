@@ -1472,7 +1472,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
             drData={drData}
             onApplyFilters={handleApplyFilters}
             statutValidation={statutValidation}
-            showHideColumns={showHideColumns}
           />
 
           <div className="panel datatables">
