@@ -47,7 +47,7 @@ export default function GlobalFiltre({
   const [searchQueries, setSearchQueries] = useState({
     banques: "",
     caisses: "",
-    produit:"",
+    produit: "",
     modes: "",
     drs: "",
     secteurs: "",
@@ -59,34 +59,42 @@ export default function GlobalFiltre({
   const [selectedItems, setSelectedItems] = useState<{
     banques: { libelle: string }[];
     caisses: { libelle: string }[];
-    produit:{libelle: string }[]
+    produit: { libelle: string }[];
     modes: { libelle: string }[];
   }>({
     banques: [],
     caisses: [],
-    produit:[],
+    produit: [],
     modes: [],
   });
 
   // Récupération des données via Redux
-  const {produit, caisses, banques, modes, secteurs, drLoading, secteurLoading } =
-    useSelector((state: TRootState) => ({
-      produit:  state.produit.data?.map((item: any) => ({ libelle: item.libelle })) ||
+  const {
+    produit,
+    caisses,
+    banques,
+    modes,
+    secteurs,
+    drLoading,
+    secteurLoading,
+  } = useSelector((state: TRootState) => ({
+    produit:
+      state?.produit?.data?.map((item: any) => ({ libelle: item.libelle })) ||
       [],
-      caisses:
-        state.caisses.data?.map((item: any) => ({ libelle: item.libelle })) ||
-        [],
-      banques:
-        state.Banques.data?.map((item: any) => ({ libelle: item.libelle })) ||
-        [],
-      modes:
-        state.modeReglement.data?.map((item: any) => ({
-          libelle: item.libelle,
-        })) || [],
-      secteurs: state.secteur.data || [],
-      drLoading: state.dr.loading,
-      secteurLoading: state.secteur.loading,
-    }));
+    caisses:
+      state?.caisses?.data?.map((item: any) => ({ libelle: item.libelle })) ||
+      [],
+    banques:
+      state?.Banques?.data?.map((item: any) => ({ libelle: item.libelle })) ||
+      [],
+    modes:
+      state?.modeReglement?.data?.map((item: any) => ({
+        libelle: item.libelle,
+      })) || [],
+    secteurs: state?.secteur?.data || [],
+    drLoading: state?.dr?.loading,
+    secteurLoading: state?.secteur?.loading,
+  }));
 
   // Charger les données initiales (caisse, banque, modes)
   useEffect(() => {
@@ -105,7 +113,7 @@ export default function GlobalFiltre({
     }
 
     // Only fetch sectors if we have valid DR IDs
-    const validDrIds = selectedDRIds.filter(id => id != null);
+    const validDrIds = selectedDRIds.filter((id) => id != null);
     if (validDrIds.length > 0) {
       dispatch(fetchSecteurs(validDrIds));
     }
@@ -226,10 +234,10 @@ export default function GlobalFiltre({
     setDateRangeKey(Date.now());
     setSelectedDRIds([]);
     setSelectedSecteurIds([]);
-    setSelectedItems({ produit : [] ,banques: [], caisses: [], modes: [] });
+    setSelectedItems({ produit: [], banques: [], caisses: [], modes: [] });
 
     setSearchQueries({
-      produit:"",
+      produit: "",
       banques: "",
       caisses: "",
       modes: "",
@@ -253,7 +261,7 @@ export default function GlobalFiltre({
   // Petite fonction utilitaire pour générer un Dropdown
   const renderDropdown = (
     label: React.ReactNode,
-    type: "produit" |"banques" | "caisses" | "modes" | "drs" | "secteurs",
+    type: "produit" | "banques" | "caisses" | "modes" | "drs" | "secteurs",
     items: any[],
     selected: any[],
     onToggle: (id: any | string) => void
@@ -438,7 +446,7 @@ export default function GlobalFiltre({
 
         {/* Dropdowns avec icônes */}
         <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-         <div className="w-full">
+          <div className="w-full">
             {renderDropdown(
               <>
                 <IconCash className="h-4 w-4 text-gray-400" />

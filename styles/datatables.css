@@ -261,3 +261,11 @@ table tr .mantine-Checkbox-root {
   width: 20px !important;
   height: 20px !important;
 }
+
+.datatables table tbody tr.has-observation {
+  background-color: #FEE2E2 !important;
+}
+
+.dark .datatables table tbody tr.has-observation {
+  background-color: rgba(254, 226, 226, 0.1) !important;
+}

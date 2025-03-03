@@ -3,7 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper";
+import { Navigation, Pagination } from "swiper/modules";
+
 import IconCaretDown from "../icon/icon-caret-down";
 import IconX from "../icon/icon-x";
 import { API_PHOTO_SUIVI } from "@/config/constants";

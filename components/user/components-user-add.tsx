@@ -136,9 +136,9 @@ const ComponentsAppsInvoiceAdd = () => {
         {
           value: "all",
           label:
-            drData.length === availableDirections.length - 1
-              ? "Tout désélectionner"
-              : "Tout sélectionner",
+            accountInfo.dr.length === availableDirections.length - 1
+              ? "✕ Désélectionner toutes les directions"
+              : "✓ Sélectionner toutes les directions",
         },
         ...drData.map((dr: any) => ({
           value: dr.id,
@@ -175,8 +175,8 @@ const ComponentsAppsInvoiceAdd = () => {
           value: "all",
           label:
             accountInfo.secteur.length === secteurData.length
-              ? "Tout désélectionner"
-              : "Tout sélectionner",
+              ? "✕ Désélectionner tous les secteurs"
+              : "✓ Sélectionner tous les secteurs",
         },
         ...secteurData.map((secteur: any) => ({
           value: secteur.id,
@@ -615,6 +615,10 @@ const ComponentsAppsInvoiceAdd = () => {
                           zIndex: 1,
                         },
                       }),
+                      menuList: (base) => ({
+                        ...base,
+                        maxHeight: "200px",
+                      }),
                     }}
                   />
                   {errors.profil && (
@@ -639,14 +643,50 @@ const ComponentsAppsInvoiceAdd = () => {
                   <Select
                     id="dr"
                     placeholder="Choisir une direction régionale"
-                    options={availableDirections.filter(
-                      (dir) => dir.value !== "all"
-                    )}
+                    options={availableDirections}
                     value={accountInfo.dr}
                     isMulti
                     isSearchable
                     isClearable
                     onChange={(selectedOptions: any) => {
+                      // Gestion de "Tout sélectionner/désélectionner"
+                      if (
+                        selectedOptions?.some((opt: any) => opt.value === "all")
+                      ) {
+                        if (
+                          accountInfo.dr.length ===
+                          availableDirections.length - 1
+                        ) {
+                          // Tout désélectionner
+                          setAccountInfo((prev) => ({
+                            ...prev,
+                            dr: [],
+                            secteur: [],
+                          }));
+                          setAvailableSecteurs([]);
+                        } else {
+                          // Tout sélectionner
+                          const allDRs = availableDirections
+                            .filter((dir) => dir.value !== "all")
+                            .map((dir) => ({
+                              value: dir.value,
+                              label: dir.label,
+                            }));
+                          setAccountInfo((prev) => ({
+                            ...prev,
+                            dr: allDRs,
+                          }));
+                          const drIds = allDRs
+                            .map((dr: any) => Number(dr.value))
+                            .filter((id: number) => !isNaN(id) && id > 0);
+                          if (drIds.length > 0) {
+                            dispatch(fetchSecteurs(drIds));
+                          }
+                        }
+                        return;
+                      }
+
+                      // Gestion normale des sélections
                       const newDRs = selectedOptions || [];
                       const oldDRIds = new Set(
                         accountInfo.dr.map((dr) => dr.value)
@@ -657,6 +697,7 @@ const ComponentsAppsInvoiceAdd = () => {
                       const removedDRIds = [...oldDRIds].filter(
                         (id) => !newDRIds.has(id)
                       );
+
                       const updatedSecteurs =
                         removedDRIds.length > 0
                           ? accountInfo.secteur.filter((secteur) => {
@@ -685,7 +726,6 @@ const ComponentsAppsInvoiceAdd = () => {
                         const drIds = newDRs
                           .map((dr: any) => Number(dr.value))
                           .filter((id: number) => !isNaN(id) && id > 0);
-
                         if (drIds.length > 0) {
                           dispatch(fetchSecteurs(drIds));
                         }
@@ -702,47 +742,42 @@ const ComponentsAppsInvoiceAdd = () => {
                         borderRadius: "0.5rem",
                         minHeight: "2.5rem",
                         boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-                        paddingLeft: "2.5rem",
                       }),
-                      container: (base) => ({
+                      valueContainer: (base) => ({
                         ...base,
-                        position: "relative",
-                        "&:before": {
-                          content: '""',
-                          position: "absolute",
-                          left: "12px",
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          width: "16px",
-                          height: "16px",
-                          backgroundImage:
-                            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' stroke='currentColor' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round' class='css-i6dzq1'%3E%3Crect x='4' y='4' width='16' height='16' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='12' y1='4' x2='12' y2='20'%3E%3C/line%3E%3C/svg%3E\")",
-                          backgroundRepeat: "no-repeat",
-                          backgroundPosition: "center",
-                          opacity: 0.5,
-                          zIndex: 1,
-                        },
+                        maxHeight: "100px",
+                        overflowY: "auto",
+                        flexWrap: "wrap",
+                        padding: "2px 8px",
+                      }),
+                      menuList: (base) => ({
+                        ...base,
+                        maxHeight: "200px",
+                      }),
+                      option: (base, state) => ({
+                        ...base,
+                        backgroundColor:
+                          state.data.value === "all"
+                            ? "#F3F4F6"
+                            : base.backgroundColor,
+                        fontWeight:
+                          state.data.value === "all" ? "600" : "normal",
+                        color:
+                          state.data.value === "all" ? "#374151" : base.color,
                       }),
                     }}
                   />
-                  {errors.dr && (
-                    <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
-                      <IconAlertCircle className="h-4 w-4" />
-                      {errors.dr}
-                    </p>
-                  )}
-                </div>
 
-                <div className="space-y-2">
                   <label
                     htmlFor="secteur"
                     className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     <div className="flex items-center gap-1">
                       <IconBuildingCommunity className="h-4 w-4 text-gray-400" />
-                      Secteur <span className="text-red-500">*</span>
+                      Exploitation <span className="text-red-500">*</span>
                     </div>
                   </label>
+
                   <Select
                     id="secteur"
                     placeholder={
@@ -750,15 +785,41 @@ const ComponentsAppsInvoiceAdd = () => {
                         ? "Sélectionnez d'abord une direction régionale"
                         : "Choisir un secteur"
                     }
-                    options={availableSecteurs.filter(
-                      (sect) => sect.value !== "all"
-                    )}
+                    options={availableSecteurs}
                     value={accountInfo.secteur}
+                    classNamePrefix="select"
                     isMulti
                     isSearchable
                     isClearable
                     isDisabled={accountInfo.dr.length === 0}
                     onChange={(selectedOptions: any) => {
+                      // Gestion de "Tout sélectionner/désélectionner"
+                      if (
+                        selectedOptions?.some((opt: any) => opt.value === "all")
+                      ) {
+                        if (accountInfo.secteur.length === secteurData.length) {
+                          // Tout désélectionner
+                          setAccountInfo((prev) => ({
+                            ...prev,
+                            secteur: [],
+                          }));
+                        } else {
+                          // Tout sélectionner
+                          const allSecteurs = availableSecteurs
+                            .filter((sect) => sect.value !== "all")
+                            .map((sect) => ({
+                              value: sect.value,
+                              label: sect.label,
+                            }));
+                          setAccountInfo((prev) => ({
+                            ...prev,
+                            secteur: allSecteurs,
+                          }));
+                        }
+                        return;
+                      }
+
+                      // Gestion normale des sélections
                       const newSecteurs = selectedOptions || [];
                       setAccountInfo((prev) => ({
                         ...prev,
@@ -766,43 +827,59 @@ const ComponentsAppsInvoiceAdd = () => {
                       }));
                     }}
                     className="text-sm"
-                    classNamePrefix="select"
                     styles={{
                       control: (base) => ({
                         ...base,
                         borderColor: "#E5E7EB",
                         borderRadius: "0.5rem",
                         minHeight: "2.5rem",
+                        maxHeight: "100px",
+                        overflowY: "auto",
                         boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-                        paddingLeft: "2.5rem",
                       }),
-                      container: (base) => ({
+                      menu: (base) => ({
                         ...base,
-                        position: "relative",
-                        "&:before": {
-                          content: '""',
-                          position: "absolute",
-                          left: "12px",
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          width: "16px",
-                          height: "16px",
-                          backgroundImage:
-                            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' stroke='currentColor' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round' class='css-i6dzq1'%3E%3Cpath d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'%3E%3C/path%3E%3Cpolyline points='9 22 9 12 15 12 15 22'%3E%3C/polyline%3E%3C/svg%3E\")",
-                          backgroundRepeat: "no-repeat",
-                          backgroundPosition: "center",
-                          opacity: 0.5,
-                          zIndex: 1,
+                        position: "absolute",
+                        width: "100%",
+                        zIndex: 1000,
+                      }),
+                      menuList: (base) => ({
+                        ...base,
+                        maxHeight: "150px",
+                        overflowY: "auto",
+                      }),
+                      option: (base, state) => ({
+                        ...base,
+                        backgroundColor:
+                          state.data.value === "all"
+                            ? "#F3F4F6"
+                            : base.backgroundColor,
+                        fontWeight:
+                          state.data.value === "all" ? "600" : "normal",
+                        color:
+                          state.data.value === "all" ? "#374151" : base.color,
+                        padding: "8px 12px",
+                      }),
+                      multiValue: (base) => ({
+                        ...base,
+                        backgroundColor: "#EFF6FF",
+                        borderRadius: "4px",
+                      }),
+                      multiValueLabel: (base) => ({
+                        ...base,
+                        color: "#2563EB",
+                        padding: "2px 6px",
+                      }),
+                      multiValueRemove: (base) => ({
+                        ...base,
+                        color: "#2563EB",
+                        ":hover": {
+                          backgroundColor: "#DBEAFE",
+                          color: "#1D4ED8",
                         },
                       }),
                     }}
                   />
-                  {errors.secteur && (
-                    <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
-                      <IconAlertCircle className="h-4 w-4" />
-                      {errors.secteur}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -832,7 +909,7 @@ const ComponentsAppsInvoiceAdd = () => {
             </div>
           </div>
 
-          <div className="space-y-6 p-4">
+          <div className="space-y-6 p-4" style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
             <div className="space-y-2">
               <h4 className="font-medium text-gray-900 dark:text-white">
                 Information personnelle
@@ -915,11 +992,11 @@ const ComponentsAppsInvoiceAdd = () => {
                   <div className="space-y-1">
                     <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <IconBuildingSkyscraper className="h-4 w-4 text-primary" />
-                      Directions régionales :
+                      Directions régionales ({accountInfo.dr.length}) :
                     </dt>
                     <dd className="mt-2">
                       {accountInfo.dr.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-1">
+                        <div className="grid grid-cols-1 gap-1" style={{ maxHeight: "150px", overflowY: "auto" }}>
                           {accountInfo.dr.map((dr: Option, index: number) => (
                             <div
                               key={index}
@@ -938,20 +1015,22 @@ const ComponentsAppsInvoiceAdd = () => {
                   <div className="space-y-1">
                     <dt className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <IconBuildingCommunity className="h-4 w-4 text-primary" />
-                      Exploitations :
+                      Exploitations ({accountInfo.secteur.length}) :
                     </dt>
                     <dd className="mt-2">
                       {accountInfo.secteur.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-1">
-                          {accountInfo.secteur.map((secteur: Option, index: number) => (
-                            <div
-                              key={index}
-                              className="flex items-center rounded bg-white/80 px-2 py-1 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-200/70 hover:bg-orange-50/50"
-                            >
-                              <IconBuildingCommunity className="mr-2 h-3 w-3 text-primary" />
-                              {secteur.label}
-                            </div>
-                          ))}
+                        <div className="grid grid-cols-1 gap-1" style={{ maxHeight: "150px", overflowY: "auto" }}>
+                          {accountInfo.secteur.map(
+                            (secteur: Option, index: number) => (
+                              <div
+                                key={index}
+                                className="flex items-center rounded bg-white/80 px-2 py-1 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-200/70 hover:bg-orange-50/50"
+                              >
+                                <IconBuildingCommunity className="mr-2 h-3 w-3 text-primary" />
+                                {secteur.label}
+                              </div>
+                            )
+                          )}
                         </div>
                       ) : (
                         <span className="text-gray-500">-</span>
