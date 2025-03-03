@@ -76,7 +76,7 @@ const Sidebar = () => {
       id: 3,
       name: "LITIGES",
       icon: <IconNotesEdit />,
-      path: "/reclamation",
+      path: "/litige",
       section: "Menu",
     },
     {

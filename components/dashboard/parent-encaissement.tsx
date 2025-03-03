@@ -56,7 +56,7 @@ const ComponentsDashboardValider = () => {
       order: 4, // Quatrième dans l'ordre
     },
     {
-      id: EStatutEncaissement.DR_DFC, // 5
+      id: EStatutEncaissement.DFC, // 5
       label: "Encaissements Traités",
       icon: IconArchive,
       habilitationName: "ENCAISSEMENTS TRAITES",
@@ -112,7 +112,7 @@ const ComponentsDashboardValider = () => {
         return EStatutEncaissement.VALIDE; // 3
       }
       if (window.location.pathname.includes('traites') && hasTraitesAccess) {
-        return EStatutEncaissement.DR_DFC; // 7
+        return EStatutEncaissement.DFC; // 7
       }
 
       // Vérifier le paramètre d'URL tab=X
@@ -126,7 +126,7 @@ const ComponentsDashboardValider = () => {
             (tabValue === EStatutEncaissement.TRAITE && hasVerifiesAccess) ||
             (tabValue === EStatutEncaissement.REJETE && hasRejetesAccess) ||
             (tabValue === EStatutEncaissement.VALIDE && hasValidesAccess) ||
-            (tabValue === EStatutEncaissement.DR_DFC && hasTraitesAccess)) {
+            (tabValue === EStatutEncaissement.DFC && hasTraitesAccess)) {
             return tabValue;
           }
         }
@@ -139,7 +139,7 @@ const ComponentsDashboardValider = () => {
     if (hasVerifiesAccess) return EStatutEncaissement.TRAITE; // 2 - Priorité 2
     if (hasRejetesAccess) return EStatutEncaissement.REJETE; // 1 - Priorité 3
     if (hasValidesAccess) return EStatutEncaissement.VALIDE; // 3 - Priorité 4
-    if (hasTraitesAccess) return EStatutEncaissement.DR_DFC; // 7 - Priorité 7
+    if (hasTraitesAccess) return EStatutEncaissement.DFC; // 7 - Priorité 7
 
     // Valeur par défaut si aucune habilitation n'est trouvée
     return EStatutEncaissement.EN_ATTENTE; // 0
