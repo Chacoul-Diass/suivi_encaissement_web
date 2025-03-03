@@ -180,8 +180,8 @@ export default function Litige() {
                   {({ selected }) => (
                     <button
                       className={`${selected
-                          ? "text-primary !outline-none before:!w-full"
-                          : ""
+                        ? "text-primary !outline-none before:!w-full"
+                        : ""
                         }relative -mb-[1px] flex items-center p-5 py-3`}
                     >
                       <tab.icon className="ltr:mr-2 rtl:ml-2" />
