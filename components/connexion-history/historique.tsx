@@ -42,8 +42,6 @@ import axios from "axios";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import axiosInstance from "@/utils/axios";
 import { useRouter, useSearchParams } from "next/navigation";
-import { French } from "flatpickr/dist/l10n/fr.js";
-import Flatpickr from "react-flatpickr";
 
 interface ConnectionHistory {
   id: number;
@@ -108,12 +106,12 @@ const formatDateSafely = (
   const date = new Date(dateString);
   return isValid(date)
     ? format(date, isDetail ? "dd MMMM yyyy à HH:mm" : "EEEE dd MMMM yyyy", {
-        locale: fr,
-      })
+      locale: fr,
+    })
     : "Date invalide";
 };
 
-const NO_DATES_SELECTED: Date[] = [];
+const NO_DATES_SELECTED = { startDate: "", endDate: "" };
 
 const ConnectionHistoryPage = () => {
   const router = useRouter();
@@ -142,7 +140,7 @@ const ConnectionHistoryPage = () => {
     {} as PaginationData
   );
 
-  const [dateRange, setDateRange] = useState<Date[]>(NO_DATES_SELECTED);
+  const [dateRange, setDateRange] = useState(NO_DATES_SELECTED);
   const [dateRangeKey, setDateRangeKey] = useState(Date.now());
 
   const updateUrl = (
@@ -238,10 +236,9 @@ const ConnectionHistoryPage = () => {
   };
 
   const getFilterParams = () => {
-    const [start, end] = dateRange; // 0, 1, ou 2 dates
     return {
-      startDate: start ? formatDate(start) : "", // vide => pas de filtre
-      endDate: end ? formatDate(end) : "", // vide => pas de filtre
+      startDate: dateRange.startDate || "", // vide => pas de filtre
+      endDate: dateRange.endDate || "", // vide => pas de filtre
     };
   };
 
@@ -286,12 +283,11 @@ const ConnectionHistoryPage = () => {
   };
 
   // Gérer le changement de dates
-  const handleDateChange = (dates: Date[]) => {
-    if (dates.length < 2) {
-      setDateRange(NO_DATES_SELECTED);
-    } else {
-      setDateRange(dates);
-    }
+  const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
+    setDateRange(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
@@ -477,25 +473,33 @@ const ConnectionHistoryPage = () => {
         }}
       >
         <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <IconFilter className="h-5 w-5 text-primary" />
-            <div className="group relative w-full sm:w-auto">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <IconCalendar className="h-5 w-5 text-gray-400 transition-colors duration-200 group-hover:text-primary" />
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="relative w-full sm:w-auto">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <IconCalendar className="h-5 w-5 text-gray-400 transition-colors duration-200 group-hover:text-primary" />
+                </div>
+                <input
+                  type="date"
+                  value={dateRange.startDate}
+                  onChange={(e) => handleDateChange('startDate', e.target.value)}
+                  className="form-input w-full min-w-[180px] rounded-lg border-gray-200 pl-10 text-sm transition-all duration-200 focus:border-primary focus:ring-primary group-hover:border-primary dark:border-gray-600 dark:bg-gray-700"
+                  placeholder="Date de début"
+                />
               </div>
-              <Flatpickr
-                key={dateRangeKey}
-                options={{
-                  mode: "range",
-                  dateFormat: "Y-m-d",
-                  locale: French,
-                  allowInput: true,
-                  defaultDate: dateRange.map((date) => new Date(date)),
-                }}
-                className="form-input w-full min-w-[270px] rounded-lg border-gray-200 pl-10 text-sm transition-all duration-200 focus:border-primary focus:ring-primary group-hover:border-primary dark:border-gray-600 dark:bg-gray-700"
-                onChange={handleDateChange}
-                placeholder="Sélectionner la période"
-              />
+              <div className="relative w-full sm:w-auto">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <IconCalendar className="h-5 w-5 text-gray-400 transition-colors duration-200 group-hover:text-primary" />
+                </div>
+                <input
+                  type="date"
+                  value={dateRange.endDate}
+                  onChange={(e) => handleDateChange('endDate', e.target.value)}
+                  className="form-input w-full min-w-[180px] rounded-lg border-gray-200 pl-10 text-sm transition-all duration-200 focus:border-primary focus:ring-primary group-hover:border-primary dark:border-gray-600 dark:bg-gray-700"
+                  placeholder="Date de fin"
+                />
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">

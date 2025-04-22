@@ -31,6 +31,9 @@ import datareleveReducer from "./encaissements/releve.slice";
 import encaissementValidationReducer from "./encaissements/soumission.slice";
 import mailbanqReducer from "./mail/mail.slice";
 
+//etat
+import etatEncaissementReducer from "./etat/etat.slice";
+
 //Rapprochement
 import dataRapprochementReducer from "./rapprochement/rapprochement.slice";
 import dataRapprochementJadeReducer from "./rapprochement/rapprochementJade.slice";
@@ -82,6 +85,9 @@ const topReducer = combineReducers({
   encaissementReleve: datareleveReducer,
   validationEncaissement: encaissementValidationReducer,
   sendmail: mailbanqReducer,
+
+  //etat
+  etatEncaissement: etatEncaissementReducer,
 
   //Rapprochement
   rapprochement: dataRapprochementReducer,
