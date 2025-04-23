@@ -861,11 +861,10 @@ export default function Profil() {
                         name="password"
                         value={passwordForm.password}
                         onChange={handlePasswordChange}
-                        className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 pr-12 text-gray-700 transition-all duration-200 focus:border-primary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 ${
-                          passwordErrors.password
+                        className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 pr-12 text-gray-700 transition-all duration-200 focus:border-primary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 ${passwordErrors.password
                             ? "border-red-300"
                             : "border-gray-300"
-                        }`}
+                          }`}
                         placeholder="Votre nouveau mot de passe"
                       />
                       <button
@@ -919,54 +918,48 @@ export default function Profil() {
                     <div className="mt-2 space-y-2">
                       <div className="flex items-center gap-2">
                         <div
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            passwordStrength.hasMinLength
+                          className={`h-1.5 w-1.5 rounded-full ${passwordStrength.hasMinLength
                               ? "bg-green-500"
                               : "bg-gray-300"
-                          }`}
+                            }`}
                         ></div>
                         <span
-                          className={`text-xs ${
-                            passwordStrength.hasMinLength
+                          className={`text-xs ${passwordStrength.hasMinLength
                               ? "text-green-600"
                               : "text-gray-500"
-                          }`}
+                            }`}
                         >
                           Au moins 5 caractères
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            passwordStrength.hasUpperCase
+                          className={`h-1.5 w-1.5 rounded-full ${passwordStrength.hasUpperCase
                               ? "bg-green-500"
                               : "bg-gray-300"
-                          }`}
+                            }`}
                         ></div>
                         <span
-                          className={`text-xs ${
-                            passwordStrength.hasUpperCase
+                          className={`text-xs ${passwordStrength.hasUpperCase
                               ? "text-green-600"
                               : "text-gray-500"
-                          }`}
+                            }`}
                         >
                           Au moins une majuscule
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            passwordStrength.hasNumber
+                          className={`h-1.5 w-1.5 rounded-full ${passwordStrength.hasNumber
                               ? "bg-green-500"
                               : "bg-gray-300"
-                          }`}
+                            }`}
                         ></div>
                         <span
-                          className={`text-xs ${
-                            passwordStrength.hasNumber
+                          className={`text-xs ${passwordStrength.hasNumber
                               ? "text-green-600"
                               : "text-gray-500"
-                          }`}
+                            }`}
                         >
                           Au moins un chiffre
                         </span>
@@ -984,13 +977,12 @@ export default function Profil() {
                         name="confirmPassword"
                         value={passwordForm.confirmPassword}
                         onChange={handlePasswordChange}
-                        className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 pr-12 text-gray-700 transition-all duration-200 focus:border-primary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 ${
-                          passwordErrors.confirmPassword
+                        className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 pr-12 text-gray-700 transition-all duration-200 focus:border-primary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 ${passwordErrors.confirmPassword
                             ? "border-red-300"
                             : passwordStrength.matches
-                            ? "border-green-300"
-                            : "border-gray-300"
-                        }`}
+                              ? "border-green-300"
+                              : "border-gray-300"
+                          }`}
                         placeholder="Confirmez votre nouveau mot de passe"
                       />
                       <button

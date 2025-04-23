@@ -1,10 +1,10 @@
 import React from 'react';
 
-interface IconClipboardCheckProps {
+interface IconCheckCircleProps {
     className?: string;
 }
 
-const IconClipboardCheck: React.FC<IconClipboardCheckProps> = ({ className = "" }) => {
+const IconCheckCircle: React.FC<IconCheckCircleProps> = ({ className = "" }) => {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -18,11 +18,10 @@ const IconClipboardCheck: React.FC<IconClipboardCheckProps> = ({ className = "" 
             strokeLinecap="round"
             strokeLinejoin="round"
         >
-            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-            <path d="M9 14l2 2 4-4"></path>
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
         </svg>
     );
 };
 
-export default IconClipboardCheck;
+export default IconCheckCircle; 
