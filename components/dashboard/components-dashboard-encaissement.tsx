@@ -34,6 +34,8 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import IconEye from "../icon/icon-eye";
 import IconCheck from "../icon/icon-check";
+import IconFileText from "../icon/icon-file-text";
+import IconExcelFile from "../icon/icon-excel-file";
 
 // Composant pour la modale d'alertes
 interface AlertItem {
@@ -55,27 +57,38 @@ interface AlertItem {
   validationEncaissement: any;
 }
 
+interface PaginationInfo {
+  currentPage: number;
+  previousPage: number | null;
+  nextPage: number | null;
+  count: number;
+  totalCount: number;
+  totalPages: number;
+}
+
 interface AlertModalProps {
   isOpen: boolean;
   onClose: () => void;
   alerts: AlertItem[];
   loading: boolean;
+  pagination: PaginationInfo | null;
+  onPageChange: (page: number) => void;
 }
 
-const AlertModal = ({ isOpen, onClose, alerts, loading }: AlertModalProps) => {
+const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange }: AlertModalProps) => {
   if (!isOpen) return null;
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat("fr-FR").format(num);
   };
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [sortStatus, setSortStatus] = useState<{ columnAccessor: string; direction: 'asc' | 'desc' }>({
     columnAccessor: 'id',
     direction: 'asc',
   });
-  const PAGE_SIZES = [10, 20, 30, 50, 100];
+  const [searchTerm, setSearchTerm] = useState("");
+  const PAGE_SIZES = [5, 10, 20, 30, 50];
 
   const handleViewDetails = (row: AlertItem) => {
     // Implémenter l'affichage des détails
@@ -83,194 +96,491 @@ const AlertModal = ({ isOpen, onClose, alerts, loading }: AlertModalProps) => {
     Toastify("success", "Fonctionnalité de détail en cours de développement");
   };
 
-  const handleValidate = (row: AlertItem) => {
-    // Implémenter la validation
-    console.log("Valider l'alerte:", row);
-    Toastify("success", "Alerte validée");
+  // Filtrer les données selon le terme de recherche
+  const filteredAlerts = alerts?.filter((alert: AlertItem) => {
+    if (!searchTerm) return true;
+    const searchValue = searchTerm.toLowerCase();
+    return (
+      (alert.directionRegionale && alert.directionRegionale.toLowerCase().includes(searchValue)) ||
+      (alert.codeExpl && alert.codeExpl.toLowerCase().includes(searchValue)) ||
+      (alert.banque && alert.banque.toLowerCase().includes(searchValue)) ||
+      (alert.numeroBordereau && alert.numeroBordereau.toLowerCase().includes(searchValue)) ||
+      (alert.produit && alert.produit.toLowerCase().includes(searchValue))
+    );
+  });
+
+  // Calculer les statistiques seulement si des alertes sont disponibles
+  const hasAlerts = alerts && alerts.length > 0;
+  const positiveEcarts = hasAlerts ? alerts.filter(a => a.ecartCaisseBanque > 0).length : 0;
+  const negativeEcarts = hasAlerts ? alerts.filter(a => a.ecartCaisseBanque < 0).length : 0;
+  const zeroEcarts = hasAlerts ? alerts.filter(a => a.ecartCaisseBanque === 0).length : 0;
+
+  // Fonction pour exporter en CSV
+  const exportToCSV = async () => {
+    try {
+      // Afficher un indicateur de chargement via le toast
+      Toastify("success", "Préparation du fichier CSV en cours...");
+
+      // Récupérer toutes les données sans pagination
+      const response: any = await axiosInstance.get(
+        `${API_AUTH_SUIVI}/encaissements/alerts/0?all=true`
+      );
+
+      if (response?.error !== false || !response?.data?.result?.length) {
+        Toastify("error", "Aucune donnée à exporter");
+        return;
+      }
+
+      const allAlerts = response?.data?.result || [];
+
+      // En-têtes CSV
+      const headers = [
+        "Direction Régionale",
+        "Code Exploitation",
+        "Date Encaissement",
+        "Banque",
+        "Produit",
+        "Numéro Bordereau",
+        "Montant Caisse",
+        "Montant Bordereau",
+        "Écart"
+      ];
+
+      // Formater les données
+      const csvData = allAlerts.map((alert: AlertItem) => [
+        alert.directionRegionale || "",
+        alert.codeExpl || "",
+        alert.dateEncaissement || "",
+        alert.banque || "",
+        alert.produit || "",
+        alert.numeroBordereau || "",
+        alert.montantRestitutionCaisse.toString(),
+        alert.montantBordereauBanque.toString(),
+        alert.ecartCaisseBanque.toString()
+      ]);
+
+      // Combiner les en-têtes et les données
+      const csvContent = [
+        headers.join(","),
+        ...csvData.map((row: string[]) => row.join(","))
+      ].join("\n");
+
+      // Créer un blob et un lien de téléchargement
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `alertes_encaissement_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      Toastify("success", `Export CSV réussi (${allAlerts.length} enregistrements)`);
+    } catch (error) {
+      console.error("Erreur lors de l'export CSV:", error);
+      Toastify("error", "Échec de l'export CSV");
+    }
+  };
+
+  // Fonction pour exporter en Excel (utilise le blob CSV avec extension .xlsx)
+  const exportToExcel = async () => {
+    try {
+      // Afficher un indicateur de chargement via le toast
+      Toastify("success", "Préparation du fichier Excel en cours...");
+
+      // Récupérer toutes les données sans pagination
+      const response: any = await axiosInstance.get(
+        `${API_AUTH_SUIVI}/encaissements/alerts/0?all=true`
+      );
+
+      if (response?.error !== false || !response?.data?.result?.length) {
+        Toastify("error", "Aucune donnée à exporter");
+        return;
+      }
+
+      const allAlerts = response?.data?.result || [];
+
+      // En-têtes Excel
+      const headers = [
+        "Direction Régionale",
+        "Code Exploitation",
+        "Date Encaissement",
+        "Banque",
+        "Produit",
+        "Numéro Bordereau",
+        "Montant Caisse",
+        "Montant Bordereau",
+        "Écart"
+      ];
+
+      // Formater les données
+      const excelData = allAlerts.map((alert: AlertItem) => [
+        alert.directionRegionale || "",
+        alert.codeExpl || "",
+        alert.dateEncaissement || "",
+        alert.banque || "",
+        alert.produit || "",
+        alert.numeroBordereau || "",
+        alert.montantRestitutionCaisse.toString(),
+        alert.montantBordereauBanque.toString(),
+        alert.ecartCaisseBanque.toString()
+      ]);
+
+      // Combiner les en-têtes et les données
+      const csvContent = [
+        headers.join("\t"),
+        ...excelData.map((row: string[]) => row.join("\t"))
+      ].join("\n");
+
+      // Créer un blob et un lien de téléchargement
+      const blob = new Blob([csvContent], { type: "application/vnd.ms-excel" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `alertes_encaissement_${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      Toastify("success", `Export Excel réussi (${allAlerts.length} enregistrements)`);
+    } catch (error) {
+      console.error("Erreur lors de l'export Excel:", error);
+      Toastify("error", "Échec de l'export Excel");
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
-      <div className="relative w-11/12 max-w-5xl rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800 md:w-3/4">
-        <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3 dark:border-gray-700">
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-            Alertes d'encaissements
-          </h3>
-          <button
-            onClick={onClose}
-            className="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <IconX className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm">
+      <div className="relative flex h-[90vh] w-[95%] max-w-[1600px] flex-col rounded-xl bg-white shadow-2xl dark:bg-gray-800 md:w-[90%]">
+        {/* Header avec dégradé */}
+        <div className="rounded-t-xl bg-gradient-to-r from-primary to-primary/80 p-6 text-white">
+          <div className="mb-0 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h3 className="text-xl font-bold">
+                Alertes d'encaissements
+              </h3>
+              {pagination && (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center rounded-full bg-white/20 px-2.5 py-1 text-xs font-medium text-white">
+                    {pagination.totalCount} {pagination.totalCount > 1 ? "alertes" : "alerte"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Boutons d'exportation */}
+            <div className="flex items-center gap-2">
+              {hasAlerts && (
+                <>
+                  <button
+                    onClick={exportToCSV}
+                    className="flex items-center gap-1 rounded-md bg-white/20 px-3 py-1.5 text-sm text-white transition-all hover:bg-white/30"
+                    title="Exporter en CSV"
+                  >
+                    <IconFileText className="h-4 w-4" />
+                    <span className="hidden sm:inline">CSV</span>
+                  </button>
+                  <button
+                    onClick={exportToExcel}
+                    className="flex items-center gap-1 rounded-md bg-white/20 px-3 py-1.5 text-sm text-white transition-all hover:bg-white/30"
+                    title="Exporter en Excel"
+                  >
+                    <IconExcelFile className="h-4 w-4" />
+                    <span className="hidden sm:inline">Excel</span>
+                  </button>
+                </>
+              )}
+              <button
+                onClick={onClose}
+                className="rounded-full p-1.5 text-white transition-all hover:bg-white/20"
+              >
+                <IconX className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
         </div>
-        
-        <div className="max-h-[70vh] overflow-hidden">
-          <div className="relative">
-            <div className="overflow-x-auto">
-              {loading && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-gray-800/70">
-                  <div className="flex flex-col items-center justify-center p-4">
-                    <span className="mb-2 text-primary">Chargement en cours</span>
-                    <div className="flex items-center justify-center space-x-2">
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
+
+        {/* Corps de la modale avec défilement */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Barre de recherche et pagination */}
+          <div className="border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {/* Barre de recherche - toujours visible pour permettre la recherche une fois les données chargées */}
+              <div className="relative w-full md:w-64">
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-input w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm placeholder-gray-400 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+                />
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Statistiques rapides - seulement si des données sont présentes */}
+              {hasAlerts && (
+                <div className="hidden lg:flex">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center gap-1">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500"></span>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        Ecarts positifs: {positiveEcarts}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        Ecarts négatifs: {negativeEcarts}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full bg-gray-400"></span>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        Ecarts nuls: {zeroEcarts}
+                      </span>
                     </div>
                   </div>
                 </div>
               )}
-              <DataTable
-                style={{
-                  position: "relative",
-                  width: "100%",
-                }}
-                rowStyle={(row: AlertItem) =>
-                  row.ecartCaisseBanque !== 0
-                    ? { backgroundColor: "#fee2e2" }
-                    : {}
-                }
-                className="table-hover whitespace-nowrap"
-                records={!loading && alerts?.length > 0 ? alerts : []}
-                columns={[
-                  {
-                    accessor: "directionRegionale",
-                    title: "Direction",
-                    sortable: true,
-                  },
-                  {
-                    accessor: "codeExpl",
-                    title: "Code",
-                    sortable: true,
-                  },
-                  {
-                    accessor: "dateEncaissement",
-                    title: "Date",
-                    sortable: true,
-                  },
-                  {
-                    accessor: "banque",
-                    title: "Banque",
-                    sortable: true,
-                  },
-                  {
-                    accessor: "montantRestitutionCaisse",
-                    title: "Montant caisse",
-                    sortable: true,
-                    render: (row: AlertItem) => (
-                      <div className="text-right">
-                        {formatNumber(row.montantRestitutionCaisse)} F
-                      </div>
-                    ),
-                  },
-                  {
-                    accessor: "montantBordereauBanque",
-                    title: "Montant bordereau",
-                    sortable: true,
-                    render: (row: AlertItem) => (
-                      <div className="text-right">
-                        {formatNumber(row.montantBordereauBanque)} F
-                      </div>
-                    ),
-                  },
-                  {
-                    accessor: "ecartCaisseBanque",
-                    title: "Écart",
-                    sortable: true,
-                    render: (row: AlertItem) => (
-                      <div
-                        className={`text-right ${
-                          row.ecartCaisseBanque !== 0 ? "text-red-500 font-semibold" : ""
-                        }`}
-                      >
-                        {formatNumber(row.ecartCaisseBanque)} F
-                      </div>
-                    ),
-                  },
-                  {
-                    accessor: "isCorrect",
-                    title: "Statut",
-                    sortable: true,
-                    render: (row: AlertItem) => (
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${
-                          row.isCorrect
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                      >
-                        {row.isCorrect ? "Correct" : "Incorrect"}
-                      </span>
-                    ),
-                  },
-                  {
-                    accessor: "actions",
-                    title: "Actions",
-                    sortable: false,
-                    render: (row: AlertItem) => (
-                      <div className="flex items-center justify-center gap-3">
-                        <Tippy content="Voir détails">
-                          <button
-                            type="button"
-                            className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary/80"
-                            onClick={() => handleViewDetails(row)}
-                          >
-                            <IconEye className="h-5 w-5 stroke-[1.5]" />
-                          </button>
+
+            </div>
+          </div>
+
+          {/* Tableau avec défilement */}
+          <div className="flex-1 overflow-auto p-6">
+            <div className="relative h-full rounded-xl border border-gray-200 dark:border-gray-700">
+              <div className="h-full overflow-auto">
+                {loading && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm dark:bg-gray-800/80">
+                    <div className="flex flex-col items-center justify-center p-4">
+                      <div className="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-gray-300 border-t-primary"></div>
+                      <span className="text-sm font-medium text-primary">Chargement des alertes</span>
+                    </div>
+                  </div>
+                )}
+                <DataTable
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    borderRadius: "0.75rem",
+                    height: "100%",
+                  }}
+                  rowStyle={(row: AlertItem) => {
+                    if (row.ecartCaisseBanque > 0) return { backgroundColor: "#d1fae5" }; // vert clair pour positif
+                    if (row.ecartCaisseBanque < 0) return { backgroundColor: "#fee2e2" }; // rouge clair pour négatif
+                    return {}; // style par défaut pour les écarts nuls
+                  }}
+                  classNames={{
+                    root: "shadow-sm",
+                    header: "border-b border-gray-200 bg-gray-50/80 py-4 text-gray-700 font-medium dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300",
+                    pagination: "sticky bottom-0 left-0 right-0 z-10 bg-white py-4 shadow-md dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700",
+                  }}
+                  rowClassName={({ ecartCaisseBanque }) =>
+                    `hover:bg-gray-50 dark:hover:bg-gray-700/30 border-b border-gray-100 dark:border-gray-700/50 transition-colors ${ecartCaisseBanque !== 0 ? "font-medium" : ""
+                    }`
+                  }
+                  className="table-hover whitespace-normal text-sm"
+                  records={!loading && filteredAlerts?.length > 0 ? filteredAlerts : []}
+                  columns={[
+                    {
+                      accessor: "directionRegionale",
+                      title: "Direction",
+                      sortable: true,
+                      width: 130,
+                      render: (row: AlertItem) => (
+                        <div className="px-2 py-3 font-medium">{row.directionRegionale}</div>
+                      ),
+                    },
+                    {
+                      accessor: "codeExpl",
+                      title: "Code",
+                      sortable: true,
+                      width: 100,
+                      render: (row: AlertItem) => (
+                        <div className="px-2 py-3">{row.codeExpl}</div>
+                      ),
+                    },
+                    {
+                      accessor: "dateEncaissement",
+                      title: "Date",
+                      sortable: true,
+                      width: 120,
+                      render: (row: AlertItem) => {
+                        // Extraire seulement la date (format DD/MM/YYYY) de la chaîne dateEncaissement
+                        const dateStr = row.dateEncaissement || "";
+                        const dateMatch = dateStr.match(/\d{2}\/\d{2}\/\d{4}/);
+                        const formattedDate = dateMatch ? dateMatch[0] : dateStr.split(" ")[0];
+
+                        return (
+                          <div className="px-2 py-3 font-medium">{formattedDate}</div>
+                        );
+                      },
+                    },
+                    {
+                      accessor: "banque",
+                      title: "Banque",
+                      sortable: true,
+                      width: 160,
+                      render: (row: AlertItem) => (
+                        <Tippy content={row.banque}>
+                          <div className="max-w-[160px] truncate px-2 py-3" title={row.banque}>
+                            {row.banque}
+                          </div>
                         </Tippy>
-                        <Tippy content="Valider">
-                          <button
-                            type="button"
-                            className="flex items-center justify-center rounded-lg p-2 text-green-600 hover:text-green-700"
-                            onClick={() => handleValidate(row)}
-                          >
-                            <IconCheck className="h-5 w-5 stroke-[1.5]" />
-                          </button>
-                        </Tippy>
+                      ),
+                    },
+                    {
+                      accessor: "montantRestitutionCaisse",
+                      title: "Montant caisse",
+                      sortable: true,
+                      width: 160,
+                      render: (row: AlertItem) => (
+                        <div className="px-2 py-3 text-right font-medium tabular-nums">
+                          {formatNumber(row.montantRestitutionCaisse)} F
+                        </div>
+                      ),
+                    },
+                    {
+                      accessor: "montantBordereauBanque",
+                      title: "Montant bordereau",
+                      sortable: true,
+                      width: 190,
+                      render: (row: AlertItem) => (
+                        <div className="px-2 py-3 text-right font-medium tabular-nums">
+                          {formatNumber(row.montantBordereauBanque)} F
+                        </div>
+                      ),
+                    },
+                    {
+                      accessor: "ecartCaisseBanque",
+                      title: "Écart",
+                      sortable: true,
+                      width: 140,
+                      render: (row: AlertItem) => {
+                        let textColorClass = "";
+                        if (row.ecartCaisseBanque > 0) textColorClass = "text-green-600 dark:text-green-400";
+                        else if (row.ecartCaisseBanque < 0) textColorClass = "text-red-600 dark:text-red-400";
+
+                        return (
+                          <div className={`px-2 py-3 text-right font-medium tabular-nums ${textColorClass}`}>
+                            {row.ecartCaisseBanque > 0 && "+"}
+                            {formatNumber(row.ecartCaisseBanque)} F
+                          </div>
+                        );
+                      },
+                    },
+                    {
+                      accessor: "actions",
+                      title: "Actions",
+                      width: 100,
+                      render: (row: AlertItem) => (
+                        <div className="flex items-center justify-center gap-2 px-2 py-3">
+                          <Tippy content="Voir détails">
+                            <button
+                              onClick={() => handleViewDetails(row)}
+                              className="rounded-full p-1.5 text-gray-500 transition-all hover:bg-primary/10 hover:text-primary dark:text-gray-400 dark:hover:text-white"
+                            >
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
+                          </Tippy>
+                        </div>
+                      ),
+                    },
+                  ]}
+                  highlightOnHover
+                  totalRecords={pagination?.totalCount || 0}
+                  recordsPerPage={pageSize}
+                  page={pagination?.currentPage || 1}
+                  onPageChange={onPageChange}
+                  recordsPerPageOptions={PAGE_SIZES}
+                  onRecordsPerPageChange={(size) => {
+                    setPageSize(size);
+                    onPageChange(1); // Revenir à la première page lors du changement de taille
+                  }}
+                  sortStatus={sortStatus}
+                  onSortStatusChange={setSortStatus}
+                  minHeight={400}
+                  paginationText={({ from, to, totalRecords }) =>
+                    `Affichage de ${from} à ${to} sur ${totalRecords} entrées`
+                  }
+                  paginationSize="md"
+                  noRecordsText={
+                    loading
+                      ? "Chargement en cours..."
+                      : searchTerm
+                        ? "Aucun résultat ne correspond à votre recherche"
+                        : "Aucune alerte disponible"
+                  }
+                  emptyState={
+                    <div className="flex flex-col items-center justify-center py-10">
+                      <div className="mb-3 rounded-full bg-gray-100 p-3 dark:bg-gray-700">
+                        <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                       </div>
-                    ),
-                  },
-                ]}
-                highlightOnHover
-                totalRecords={alerts?.length || 0}
-                recordsPerPage={pageSize}
-                page={currentPage}
-                onPageChange={(page) => setCurrentPage(page)}
-                recordsPerPageOptions={PAGE_SIZES}
-                onRecordsPerPageChange={setPageSize}
-                sortStatus={sortStatus}
-                onSortStatusChange={setSortStatus}
-                minHeight={200}
-                paginationText={({ from, to, totalRecords }) =>
-                  `Affichage de ${from} à ${to} sur ${totalRecords} entrées`
-                }
-                noRecordsText={
-                  loading
-                    ? "Chargement en cours..."
-                    : "Aucune alerte disponible"
-                }
-              />
+                      <p className="text-center text-gray-500 dark:text-gray-400">
+                        {searchTerm
+                          ? "Aucun élément ne correspond à votre recherche"
+                          : "Aucune alerte pour le moment"}
+                      </p>
+                    </div>
+                  }
+                />
+              </div>
             </div>
           </div>
         </div>
-        
-        <div className="mt-4 flex justify-end space-x-3">
-          <button
-            onClick={onClose}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-          >
-            Fermer
-          </button>
-          <button
-            onClick={() => {
-              onClose();
-              Toastify("success", "Alertes acquittées");
-            }}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/90"
-          >
-            Acquitter toutes les alertes
-          </button>
+
+        <div className="border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* Légende des couleurs - seulement si des alertes sont disponibles */}
+            {hasAlerts && (
+              <div className="flex items-center gap-6">
+                <div className="hidden items-center space-x-6 lg:flex">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block h-3 w-3 rounded-sm bg-green-100 dark:bg-green-900/30"></span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      Écart positif
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block h-3 w-3 rounded-sm bg-red-100 dark:bg-red-900/30"></span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      Écart négatif
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={onClose}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+              >
+                Fermer
+              </button>
+              {/* Bouton d'acquittement - seulement si des alertes sont disponibles */}
+              {hasAlerts && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    Toastify("success", "Alertes acquittées");
+                  }}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary/90 hover:shadow-md focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 dark:ring-offset-gray-800"
+                >
+                  Acquitter toutes les alertes
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -290,6 +600,8 @@ const ComponentsDashboardSales = () => {
   const [alertsData, setAlertsData] = useState<AlertItem[]>([]);
   const [hasCheckedAlerts, setHasCheckedAlerts] = useState(false);
   const [alertsLoading, setAlertsLoading] = useState(false);
+  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo | null>(null);
+  const [alertPage, setAlertPage] = useState(1);
 
   const fetchDashboardData = async (filters?: any) => {
     const cleanArray = (arr: string[] | undefined) =>
@@ -344,14 +656,16 @@ const ComponentsDashboardSales = () => {
     }
   };
 
-  const getAlerts = async (status: string) => {
+  const getAlerts = async (page: number = 1) => {
     try {
-      setLoading(true);
+      setAlertsLoading(true);
       const response: any = await axiosInstance.get(
-        `${API_AUTH_SUIVI}/encaissements/alerts/0`
+        `${API_AUTH_SUIVI}/encaissements/alerts/0?page=${page}`
       );
-      
+
       if (response?.error === false) {
+        setAlertsData(response?.data?.result || []);
+        setPaginationInfo(response?.data?.pagination || null);
         return response?.data;
       }
       return null;
@@ -359,7 +673,7 @@ const ComponentsDashboardSales = () => {
       console.error("Erreur lors de la récupération des alertes:", error);
       return null;
     } finally {
-      setLoading(false);
+      setAlertsLoading(false);
     }
   };
 
@@ -368,22 +682,18 @@ const ComponentsDashboardSales = () => {
     const checkAlertsOnLogin = async () => {
       if (!hasCheckedAlerts) {
         try {
-          setAlertsLoading(true);
-          const data = await getAlerts("0");
+          const data = await getAlerts(1);
           if (data && data.result && data.result.length > 0) {
-            setAlertsData(data.result);
             setAlertModalOpen(true);
           }
           setHasCheckedAlerts(true);
         } catch (error) {
           console.error("Erreur lors de la vérification des alertes:", error);
           setHasCheckedAlerts(true);
-        } finally {
-          setAlertsLoading(false);
         }
       }
     };
-    
+
     checkAlertsOnLogin();
   }, [hasCheckedAlerts]);
 
@@ -711,6 +1021,11 @@ const ComponentsDashboardSales = () => {
     fetchEcartData({});
   };
 
+  const handleAlertPageChange = (page: number) => {
+    setAlertPage(page);
+    getAlerts(page);
+  };
+
   return (
     <>
       <AlertModal
@@ -718,26 +1033,26 @@ const ComponentsDashboardSales = () => {
         onClose={() => setAlertModalOpen(false)}
         alerts={alertsData}
         loading={alertsLoading}
+        pagination={paginationInfo}
+        onPageChange={handleAlertPageChange}
       />
       <div className="panel">
         <div className="panel relative mb-8">
           <div className=" flex border-b border-gray-200 dark:border-gray-700">
             <button
-              className={`group relative flex items-center gap-3 px-8 py-5 text-sm font-medium outline-none transition-all duration-300 ease-in-out hover:bg-gray-50/50 dark:hover:bg-gray-700/50 ${
-                activeTab === 1
-                  ? "text-primary"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              }`}
+              className={`group relative flex items-center gap-3 px-8 py-5 text-sm font-medium outline-none transition-all duration-300 ease-in-out hover:bg-gray-50/50 dark:hover:bg-gray-700/50 ${activeTab === 1
+                ? "text-primary"
+                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                }`}
               onClick={() => setActiveTab(1)}
               id="tuto-dashboard-globalView"
             >
               <div className="flex items-center gap-2">
                 <svg
-                  className={`h-5 w-5 transition-all duration-300 ${
-                    activeTab === 1
-                      ? "scale-110 text-primary"
-                      : "text-gray-400 group-hover:scale-105 group-hover:text-gray-500"
-                  }`}
+                  className={`h-5 w-5 transition-all duration-300 ${activeTab === 1
+                    ? "scale-110 text-primary"
+                    : "text-gray-400 group-hover:scale-105 group-hover:text-gray-500"
+                    }`}
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -750,9 +1065,8 @@ const ComponentsDashboardSales = () => {
                   />
                 </svg>
                 <span
-                  className={`transform transition-all duration-300 ${
-                    activeTab === 1 ? "translate-x-0.5" : ""
-                  }`}
+                  className={`transform transition-all duration-300 ${activeTab === 1 ? "translate-x-0.5" : ""
+                    }`}
                 >
                   Vue d'ensemble
                 </span>
@@ -762,21 +1076,19 @@ const ComponentsDashboardSales = () => {
               )}
             </button>
             <button
-              className={`group relative flex items-center gap-3 px-8 py-5 text-sm font-medium outline-none transition-all duration-300 ease-in-out hover:bg-gray-50/50 dark:hover:bg-gray-700/50 ${
-                activeTab === 2
-                  ? "text-primary"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              }`}
+              className={`group relative flex items-center gap-3 px-8 py-5 text-sm font-medium outline-none transition-all duration-300 ease-in-out hover:bg-gray-50/50 dark:hover:bg-gray-700/50 ${activeTab === 2
+                ? "text-primary"
+                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                }`}
               onClick={() => setActiveTab(2)}
               id="tuto-dashboard-details"
             >
               <div className="flex items-center gap-2">
                 <svg
-                  className={`h-5 w-5 transition-all duration-300 ${
-                    activeTab === 2
-                      ? "scale-110 text-primary"
-                      : "text-gray-400 group-hover:scale-105 group-hover:text-gray-500"
-                  }`}
+                  className={`h-5 w-5 transition-all duration-300 ${activeTab === 2
+                    ? "scale-110 text-primary"
+                    : "text-gray-400 group-hover:scale-105 group-hover:text-gray-500"
+                    }`}
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -785,13 +1097,12 @@ const ComponentsDashboardSales = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 00.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
                 <span
-                  className={`transform transition-all duration-300 ${
-                    activeTab === 2 ? "translate-x-0.5" : ""
-                  }`}
+                  className={`transform transition-all duration-300 ${activeTab === 2 ? "translate-x-0.5" : ""
+                    }`}
                 >
                   Détails des écarts
                 </span>
@@ -918,9 +1229,8 @@ const ComponentsDashboardSales = () => {
                       <h5 className="text-lg font-semibold">Revenue</h5>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-sm ${
-                            !isTableView ? "text-primary" : "text-gray-500"
-                          }`}
+                          className={`text-sm ${!isTableView ? "text-primary" : "text-gray-500"
+                            }`}
                         >
                           Graphique
                         </span>
@@ -934,9 +1244,8 @@ const ComponentsDashboardSales = () => {
                           <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700"></div>
                         </label>
                         <span
-                          className={`text-sm ${
-                            isTableView ? "text-primary" : "text-gray-500"
-                          }`}
+                          className={`text-sm ${isTableView ? "text-primary" : "text-gray-500"
+                            }`}
                         >
                           Tableau
                         </span>
@@ -992,11 +1301,10 @@ const ComponentsDashboardSales = () => {
                                             )}
                                           </td>
                                           <td
-                                            className={`px-6 py-3 text-left text-sm ${
-                                              clotures < 0
-                                                ? "text-primary"
-                                                : "text-gray-800"
-                                            } dark:text-white-light`}
+                                            className={`px-6 py-3 text-left text-sm ${clotures < 0
+                                              ? "text-primary"
+                                              : "text-gray-800"
+                                              } dark:text-white-light`}
                                           >
                                             {clotures.toLocaleString()} FCFA
                                           </td>
@@ -1012,14 +1320,13 @@ const ComponentsDashboardSales = () => {
                                       Total
                                     </td>
                                     <td
-                                      className={`px-6 py-3 text-left text-sm font-semibold ${
-                                        (graph?.series?.[0]?.data?.reduce(
-                                          (a: number, b: number) => a + b,
-                                          0
-                                        ) || 0) < 0
-                                          ? "text-primary"
-                                          : "text-gray-800"
-                                      } dark:text-white-light`}
+                                      className={`px-6 py-3 text-left text-sm font-semibold ${(graph?.series?.[0]?.data?.reduce(
+                                        (a: number, b: number) => a + b,
+                                        0
+                                      ) || 0) < 0
+                                        ? "text-primary"
+                                        : "text-gray-800"
+                                        } dark:text-white-light`}
                                     >
                                       {(
                                         graph?.series?.[0]?.data?.reduce(
@@ -1226,8 +1533,8 @@ const ComponentsDashboardSales = () => {
                               index === 0
                                 ? "badge-outline-primary bg-primary-light"
                                 : index === 1
-                                ? "badge-outline-success bg-success-light"
-                                : "badge-outline-danger bg-danger-light";
+                                  ? "badge-outline-success bg-success-light"
+                                  : "badge-outline-danger bg-danger-light";
 
                             return (
                               <div
@@ -1235,13 +1542,12 @@ const ComponentsDashboardSales = () => {
                                 className="group relative flex items-center py-1.5"
                               >
                                 <div
-                                  className={`h-1.5 w-1.5 rounded-full ${
-                                    index === 0
-                                      ? "bg-primary"
-                                      : index === 1
+                                  className={`h-1.5 w-1.5 rounded-full ${index === 0
+                                    ? "bg-primary"
+                                    : index === 1
                                       ? "bg-success"
                                       : "bg-danger"
-                                  } ltr:mr-1 rtl:ml-1.5`}
+                                    } ltr:mr-1 rtl:ml-1.5`}
                                 ></div>
                                 <div className="flex-1">{banque?.banque}</div>
                                 <div className="text-xs text-white-dark dark:text-gray-500 ltr:ml-auto rtl:mr-auto">
@@ -1273,53 +1579,53 @@ const ComponentsDashboardSales = () => {
                       <div className="space-y-6">
                         {loading
                           ? Array.from({ length: 4 }).map((_, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center space-x-3"
-                              >
-                                <div className="h-9 w-9 animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"></div>
-                                <div className="flex-1 space-y-2">
-                                  <div className="h-4 animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"></div>
-                                  <div className="h-3 w-1/2 animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"></div>
-                                </div>
-                                <div className="h-5 w-12 animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"></div>
+                            <div
+                              key={index}
+                              className="flex items-center space-x-3"
+                            >
+                              <div className="h-9 w-9 animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"></div>
+                              <div className="flex-1 space-y-2">
+                                <div className="h-4 animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"></div>
+                                <div className="h-3 w-1/2 animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"></div>
                               </div>
-                            ))
+                              <div className="h-5 w-12 animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"></div>
+                            </div>
+                          ))
                           : caisses?.most?.map((caisse: any, index: number) => {
-                              const isPositive = caisse?.totalEcartReleve >= 0;
-                              const badgeClass = isPositive
-                                ? "bg-success-light text-success dark:bg-success dark:text-success-light"
-                                : "bg-danger-light text-danger dark:bg-danger dark:text-danger-light";
-                              const textColorClass = isPositive
-                                ? "text-success"
-                                : "text-danger";
-                              const signe = isPositive ? "+" : "";
+                            const isPositive = caisse?.totalEcartReleve >= 0;
+                            const badgeClass = isPositive
+                              ? "bg-success-light text-success dark:bg-success dark:text-success-light"
+                              : "bg-danger-light text-danger dark:bg-danger dark:text-danger-light";
+                            const textColorClass = isPositive
+                              ? "text-success"
+                              : "text-danger";
+                            const signe = isPositive ? "+" : "";
 
-                              return (
-                                <div className="flex" key={index}>
-                                  <span
-                                    className={`grid h-9 w-9 shrink-0 place-content-center rounded-md ${badgeClass}`}
-                                  >
-                                    J{index + 1}
-                                  </span>
-                                  <div className="flex-1 px-3">
-                                    <div>{`Journée ${caisse?.numeroJourneeCaisse}`}</div>
-                                    <div className="text-xs text-white-dark dark:text-gray-500">
-                                      {isPositive
-                                        ? "Écart positif"
-                                        : "Écart négatif"}
-                                    </div>
+                            return (
+                              <div className="flex" key={index}>
+                                <span
+                                  className={`grid h-9 w-9 shrink-0 place-content-center rounded-md ${badgeClass}`}
+                                >
+                                  J{index + 1}
+                                </span>
+                                <div className="flex-1 px-3">
+                                  <div>{`Journée ${caisse?.numeroJourneeCaisse}`}</div>
+                                  <div className="text-xs text-white-dark dark:text-gray-500">
+                                    {isPositive
+                                      ? "Écart positif"
+                                      : "Écart négatif"}
                                   </div>
-                                  <span
-                                    className={`whitespace-pre px-1 text-base ${textColorClass} ltr:ml-auto rtl:mr-auto`}
-                                  >
-                                    {`${signe}${caisse?.totalEcartReleve?.toLocaleString(
-                                      "fr-FR"
-                                    )} F CFA`}
-                                  </span>
                                 </div>
-                              );
-                            })}
+                                <span
+                                  className={`whitespace-pre px-1 text-base ${textColorClass} ltr:ml-auto rtl:mr-auto`}
+                                >
+                                  {`${signe}${caisse?.totalEcartReleve?.toLocaleString(
+                                    "fr-FR"
+                                  )} F CFA`}
+                                </span>
+                              </div>
+                            );
+                          })}
                       </div>
                     </div>
                   </div>
@@ -1345,11 +1651,10 @@ const ComponentsDashboardSales = () => {
                             <span className="mb-4 flex items-center justify-between dark:text-white">
                               Écart (A-B)
                               <IconCaretDown
-                                className={`h-4 w-4 ${
-                                  ecart?.ecartAB >= 0
-                                    ? "text-success"
-                                    : "text-danger"
-                                }`}
+                                className={`h-4 w-4 ${ecart?.ecartAB >= 0
+                                  ? "text-success"
+                                  : "text-danger"
+                                  }`}
                               />
                             </span>
                             <div className="btn w-full border-0 bg-[#ebedf2] py-1 text-base text-[#515365] shadow-none dark:bg-black dark:text-[#bfc9d4]">
@@ -1361,11 +1666,10 @@ const ComponentsDashboardSales = () => {
                             <span className="mb-4 flex items-center justify-between dark:text-white">
                               Écart (B-C)
                               <IconCaretDown
-                                className={`h-4 w-4 ${
-                                  ecart?.ecartBC >= 0
-                                    ? "text-success"
-                                    : "text-danger"
-                                }`}
+                                className={`h-4 w-4 ${ecart?.ecartBC >= 0
+                                  ? "text-success"
+                                  : "text-danger"
+                                  }`}
                               />
                             </span>
                             <div className="btn w-full border-0 bg-[#ebedf2] py-1 text-base text-[#515365] shadow-none dark:bg-black dark:text-[#bfc9d4]">
@@ -1385,34 +1689,34 @@ const ComponentsDashboardSales = () => {
                       <div className="mb-5 space-y-1">
                         {loading
                           ? Array.from({ length: 5 }).map((_, index) => (
+                            <div
+                              key={index}
+                              className="h-4 w-full animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                          ))
+                          : ecart.top5CaissesWithMostCloturedDossiers?.map(
+                            (caisse: any, index: number) => (
                               <div
                                 key={index}
-                                className="h-4 w-full animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"
-                              ></div>
-                            ))
-                          : ecart.top5CaissesWithMostCloturedDossiers?.map(
-                              (caisse: any, index: number) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center justify-between"
-                                >
-                                  <p className="font-semibold text-[#515365]">
-                                    Journée {caisse.numeroJourneeCaisse}
-                                  </p>
-                                  <p className="text-base">
-                                    <span className="font-semibold">
-                                      {caisse.nombreDossiersClotures}
-                                    </span>
-                                    <span className="text-sm font-light text-gray-500">
-                                      {" "}
-                                      {caisse.nombreDossiersClotures > 1
-                                        ? "dossiers clôturés"
-                                        : "dossier clôturé"}
-                                    </span>
-                                  </p>
-                                </div>
-                              )
-                            )}
+                                className="flex items-center justify-between"
+                              >
+                                <p className="font-semibold text-[#515365]">
+                                  Journée {caisse.numeroJourneeCaisse}
+                                </p>
+                                <p className="text-base">
+                                  <span className="font-semibold">
+                                    {caisse.nombreDossiersClotures}
+                                  </span>
+                                  <span className="text-sm font-light text-gray-500">
+                                    {" "}
+                                    {caisse.nombreDossiersClotures > 1
+                                      ? "dossiers clôturés"
+                                      : "dossier clôturé"}
+                                  </span>
+                                </p>
+                              </div>
+                            )
+                          )}
                       </div>
                     </div>
                   </div>
@@ -1429,9 +1733,8 @@ const ComponentsDashboardSales = () => {
               </div>
               <div className="relative">
                 <div
-                  className={`table-responsive ${
-                    showAllRestitution ? "max-h-[400px] overflow-y-auto" : ""
-                  }`}
+                  className={`table-responsive ${showAllRestitution ? "max-h-[400px] overflow-y-auto" : ""
+                    }`}
                 >
                   {loading ? (
                     <div className="flex h-40 items-center justify-center">
@@ -1472,30 +1775,27 @@ const ComponentsDashboardSales = () => {
                               {item.directionRegionale}
                             </td>
                             <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.montantA - item.montantB < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
+                              className={`px-6 py-3 text-left text-sm ${item.montantA - item.montantB < 0
+                                ? "text-primary"
+                                : "text-gray-800"
+                                } dark:text-white-light`}
                             >
                               {(item.montantA - item.montantB).toLocaleString()}{" "}
                               FCFA
                             </td>
                             <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.montantB < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
+                              className={`px-6 py-3 text-left text-sm ${item.montantB < 0
+                                ? "text-primary"
+                                : "text-gray-800"
+                                } dark:text-white-light`}
                             >
                               {item.montantB.toLocaleString()} FCFA
                             </td>
                             <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.ecartAB < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
+                              className={`px-6 py-3 text-left text-sm ${item.ecartAB < 0
+                                ? "text-primary"
+                                : "text-gray-800"
+                                } dark:text-white-light`}
                             >
                               {item.ecartAB.toLocaleString()} FCFA
                             </td>
@@ -1525,9 +1825,8 @@ const ComponentsDashboardSales = () => {
               </div>
               <div className="relative">
                 <div
-                  className={`table-responsive ${
-                    showAllBordereau ? "max-h-[400px] overflow-y-auto" : ""
-                  }`}
+                  className={`table-responsive ${showAllBordereau ? "max-h-[400px] overflow-y-auto" : ""
+                    }`}
                 >
                   {loading ? (
                     <div className="flex h-40 items-center justify-center">
@@ -1568,29 +1867,26 @@ const ComponentsDashboardSales = () => {
                               {item.directionRegionale}
                             </td>
                             <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.ecartC < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
+                              className={`px-6 py-3 text-left text-sm ${item.ecartC < 0
+                                ? "text-primary"
+                                : "text-gray-800"
+                                } dark:text-white-light`}
                             >
                               {item.ecartC.toLocaleString()} FCFA
                             </td>
                             <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.ecartB < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
+                              className={`px-6 py-3 text-left text-sm ${item.ecartB < 0
+                                ? "text-primary"
+                                : "text-gray-800"
+                                } dark:text-white-light`}
                             >
                               {item.ecartB.toLocaleString()} FCFA
                             </td>
                             <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.ecartBC < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
+                              className={`px-6 py-3 text-left text-sm ${item.ecartBC < 0
+                                ? "text-primary"
+                                : "text-gray-800"
+                                } dark:text-white-light`}
                             >
                               {item.ecartBC.toLocaleString()} FCFA
                             </td>
