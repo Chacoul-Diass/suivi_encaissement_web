@@ -45,14 +45,14 @@ export default function Litige() {
   const allTabs = [
     {
       id: EStatutEncaissement.RECLAMATION_REVERSES,
-      label: "Litiges Chargés",
+      label: "Reclamations Chargés",
       icon: IconBarChart,
       habilitationName: "LITIGES CHARGES",
     },
 
     {
       id: EStatutEncaissement.RECLAMATION_TRAITES,
-      label: "Litiges Traités",
+      label: "Reclamations Traités",
       icon: IconChecks,
       habilitationName: "LITIGES TRAITES",
     },
@@ -62,7 +62,7 @@ export default function Litige() {
     habilitation?.some(
       (h: { name: string; LIRE: boolean }) =>
         h.name.normalize("NFKC").toUpperCase() ===
-          tab.habilitationName.normalize("NFKC").toUpperCase() &&
+        tab.habilitationName.normalize("NFKC").toUpperCase() &&
         h.LIRE === true
     )
   );
@@ -179,11 +179,10 @@ export default function Litige() {
                 <Tab as={Fragment} key={tab.id}>
                   {({ selected }) => (
                     <button
-                      className={`${
-                        selected
+                      className={`${selected
                           ? "text-primary !outline-none before:!w-full"
                           : ""
-                      }relative -mb-[1px] flex items-center p-5 py-3`}
+                        }relative -mb-[1px] flex items-center p-5 py-3`}
                     >
                       <tab.icon className="ltr:mr-2 rtl:ml-2" />
                       {tab.label}

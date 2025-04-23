@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Dropdown from "../dropdown";
-import Flatpickr from "react-flatpickr";
-import { French } from "flatpickr/dist/l10n/fr.js";
 import IconCaretDown from "../icon/icon-caret-down";
 import IconCalendar from "../icon/icon-calendar";
 import IconBank from "../icon/icon-bank";
@@ -21,6 +19,7 @@ import { fetchcaisses } from "@/store/reducers/select/caisse.slice";
 import { fetchmodeReglement } from "@/store/reducers/select/modeReglement.slice";
 import { fetchSecteurs } from "@/store/reducers/select/secteur.slice";
 import { fetchProduit } from "@/store/reducers/select/produit.slice";
+import dayjs from "dayjs";
 
 interface GlobalFiltreProps {
   drData: any;
@@ -39,9 +38,15 @@ export default function GlobalFiltre({
 }: GlobalFiltreProps) {
   const dispatch = useDispatch<TAppDispatch>();
 
-  // Dates sélectionnées (vide par défaut => pas de date initiale)
-  const [dateRange, setDateRange] = useState<Date[]>(NO_DATES_SELECTED);
-  const [dateRangeKey, setDateRangeKey] = useState(Date.now());
+  // État pour la période, adapté pour utiliser des chaînes de caractères au lieu de dates
+  const [dateRange, setDateRange] = useState<{ startDate: string, endDate: string }>({
+    startDate: "",
+    endDate: ""
+  });
+
+  // État pour afficher/masquer le sélecteur de date
+  const [isDateRangeVisible, setIsDateRangeVisible] = useState(false);
+  const datePickerRef = useRef<HTMLDivElement>(null);
 
   // Ici, on stocke la recherche propre à chaque dropdown
   const [searchQueries, setSearchQueries] = useState({
@@ -124,7 +129,7 @@ export default function GlobalFiltre({
     setSelectedSecteurIds([]);
   }, [selectedDRIds]);
 
-  // Ajout/suppression d’un item (banque, caisse, mode)
+  // Ajout/suppression d'un item (banque, caisse, mode)
   const toggleSelection = (
     libelle: string,
     type: "produit" | "banques" | "caisses" | "modes"
@@ -137,7 +142,7 @@ export default function GlobalFiltre({
     }));
   };
 
-  // Ajout/suppression d’une DR
+  // Ajout/suppression d'une DR
   const toggleDR = (id: number) => {
     setSelectedDRIds((prev) => {
       const updated = prev.includes(id)
@@ -153,7 +158,7 @@ export default function GlobalFiltre({
     });
   };
 
-  // Ajout/suppression d’un secteur
+  // Ajout/suppression d'un secteur
   const toggleSecteur = (id: number) => {
     setSelectedSecteurIds((prev) =>
       prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
@@ -191,18 +196,35 @@ export default function GlobalFiltre({
     }
   };
 
-  // Formater une date en YYYY-MM-DD
-  const formatDate = (date: Date | undefined): string => {
-    if (!date) return "";
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+  // Effet pour fermer le sélecteur de date quand on clique en dehors
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(event.target as Node)
+      ) {
+        setIsDateRangeVisible(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Gestion du changement de date
+  const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
+    console.log(`Date ${field} changée:`, value);
+
+    setDateRange(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  // Construit l’objet de filtres pour onApplyFilters
+  // Construit l'objet de filtres pour onApplyFilters
   const getFilterParams = () => {
-    const [start, end] = dateRange; // 0, 1, ou 2 dates
     return {
       id: statutValidation,
       directionRegional: selectedDRIds
@@ -217,8 +239,8 @@ export default function GlobalFiltre({
       caisse: selectedItems.caisses.map((caisse) => caisse.libelle.trim()),
       produit: selectedItems.produit.map((produit) => produit.libelle.trim()),
       modeReglement: selectedItems.modes.map((mode) => mode.libelle.trim()),
-      startDate: start ? formatDate(start) : "", // vide => pas de filtre
-      endDate: end ? formatDate(end) : "", // vide => pas de filtre
+      startDate: dateRange.startDate, // Utiliser directement la valeur de l'état
+      endDate: dateRange.endDate,     // Utiliser directement la valeur de l'état
     };
   };
 
@@ -228,10 +250,9 @@ export default function GlobalFiltre({
     onApplyFilters(params);
   };
 
-  // Réinitialiser : on vide toutes les sélections, mais on garde id dans l’URL
+  // Réinitialiser : on vide toutes les sélections, mais on garde id dans l'URL
   const resetFilters = () => {
-    setDateRange(NO_DATES_SELECTED);
-    setDateRangeKey(Date.now());
+    setDateRange({ startDate: "", endDate: "" });
     setSelectedDRIds([]);
     setSelectedSecteurIds([]);
     setSelectedItems({ produit: [], banques: [], caisses: [], modes: [] });
@@ -245,17 +266,8 @@ export default function GlobalFiltre({
       secteurs: "",
     });
 
-    // On repasse l’id pour le conserver
+    // On repasse l'id pour le conserver
     onApplyFilters({ id: statutValidation });
-  };
-
-  // Gérer le changement dans Flatpickr
-  const handleDateChange = (dates: Date[]) => {
-    if (dates.length < 2) {
-      setDateRange(NO_DATES_SELECTED);
-    } else {
-      setDateRange(dates);
-    }
   };
 
   // Petite fonction utilitaire pour générer un Dropdown
@@ -306,9 +318,8 @@ export default function GlobalFiltre({
       )}
 
       <Dropdown
-        btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${
-          selected.length > 0 ? "ring-2 ring-primary/30" : ""
-        }`}
+        btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${selected.length > 0 ? "ring-2 ring-primary/30" : ""
+          }`}
         button={
           <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
             {label}
@@ -373,8 +384,8 @@ export default function GlobalFiltre({
                       type === "drs" || type === "secteurs"
                         ? selected.includes(item.id)
                         : selected.some(
-                            (sel: any) => sel.libelle === item.libelle
-                          )
+                          (sel: any) => sel.libelle === item.libelle
+                        )
                     }
                     onChange={() =>
                       type === "drs" || type === "secteurs"
@@ -424,24 +435,63 @@ export default function GlobalFiltre({
       </div>
 
       <div className="flex flex-wrap items-start gap-4 lg:flex-nowrap lg:items-center">
-        {/* Flatpickr avec icône et animation */}
-        <div className="group relative w-full sm:w-auto">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <IconCalendar className="h-5 w-5 text-gray-400 transition-colors duration-200 group-hover:text-primary" />
+        {/* Sélecteur de dates personnalisé */}
+        <div className="relative w-full sm:w-auto" ref={datePickerRef}>
+          <div
+            className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+            onClick={() => setIsDateRangeVisible(!isDateRangeVisible)}
+          >
+            <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+              <IconCalendar className="h-4 w-4 text-gray-400" />
+              <span>
+                {dateRange.startDate && dateRange.endDate
+                  ? `${dayjs(dateRange.startDate).format("DD/MM/YYYY")} - ${dayjs(dateRange.endDate).format("DD/MM/YYYY")}`
+                  : "Sélectionner la période"}
+              </span>
+            </div>
           </div>
-          <Flatpickr
-            key={dateRangeKey}
-            options={{
-              mode: "range",
-              dateFormat: "Y-m-d",
-              locale: French,
-              allowInput: true,
-              defaultDate: dateRange.map((date) => new Date(date)),
-            }}
-            className="form-input w-full min-w-[270px] rounded-lg border-gray-200 pl-10 text-sm transition-all duration-200 focus:border-primary focus:ring-primary group-hover:border-primary dark:border-gray-600 dark:bg-gray-700"
-            onChange={handleDateChange}
-            placeholder="Sélectionner la période"
-          />
+
+          {isDateRangeVisible && (
+            <div className="absolute z-10 mt-2 w-full min-w-[300px] rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+              <div className="mb-3 space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date début</label>
+                  <input
+                    type="date"
+                    className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                    value={dateRange.startDate || ""}
+                    onChange={(e) => handleDateChange('startDate', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date fin</label>
+                  <input
+                    type="date"
+                    className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                    value={dateRange.endDate || ""}
+                    onChange={(e) => handleDateChange('endDate', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                  onClick={() => {
+                    setDateRange({ startDate: "", endDate: "" });
+                    setIsDateRangeVisible(false);
+                  }}
+                >
+                  Effacer
+                </button>
+                <button
+                  className="flex-1 rounded-lg bg-primary py-2 text-sm font-medium text-white transition-all hover:bg-primary/90"
+                  onClick={() => setIsDateRangeVisible(false)}
+                >
+                  Appliquer
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Dropdowns avec icônes */}

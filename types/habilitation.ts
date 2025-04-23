@@ -20,6 +20,7 @@ export type MenuName =
   | "LITIGES"
   | "RAPPROCHEMENT"
   | "LITIGES CHARGES"
-  | "LITIGES TRAITES";
+  | "LITIGES TRAITES"
+  | "ÉTAT DES ENCAISSEMENTS";
 
 export type HabilitationAction = "CREER" | "MODIFIER" | "SUPPRIMER" | "LIRE";

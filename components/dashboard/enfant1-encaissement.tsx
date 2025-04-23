@@ -14,7 +14,6 @@ interface EncaissementComptableProps {
   total: ITotal;
   paginate: Paginations;
   loading: boolean;
-  fetchData : any;
   habilitation: any[];
   handlePageChange?: (page: number) => void;
   handleSearchChange?: (value: string) => void;
@@ -26,7 +25,6 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
   data,
   total,
   paginate,
-  fetchData,
   loading,
   habilitation,
   handlePageChange,
@@ -214,7 +212,6 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
         <ComponentsDatatablesColumnChooser
           statutValidation={statutValidation}
           data={data}
-          fetchData={fetchData}
           loading={loading}
           paginate={paginate}
           habilitation={habilitation}

@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className={nunito.variable}>
         <ProviderComponent>
           {children}
-          <FloatingButton />
+          {/* <FloatingButton /> */}
         </ProviderComponent>
       </body>
     </html>
