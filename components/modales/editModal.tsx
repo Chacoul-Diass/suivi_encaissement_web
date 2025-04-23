@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { TAppDispatch } from "@/store";
 import Tippy from "@tippyjs/react";
@@ -80,10 +80,12 @@ export default function EditModal({
   const maxNumber = 69;
   const [montantSaisi, setMontantSaisi] = useState<string>("");
   const [montantAffiche, setMontantAffiche] = useState<string>("");
+  const montantInputRef = useRef<HTMLInputElement>(null);
   const [dateMontantBanque, setDateMontantBanque] = useState<string>("");
   const [formError, setFormError] = useState("");
   const [montantModifie, setMontantModifie] = useState<boolean>(false);
   const [validationModalOpen, setValidationModalOpen] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [newMontantSaisi, setNewMontantSaisi] = useState<string>("");
   const [newMontantAffiche, setNewMontantAffiche] = useState<string>("");
   const [newMontantError, setNewMontantError] = useState<string>("");
@@ -110,20 +112,34 @@ export default function EditModal({
   };
 
   const handleMontantInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value.replace(/[^\d]/g, ""); // Garde uniquement les chiffres
-    if (inputValue === "") {
+    // On récupère la valeur brute de l'input
+    const inputValue = e.target.value;
+
+    // On supprime tout ce qui n'est pas un chiffre
+    const cleanedValue = inputValue.replace(/\D/g, "");
+
+    // Si la valeur est vide, réinitialiser tous les états
+    if (cleanedValue === "") {
       setMontantSaisi("");
-      setMontantAffiche("");
-      setMontantModifie(true);
+      handleMontantChange(0);
       return;
     }
 
-    const numericValue = parseInt(inputValue);
-    setMontantSaisi(numericValue.toString());
-    setMontantAffiche(formatNumber(numericValue));
+    // Stocke la valeur non formatée pour les calculs
+    setMontantSaisi(cleanedValue);
+
+    // Mettre à jour les autres états
+    const numericValue = parseInt(cleanedValue);
     setFormError("");
     setMontantModifie(true);
     handleMontantChange(numericValue);
+  };
+
+  const handleMontantBlur = () => {
+    if (montantSaisi !== "") {
+      const numericValue = parseInt(montantSaisi);
+      setMontantAffiche(formatNumber(numericValue));
+    }
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -140,8 +156,7 @@ export default function EditModal({
       setFormError("La date du relevé est obligatoire");
       return;
     }
-
-    // setIsConfirmationModalOpen(true);
+    setIsConfirmationModalOpen(true);
   };
 
   const handleValidateMontant = async () => {
@@ -152,43 +167,27 @@ export default function EditModal({
       }
 
       setIsValidating(true);
-
       // Appel API pour valider le montant
-      console.log(`Validation du montant ${selectedRow.id}`);
-      const response = await axiosInstance.patch(`${API_AUTH_SUIVI}/encaissements/validate-amount/${selectedRow.id}`);
+      const response: any = await axiosInstance.patch(`${API_AUTH_SUIVI}/encaissements/validate-amount/${selectedRow.id}`);
 
-      if (response.status === 200) {
-        console.log("Validation réussie, fermeture des modals");
-        
-        // Afficher une notification de succès
-        // toast.fire("success", "Montant validé avec succès");
+      const montantReleve = selectedRow.montantReleve || 0;
+      const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
 
-        // Fermer d'abord la modal de validation
-        setValidationModalOpen(false);
+      const updatedRow = {
+        ...selectedRow,
+        observationBanque,
+        rasChecked1,
+        rasChecked2,
+        images2,
+        montantReleve: montantReleve,
+        dateMontantBanque,
+        ecartReleve: montantBordereau - montantReleve,
+        statutValidation: 2,
+      };
 
-        const montantReleve = selectedRow.montantReleve || 0;
-        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
-
-        const updatedRow = {
-          ...selectedRow,
-          observationBanque,
-          rasChecked1,
-          rasChecked2,
-          images2,
-          montantReleve: montantReleve,
-          dateMontantBanque,
-          ecartReleve: montantBordereau - montantReleve,
-          statutValidation: 2,
-        };
-
-        // Utiliser un timeout pour s'assurer que la fermeture de la modal s'effectue correctement
-        setTimeout(() => {
-          // Fermer ensuite la modal principale et soumettre les données
-          // setIsConfirmationModalOpen(false);
-          setModalOpen(false);
-          handleSubmit(updatedRow);
-        }, 500);
-      }
+      handleSubmit(updatedRow);
+      setValidationModalOpen(false);
+      setIsConfirmationModalOpen(true);
     } catch (error) {
       console.error("Erreur lors de la validation du montant", error);
       // Afficher une notification d'erreur
@@ -224,6 +223,36 @@ export default function EditModal({
     setMontantSaisi(newMontantSaisi);
     setMontantAffiche(newMontantAffiche);
     setMontantModifie(true);
+  };
+
+const handleConfirmSubmit = () => {
+    let finalMontant = 0;
+
+    if (montantModifie && montantSaisi) {
+      finalMontant = parseFloat(montantSaisi);
+    } else if (selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0) {
+      finalMontant = selectedRow.montantReleve;
+    } else if (montantSaisi) {
+      finalMontant = parseFloat(montantSaisi);
+    }
+
+    const bordereau = selectedRow["Montant bordereau (B)"] || 0;
+
+    const updatedRow = {
+      ...selectedRow,
+      observationBanque,
+      rasChecked1,
+      rasChecked2,
+      images2,
+      montantReleve: finalMontant,
+      dateMontantBanque,
+      ecartReleve: bordereau - finalMontant,
+      statutValidation: 2,
+    };
+
+    handleSubmit(updatedRow);
+    setIsConfirmationModalOpen(false);
+    setModalOpen(false);
   };
 
   return (
@@ -418,24 +447,29 @@ export default function EditModal({
                   <div className="flex">
                     <input
                       type="text"
-                      className="form-input w-full rounded-lg border-gray-300 bg-gray-100 py-3 pl-10 pr-4 text-gray-600 opacity-80 cursor-not-allowed dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
+                      ref={montantInputRef}
+                      className={`form-input w-full rounded-lg border-gray-300 py-3 pl-10 pr-4 ${selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0 && (selectedRow.isCorrect === 0 || selectedRow.isCorrect === 1)
+                          ? "bg-gray-100 text-gray-600 opacity-80 cursor-not-allowed dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
+                          : "bg-white text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        }`}
                       placeholder="Montant en F CFA"
-                      value={montantAffiche}
+                      defaultValue={montantSaisi}
                       onChange={handleMontantInputChange}
-                      disabled
+                      onBlur={handleMontantBlur}
+                      disabled={selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0 && (selectedRow.isCorrect === 0 || selectedRow.isCorrect === 1)}
                     />
                     <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
                       <IconCashBanknotes className="h-5 w-5 text-gray-400" />
                     </div>
-                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-                      <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded dark:bg-gray-600 dark:text-gray-300">
-                        Non modifiable
-                      </span>
-                    </div>
+                    {selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0 && (selectedRow.isCorrect === 0 || selectedRow.isCorrect === 1) && (
+                      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                        <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded dark:bg-gray-600 dark:text-gray-300">
+                          Non modifiable
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  {formError && (
-                    <p className="mt-2 text-sm text-red-500">{formError}</p>
-                  )}
+
                 </div>
                 {/* Date du montant banque */}
                 <div className="mt-3">
@@ -452,6 +486,10 @@ export default function EditModal({
                     />
                   </div>
                 </div>
+
+                {formError && (
+                    <p className="text-sm text-red-500">{formError}</p>
+                  )}
               </div>
             </div>
 
@@ -619,7 +657,7 @@ export default function EditModal({
       </div>
 
       {/* Confirmation Modal */}
-      {/* {isConfirmationModalOpen && (
+      {isConfirmationModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md transform rounded-lg bg-white p-6 shadow-xl transition-all dark:bg-gray-800">
             <div className="text-center">
@@ -705,21 +743,21 @@ export default function EditModal({
             </div>
           </div>
         </div>
-      )} */}
+      )} 
 
       {/* Modal de Validation du Montant */}
       {validationModalOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm"
           onClick={() => setValidationModalOpen(false)}
         >
-          <div 
+          <div
             className="w-full max-w-md transform rounded-lg bg-white p-6 shadow-xl transition-all dark:bg-gray-800"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="relative text-center">
-              <button 
-                onClick={() => setValidationModalOpen(false)} 
+              <button
+                onClick={() => setValidationModalOpen(false)}
                 className="absolute right-0 top-0 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
                 aria-label="Fermer"
               >
@@ -789,22 +827,22 @@ export default function EditModal({
                       className="mt-3 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:bg-gray-400"
                       onClick={handleConfirmNewMontant}
                       disabled={
-                        !newMontantAffiche || 
-                        newMontantError !== "" || 
+                        !newMontantAffiche ||
+                        newMontantError !== "" ||
                         parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) <= 0 ||
                         parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) === selectedRow.montantReleve
                       }
                     >
                       Confirmer ce nouveau montant
                     </button>
-                    {(newMontantAffiche && 
+                    {(newMontantAffiche &&
                       parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) === selectedRow.montantReleve) && (
-                      <p className="mt-2 text-sm text-red-500">Le nouveau montant ne peut pas être identique à l'ancien</p>
-                    )}
-                    {(newMontantAffiche && 
+                        <p className="mt-2 text-sm text-red-500">Le nouveau montant ne peut pas être identique à l'ancien</p>
+                      )}
+                    {(newMontantAffiche &&
                       parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) <= 0) && (
-                      <p className="mt-2 text-sm text-red-500">Le montant doit être supérieur à 0</p>
-                    )}
+                        <p className="mt-2 text-sm text-red-500">Le montant doit être supérieur à 0</p>
+                      )}
                   </div>
                 </div>
 
