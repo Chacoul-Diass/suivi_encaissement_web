@@ -43,6 +43,114 @@ import IconClipboardCheck from "../icon/icon-clipboard-check";
 import IconUpload from "../icon/icon-upload";
 import IconCheckCircle from "../icon/icon-check-circle";
 import IconShield from "../icon/icon-shield";
+import IconWarning from "../icon/icon-warning";
+
+// Interface pour la modal de confirmation
+interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmButtonText?: string;
+  cancelButtonText?: string;
+  type?: 'warning' | 'info' | 'error' | 'success';
+}
+
+// Composant Modal de confirmation
+const ConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmButtonText = "Confirmer",
+  cancelButtonText = "Annuler",
+  type = 'warning'
+}: ConfirmModalProps) => {
+  if (!isOpen) return null;
+
+  // Déterminer les couleurs et icônes en fonction du type
+  const getTypeStyles = () => {
+    switch (type) {
+      case 'warning':
+        return {
+          icon: <IconWarning className="h-8 w-8 text-amber-500" />,
+          confirmButtonClass: "bg-amber-500 hover:bg-amber-600",
+          headerClass: "bg-gradient-to-r from-amber-500 to-amber-400"
+        };
+      case 'error':
+        return {
+          icon: <IconX className="h-8 w-8 text-red-500" />,
+          confirmButtonClass: "bg-red-500 hover:bg-red-600",
+          headerClass: "bg-gradient-to-r from-red-500 to-red-400"
+        };
+      case 'success':
+        return {
+          icon: <IconCheck className="h-8 w-8 text-green-500" />,
+          confirmButtonClass: "bg-green-500 hover:bg-green-600",
+          headerClass: "bg-gradient-to-r from-green-500 to-green-400"
+        };
+      case 'info':
+      default:
+        return {
+          icon: <IconBell className="h-8 w-8 text-primary" />,
+          confirmButtonClass: "bg-primary hover:bg-primary/90",
+          headerClass: "bg-gradient-to-r from-primary to-primary/80"
+        };
+    }
+  };
+
+  const typeStyles = getTypeStyles();
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/70 backdrop-blur-sm">
+      <div className="relative w-full max-w-md rounded-xl bg-white shadow-2xl dark:bg-gray-800">
+        {/* Header avec dégradé */}
+        <div className={`rounded-t-xl ${typeStyles.headerClass} p-4 text-white`}>
+          <div className="mb-0 flex items-center justify-between">
+            <h3 className="text-lg font-bold">{title}</h3>
+            <button
+              onClick={onClose}
+              className="rounded-full p-1 text-white transition-all hover:bg-white/20"
+            >
+              <IconX className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Corps de la modal */}
+        <div className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0">
+              {typeStyles.icon}
+            </div>
+            <p className="text-base text-gray-600 dark:text-gray-300">{message}</p>
+          </div>
+        </div>
+
+        {/* Boutons d'action */}
+        <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+          >
+            {cancelButtonText}
+          </button>
+          <button
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+            className={`rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow-md focus:ring-2 focus:ring-offset-2 dark:ring-offset-gray-800 ${typeStyles.confirmButtonClass}`}
+          >
+            {confirmButtonText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Composant pour la modale d'alertes
 interface AlertItem {
@@ -82,6 +190,7 @@ interface AlertModalProps {
   onPageChange: (page: number) => void;
   activeTabId?: number;
   onTabChange?: (tabId: number) => void;
+  onShowConfirmModal?: (title: string, message: string, onConfirm: () => void) => void;
 }
 
 // Ajout de la définition du modèle pour les onglets d'alertes
@@ -91,7 +200,7 @@ interface AlertTab {
   icon: React.ReactNode;
 }
 
-const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange, activeTabId = 0, onTabChange }: AlertModalProps) => {
+const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange, activeTabId = 0, onTabChange, onShowConfirmModal }: AlertModalProps) => {
   if (!isOpen) return null;
 
   const formatNumber = (num: number) => {
@@ -152,7 +261,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
   const negativeEcarts = hasAlerts ? alerts.filter(a => a.ecartCaisseBanque < 0).length : 0;
   const zeroEcarts = hasAlerts ? alerts.filter(a => a.ecartCaisseBanque === 0).length : 0;
 
-  // Fonction pour exporter en CSV
+  // Les fonctions d'exportation sont déplacées vers le composant parent
   const exportToCSV = async () => {
     try {
       // Afficher un indicateur de chargement via le toast
@@ -240,13 +349,26 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
 
       // Vérifier si le nombre de lignes dépasse 1000
       if (allAlerts.length > 1000) {
-        // Avertir l'utilisateur
-        if (!confirm(`Attention: Le fichier contient ${allAlerts.length} lignes, ce qui pourrait causer des problèmes d'ouverture avec Excel. Voulez-vous continuer quand même?`)) {
-          Toastify("warning", "Export Excel annulé");
-          return;
-        }
+        // Informer le parent pour afficher la modal de confirmation
+        onShowConfirmModal && onShowConfirmModal(
+          "Attention",
+          `Le fichier contient ${allAlerts.length} lignes, ce qui pourrait causer des problèmes d'ouverture avec Excel. Voulez-vous continuer quand même?`,
+          () => processExcelExport(allAlerts)
+        );
+        return;
       }
 
+      // Si pas trop de lignes, continuer directement
+      processExcelExport(allAlerts);
+    } catch (error) {
+      console.error("Erreur lors de l'export Excel:", error);
+      Toastify("error", "Échec de l'export Excel");
+    }
+  };
+
+  // Fonction pour traiter l'export Excel une fois confirmé
+  const processExcelExport = (allAlerts: any[]) => {
+    try {
       // En-têtes Excel
       const headers = [
         "Direction Régionale",
@@ -292,7 +414,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
 
       Toastify("success", `Export Excel réussi (${allAlerts.length} enregistrements)`);
     } catch (error) {
-      console.error("Erreur lors de l'export Excel:", error);
+      console.error("Erreur lors du traitement de l'export Excel:", error);
       Toastify("error", "Échec de l'export Excel");
     }
   };
@@ -685,6 +807,13 @@ const ComponentsDashboardSales = () => {
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo | null>(null);
   const [alertPage, setAlertPage] = useState(1);
   const [alertTabId, setAlertTabId] = useState(0);
+  const [confirmModalProps, setConfirmModalProps] = useState<ConfirmModalProps>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => { },
+    onClose: () => setConfirmModalProps(prev => ({ ...prev, isOpen: false }))
+  });
 
   const fetchDashboardData = async (filters?: any) => {
     const cleanArray = (arr: string[] | undefined) =>
@@ -1115,8 +1244,25 @@ const ComponentsDashboardSales = () => {
     getAlerts(1, tabId);
   };
 
+  const handleShowConfirmModal = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModalProps({
+      isOpen: true,
+      title,
+      message,
+      type: "warning",
+      confirmButtonText: "Continuer",
+      cancelButtonText: "Annuler",
+      onConfirm,
+      onClose: () => {
+        setConfirmModalProps(prev => ({ ...prev, isOpen: false }));
+        Toastify("warning", "Export Excel annulé");
+      }
+    });
+  };
+
   return (
     <>
+      <ConfirmModal {...confirmModalProps} />
       <AlertModal
         isOpen={alertModalOpen}
         onClose={() => setAlertModalOpen(false)}
@@ -1126,6 +1272,7 @@ const ComponentsDashboardSales = () => {
         onPageChange={handleAlertPageChange}
         activeTabId={alertTabId}
         onTabChange={handleAlertTabChange}
+        onShowConfirmModal={handleShowConfirmModal}
       />
       <div className="panel">
         <div className="panel relative mb-8">
