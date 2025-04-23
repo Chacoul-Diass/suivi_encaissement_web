@@ -810,7 +810,7 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                     isOpen={detailsModalOpen}
                     onClose={closeDetailsModal}
                     encaissement={selectedEncaissement}
-                    formatMontant={formatMontant}
+                    formatNumber={formatMontant}
                     formatDate={formatDisplayDate}
                 />
             </div>
