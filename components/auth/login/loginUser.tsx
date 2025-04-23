@@ -51,12 +51,46 @@ const ComponentsAuthLoginForm = () => {
   const defaultBackground = "/assets/images/auth/default-bg.jpg";
   const [background, setBackground] = useState(defaultBackground);
   const [isCustomBackground, setIsCustomBackground] = useState(false);
+  const [isDarkBackground, setIsDarkBackground] = useState(true);
 
   useEffect(() => {
     const savedBackground = localStorage.getItem("userBackground");
     if (savedBackground) {
       setBackground(savedBackground);
       setIsCustomBackground(true);
+      
+      // Analyser la luminosité de l'image sauvegardée
+      const img = document.createElement('img');
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+        
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+        
+        try {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          let totalBrightness = 0;
+          const pixels = imageData.data.length / 4;
+          
+          for (let i = 0; i < imageData.data.length; i += 4) {
+            const r = imageData.data[i];
+            const g = imageData.data[i + 1];
+            const b = imageData.data[i + 2];
+            const brightness = (0.299 * r + 0.587 * g + 0.114 * b);
+            totalBrightness += brightness;
+          }
+          
+          const averageBrightness = totalBrightness / pixels;
+          setIsDarkBackground(averageBrightness < 128);
+        } catch (error) {
+          console.error("Erreur lors de l'analyse de l'image sauvegardée", error);
+          setIsDarkBackground(false);
+        }
+      };
+      img.src = savedBackground;
     }
   }, []);
 
@@ -77,8 +111,47 @@ const ComponentsAuthLoginForm = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
+          // Enregistrer l'image
           setBackground(reader.result);
           setIsCustomBackground(true);
+          localStorage.setItem("userBackground", reader.result);
+          
+          // Déterminer si l'image est sombre ou claire
+          const img = document.createElement('img');
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            if (!ctx) return; // S'assurer que le contexte est disponible
+            
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            
+            // Analyser les pixels pour déterminer la luminosité moyenne
+            try {
+              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              let totalBrightness = 0;
+              const pixels = imageData.data.length / 4; // RGB + alpha
+              
+              // Calculer la luminosité moyenne (0.299R + 0.587G + 0.114B)
+              for (let i = 0; i < imageData.data.length; i += 4) {
+                const r = imageData.data[i];
+                const g = imageData.data[i + 1];
+                const b = imageData.data[i + 2];
+                const brightness = (0.299 * r + 0.587 * g + 0.114 * b);
+                totalBrightness += brightness;
+              }
+              
+              const averageBrightness = totalBrightness / pixels;
+              // Seuil de 128 (sur 255) pour déterminer si sombre ou clair
+              setIsDarkBackground(averageBrightness < 128);
+            } catch (error) {
+              console.error("Erreur lors de l'analyse de l'image", error);
+              // Par défaut, considérer comme clair
+              setIsDarkBackground(false);
+            }
+          };
+          img.src = reader.result;
         }
       };
       reader.readAsDataURL(file);
@@ -103,6 +176,7 @@ const ComponentsAuthLoginForm = () => {
       setIsCustomBackground(false);
       localStorage.removeItem("userBackground");
       setSelectedImageName("Aucune image choisie");
+      setIsDarkBackground(true);
     }
   };
 
@@ -332,12 +406,14 @@ const ComponentsAuthLoginForm = () => {
       </div>
       {/* Boutons fixes pour changer le fond d'écran */}
       <div className="fixed right-6 top-6 z-20 flex items-center gap-3">
-        <label className="group flex cursor-pointer items-center gap-2 rounded-xl bg-white/10 px-5 py-3 backdrop-blur-md transition-all duration-300 hover:bg-white/20">
+        <label
+          className={`group flex cursor-pointer items-center gap-2 rounded-xl ${isDarkBackground ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-700/70 hover:bg-gray-700/90'} px-5 py-3 backdrop-blur-md transition-all duration-300`}
+        >
           <div className="relative">
-            <div className="absolute -inset-1 animate-pulse rounded-full bg-primary/20 blur-sm group-hover:bg-primary/30"></div>
-            <IconDownload className="relative h-5 w-5 text-white transition-transform duration-300 group-hover:scale-110" />
+            <div className={`absolute -inset-1 animate-pulse rounded-full ${isDarkBackground ? 'bg-primary/20' : 'bg-primary/40'} blur-sm group-hover:bg-primary/30`}></div>
+            <IconDownload className={`relative h-5 w-5 ${isDarkBackground ? 'text-white' : 'text-white'} transition-transform duration-300 group-hover:scale-110`} />
           </div>
-          <span className="text-sm font-medium text-white">
+          <span className={`text-sm font-medium ${isDarkBackground ? 'text-white' : 'text-white'}`}>
             Changer le fond d'ecran
           </span>
           <input
@@ -350,10 +426,10 @@ const ComponentsAuthLoginForm = () => {
         {isCustomBackground && (
           <button
             onClick={resetBackground}
-            className="group flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 backdrop-blur-md transition-all duration-300 hover:bg-white/20"
+            className={`group flex items-center gap-2 rounded-xl ${isDarkBackground ? 'bg-primary/10 hover:bg-white/20' : 'bg-red-500/50 hover:bg-red-500/70'} px-5 py-3 backdrop-blur-md transition-all duration-300`}
           >
             <div className="relative">
-              <div className="absolute -inset-1 animate-pulse rounded-full bg-red-500/20 blur-sm group-hover:bg-red-500/30"></div>
+              <div className={`absolute -inset-1 animate-pulse rounded-full ${isDarkBackground ? 'bg-red-500/20' : 'bg-red-500/30'} blur-sm group-hover:bg-red-500/30`}></div>
               <IconTrashLines className="relative h-5 w-5 text-white transition-transform duration-300 group-hover:scale-110" />
             </div>
             <span className="text-sm font-medium text-white">

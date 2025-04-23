@@ -27,6 +27,359 @@ import { fr } from "date-fns/locale";
 
 import { API_AUTH_SUIVI } from "@/config/constants";
 import axiosInstance from "@/utils/axios";
+import IconX from "../icon/icon-x";
+import { Toastify } from "@/utils/toast";
+import { DataTable } from "mantine-datatable";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css";
+import IconEye from "../icon/icon-eye";
+import IconCheck from "../icon/icon-check";
+import IconAlertCircle from "../icon/icon-alert-circle";
+import IconUsers from "../icon/icon-users";
+import IconCash from "../icon/icon-cash";
+import { motion } from "framer-motion";
+
+// Composant pour la modale d'alertes
+interface AlertItem {
+  id: number;
+  directionRegionale: string;
+  codeExpl: string;
+  dateEncaissement: string;
+  banque: string;
+  produit: string;
+  compteBanque: string | null;
+  numeroBordereau: string;
+  journeeCaisse: string;
+  modeReglement: string;
+  montantReleve: number;
+  isCorrect: number;
+  montantRestitutionCaisse: number;
+  montantBordereauBanque: number;
+  ecartCaisseBanque: number;
+  validationEncaissement: any;
+}
+
+interface AlertModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  alerts: AlertItem[];
+  loading: boolean;
+}
+
+const AlertModal = ({ isOpen, onClose, alerts, loading }: AlertModalProps) => {
+  if (!isOpen) return null;
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat("fr-FR").format(num);
+  };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortStatus, setSortStatus] = useState<{ columnAccessor: string; direction: 'asc' | 'desc' }>({
+    columnAccessor: 'id',
+    direction: 'asc',
+  });
+  const PAGE_SIZES = [10, 20, 30, 50, 100];
+
+  const handleViewDetails = (row: AlertItem) => {
+    // Implémenter l'affichage des détails
+    console.log("Voir détails de l'alerte:", row);
+    Toastify("success", "Fonctionnalité de détail en cours de développement");
+  };
+
+  const handleValidate = (row: AlertItem) => {
+    // Implémenter la validation
+    console.log("Valider l'alerte:", row);
+    Toastify("success", "Alerte validée");
+  };
+
+  // Calcul des statistiques
+  const totalAlerts = alerts.length;
+  const alertsWithErrors = alerts.filter(alert => alert.ecartCaisseBanque !== 0).length;
+  const totalAmount = alerts.reduce((sum, alert) => sum + alert.montantRestitutionCaisse, 0);
+  const uniqueDRs = [...new Set(alerts.map(alert => alert.directionRegionale))].length;
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      transition: { 
+        duration: 0.3,
+        ease: "easeOut",
+        staggerChildren: 0.05
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.95,
+      transition: { 
+        duration: 0.2,
+        ease: "easeIn" 
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden backdrop-blur-sm bg-black/40">
+      <motion.div 
+        className="relative w-[95%] max-w-[1600px] rounded-xl bg-white p-0 shadow-2xl dark:bg-gray-800"
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        variants={containerVariants}
+      >
+        {/* En-tête avec dégradé */}
+        <div className="flex items-center justify-between rounded-t-xl bg-gradient-to-r from-primary to-blue-500 p-5 text-white">
+          <div className="flex items-center gap-3">
+            <IconAlertCircle className="h-7 w-7" />
+            <h3 className="text-2xl font-bold tracking-tight">Alertes d'encaissements</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-full bg-white/20 p-2 backdrop-blur-sm transition-all hover:bg-white/30"
+          >
+            <IconX className="h-5 w-5 text-white" />
+          </button>
+        </div>
+        
+        {/* Panneau des statistiques */}
+        <motion.div 
+          className="grid grid-cols-1 gap-6 p-5 sm:grid-cols-2 lg:grid-cols-4"
+          variants={containerVariants}
+        >
+          <motion.div 
+            variants={itemVariants}
+            className="flex items-center rounded-lg bg-gradient-to-br from-purple-50 to-blue-50 p-4 shadow-sm dark:from-gray-700 dark:to-gray-800"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <IconAlertCircle className="h-7 w-7" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total alertes</p>
+              <h4 className="text-2xl font-bold text-gray-800 dark:text-white">{totalAlerts}</h4>
+            </div>
+          </motion.div>
+          
+          <motion.div 
+            variants={itemVariants}
+            className="flex items-center rounded-lg bg-gradient-to-br from-red-50 to-orange-50 p-4 shadow-sm dark:from-gray-700 dark:to-gray-800"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-red-500">
+              <IconAlertCircle className="h-7 w-7" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Avec écarts</p>
+              <h4 className="text-2xl font-bold text-gray-800 dark:text-white">{alertsWithErrors}</h4>
+            </div>
+          </motion.div>
+          
+          <motion.div 
+            variants={itemVariants}
+            className="flex items-center rounded-lg bg-gradient-to-br from-green-50 to-teal-50 p-4 shadow-sm dark:from-gray-700 dark:to-gray-800"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10 text-green-500">
+              <IconCash className="h-7 w-7" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Montant total</p>
+              <h4 className="text-2xl font-bold text-gray-800 dark:text-white">{formatNumber(totalAmount)} F</h4>
+            </div>
+          </motion.div>
+          
+          <motion.div 
+            variants={itemVariants}
+            className="flex items-center rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 p-4 shadow-sm dark:from-gray-700 dark:to-gray-800"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
+              <IconUsers className="h-7 w-7" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Directions régionales</p>
+              <h4 className="text-2xl font-bold text-gray-800 dark:text-white">{uniqueDRs}</h4>
+            </div>
+          </motion.div>
+        </motion.div>
+        
+        {/* Tableau de données */}
+        <div className="px-5 pb-5">
+          <motion.div 
+            className="overflow-hidden rounded-xl border border-gray-200 shadow-sm dark:border-gray-700"
+            variants={containerVariants}
+          >
+            <div className="relative">
+              {loading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm dark:bg-gray-800/80">
+                  <div className="flex flex-col items-center justify-center rounded-lg bg-white p-8 shadow-lg dark:bg-gray-700">
+                    <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                    <span className="text-primary">Chargement des alertes...</span>
+                  </div>
+                </div>
+              )}
+              <DataTable
+                style={{
+                  position: "relative",
+                  width: "100%",
+                }}
+                rowStyle={(row: AlertItem) =>
+                  row.ecartCaisseBanque !== 0
+                    ? { backgroundColor: "rgba(254, 226, 226, 0.6)" }
+                    : {}
+                }
+                className="table-hover"
+                records={!loading && alerts?.length > 0 ? alerts : []}
+                columns={[
+                  {
+                    accessor: "directionRegionale",
+                    title: "Direction",
+                    sortable: true,
+                  },
+                  {
+                    accessor: "codeExpl",
+                    title: "Code",
+                    sortable: true,
+                  },
+                  {
+                    accessor: "dateEncaissement",
+                    title: "Date",
+                    sortable: true,
+                  },
+                  {
+                    accessor: "banque",
+                    title: "Banque",
+                    sortable: true,
+                  },
+                  {
+                    accessor: "montantRestitutionCaisse",
+                    title: "Montant caisse",
+                    sortable: true,
+                    render: (row: AlertItem) => (
+                      <div className="text-right">
+                        {formatNumber(row.montantRestitutionCaisse)} F
+                      </div>
+                    ),
+                  },
+                  {
+                    accessor: "montantBordereauBanque",
+                    title: "Montant bordereau",
+                    sortable: true,
+                    render: (row: AlertItem) => (
+                      <div className="text-right">
+                        {formatNumber(row.montantBordereauBanque)} F
+                      </div>
+                    ),
+                  },
+                  {
+                    accessor: "ecartCaisseBanque",
+                    title: "Écart",
+                    sortable: true,
+                    render: (row: AlertItem) => (
+                      <div
+                        className={`text-right ${
+                          row.ecartCaisseBanque !== 0 
+                            ? "font-semibold text-red-500"
+                            : ""
+                        }`}
+                      >
+                        {formatNumber(row.ecartCaisseBanque)} F
+                      </div>
+                    ),
+                  },
+                  {
+                    accessor: "isCorrect",
+                    title: "Statut",
+                    sortable: true,
+                    render: (row: AlertItem) => (
+                      <span
+                        className={`rounded-full px-2.5 py-1.5 text-xs font-medium ${
+                          row.isCorrect
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
+                      >
+                        {row.isCorrect ? "Correct" : "Incorrect"}
+                      </span>
+                    ),
+                  },
+                  {
+                    accessor: "actions",
+                    title: "Actions",
+                    sortable: false,
+                    render: (row: AlertItem) => (
+                      <div className="flex items-center justify-center gap-3">
+                        <Tippy content="Voir détails">
+                          <button
+                            type="button"
+                            className="flex items-center justify-center rounded-lg p-2 text-primary transition-colors hover:bg-primary/10"
+                            onClick={() => handleViewDetails(row)}
+                          >
+                            <IconEye className="h-5 w-5 stroke-[1.5]" />
+                          </button>
+                        </Tippy>
+                        <Tippy content="Valider">
+                          <button
+                            type="button"
+                            className="flex items-center justify-center rounded-lg p-2 text-green-600 transition-colors hover:bg-green-50"
+                            onClick={() => handleValidate(row)}
+                          >
+                            <IconCheck className="h-5 w-5 stroke-[1.5]" />
+                          </button>
+                        </Tippy>
+                      </div>
+                    ),
+                  },
+                ]}
+                highlightOnHover
+                totalRecords={alerts?.length || 0}
+                recordsPerPage={pageSize}
+                page={currentPage}
+                onPageChange={(page) => setCurrentPage(page)}
+                recordsPerPageOptions={PAGE_SIZES}
+                onRecordsPerPageChange={setPageSize}
+                sortStatus={sortStatus}
+                onSortStatusChange={setSortStatus}
+                minHeight={300}
+                paginationText={({ from, to, totalRecords }) =>
+                  `Affichage de ${from} à ${to} sur ${totalRecords} entrées`
+                }
+                noRecordsText={
+                  loading
+                    ? "Chargement en cours..."
+                    : "Aucune alerte disponible"
+                }
+              />
+            </div>
+          </motion.div>
+        </div>
+        
+        {/* Pieds de page */}
+        <div className="flex items-center justify-end gap-4 rounded-b-xl bg-gray-50 p-5 dark:bg-gray-700">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+          >
+            Fermer
+          </button>
+          <button
+            onClick={() => {
+              onClose();
+              Toastify("success", "Alertes acquittées");
+            }}
+            className="rounded-lg bg-gradient-to-r from-primary to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-primary/90 hover:to-blue-600/90"
+          >
+            Acquitter toutes les alertes
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 const ComponentsDashboardSales = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -37,6 +390,10 @@ const ComponentsDashboardSales = () => {
 
   const [ecartDataDashboard, setEcartDataDashboard] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [alertModalOpen, setAlertModalOpen] = useState(false);
+  const [alertsData, setAlertsData] = useState<AlertItem[]>([]);
+  const [hasCheckedAlerts, setHasCheckedAlerts] = useState(false);
+  const [alertsLoading, setAlertsLoading] = useState(false);
 
   const fetchDashboardData = async (filters?: any) => {
     const cleanArray = (arr: string[] | undefined) =>
@@ -90,6 +447,49 @@ const ComponentsDashboardSales = () => {
       setLoading(false);
     }
   };
+
+  const getAlerts = async (status: string) => {
+    try {
+      setLoading(true);
+      const response: any = await axiosInstance.get(
+        `${API_AUTH_SUIVI}/encaissements/alerts/0`
+      );
+      
+      if (response?.error === false) {
+        return response?.data;
+      }
+      return null;
+    } catch (error) {
+      console.error("Erreur lors de la récupération des alertes:", error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Vérifier les alertes à l'initialisation
+  useEffect(() => {
+    const checkAlertsOnLogin = async () => {
+      if (!hasCheckedAlerts) {
+        try {
+          setAlertsLoading(true);
+          const data = await getAlerts("0");
+          if (data && data.result && data.result.length > 0) {
+            setAlertsData(data.result);
+            setAlertModalOpen(true);
+          }
+          setHasCheckedAlerts(true);
+        } catch (error) {
+          console.error("Erreur lors de la vérification des alertes:", error);
+          setHasCheckedAlerts(true);
+        } finally {
+          setAlertsLoading(false);
+        }
+      }
+    };
+    
+    checkAlertsOnLogin();
+  }, [hasCheckedAlerts]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -417,6 +817,12 @@ const ComponentsDashboardSales = () => {
 
   return (
     <>
+      <AlertModal
+        isOpen={alertModalOpen}
+        onClose={() => setAlertModalOpen(false)}
+        alerts={alertsData}
+        loading={alertsLoading}
+      />
       <div className="panel">
         <div className="panel relative mb-8">
           <div className=" flex border-b border-gray-200 dark:border-gray-700">
@@ -1117,203 +1523,203 @@ const ComponentsDashboardSales = () => {
                 </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            {/* Tableau des écarts de restitution */}
-            <div className="panel h-full">
-              <div className="mb-5 flex items-center justify-between dark:text-white-light">
-                <h5 className="text-lg font-semibold">Écarts de restitution</h5>
-              </div>
-              <div className="relative">
-                <div
-                  className={`table-responsive ${
-                    showAllRestitution ? "max-h-[400px] overflow-y-auto" : ""
-                  }`}
-                >
-                  {loading ? (
-                    <div className="flex h-40 items-center justify-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                    </div>
-                  ) : !ecartData?.restitution?.length ? (
-                    <div className="flex h-40 items-center justify-center text-gray-500 dark:text-gray-400">
-                      Aucune donnée disponible
-                    </div>
-                  ) : (
-                    <table className="w-full table-auto">
-                      <thead className="sticky top-0 bg-white dark:bg-[#1a1c2d]">
-                        <tr className="border-b border-[#e0e6ed] bg-white dark:border-[#191e3a] dark:bg-[#1a1c2d]">
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
-                            Direction Régionale
-                          </th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
-                            Écart A
-                          </th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
-                            Écart B
-                          </th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
-                            Écart A-B
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(showAllRestitution
-                          ? ecartData?.restitution
-                          : ecartData?.restitution?.slice(0, 5)
-                        )?.map((item: any, index: number) => (
-                          <tr
-                            key={index}
-                            className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]"
-                          >
-                            <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">
-                              {item.directionRegionale}
-                            </td>
-                            <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.montantA - item.montantB < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
-                            >
-                              {(item.montantA - item.montantB).toLocaleString()}{" "}
-                              FCFA
-                            </td>
-                            <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.montantB < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
-                            >
-                              {item.montantB.toLocaleString()} FCFA
-                            </td>
-                            <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.ecartAB < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
-                            >
-                              {item.ecartAB.toLocaleString()} FCFA
-                            </td>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              {/* Tableau des écarts de restitution */}
+              <div className="panel h-full">
+                <div className="mb-5 flex items-center justify-between dark:text-white-light">
+                  <h5 className="text-lg font-semibold">Écarts de restitution</h5>
+                </div>
+                <div className="relative">
+                  <div
+                    className={`table-responsive ${
+                      showAllRestitution ? "max-h-[400px] overflow-y-auto" : ""
+                    }`}
+                  >
+                    {loading ? (
+                      <div className="flex h-40 items-center justify-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                      </div>
+                    ) : !ecartData?.restitution?.length ? (
+                      <div className="flex h-40 items-center justify-center text-gray-500 dark:text-gray-400">
+                        Aucune donnée disponible
+                      </div>
+                    ) : (
+                      <table className="w-full table-auto">
+                        <thead className="sticky top-0 bg-white dark:bg-[#1a1c2d]">
+                          <tr className="border-b border-[#e0e6ed] bg-white dark:border-[#191e3a] dark:bg-[#1a1c2d]">
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                              Direction Régionale
+                            </th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                              Écart A
+                            </th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                              Écart B
+                            </th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                              Écart A-B
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {(showAllRestitution
+                            ? ecartData?.restitution
+                            : ecartData?.restitution?.slice(0, 5)
+                          )?.map((item: any, index: number) => (
+                            <tr
+                              key={index}
+                              className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]"
+                            >
+                              <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">
+                                {item.directionRegionale}
+                              </td>
+                              <td
+                                className={`px-6 py-3 text-left text-sm ${
+                                  item.montantA - item.montantB < 0
+                                    ? "text-primary"
+                                    : "text-gray-800"
+                                } dark:text-white-light`}
+                              >
+                                {(item.montantA - item.montantB).toLocaleString()}{" "}
+                                FCFA
+                              </td>
+                              <td
+                                className={`px-6 py-3 text-left text-sm ${
+                                  item.montantB < 0
+                                    ? "text-primary"
+                                    : "text-gray-800"
+                                } dark:text-white-light`}
+                              >
+                                {item.montantB.toLocaleString()} FCFA
+                              </td>
+                              <td
+                                className={`px-6 py-3 text-left text-sm ${
+                                  item.ecartAB < 0
+                                    ? "text-primary"
+                                    : "text-gray-800"
+                                } dark:text-white-light`}
+                              >
+                                {item.ecartAB.toLocaleString()} FCFA
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                  {ecartData?.restitution?.length > 5 && (
+                    <div className="sticky bottom-0 mt-4 flex justify-center bg-white py-2 dark:bg-[#1a1c2d]">
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setShowAllRestitution(!showAllRestitution)}
+                      >
+                        {showAllRestitution ? "Voir moins" : "Voir plus"}
+                      </button>
+                    </div>
                   )}
                 </div>
-                {ecartData?.restitution?.length > 5 && (
-                  <div className="sticky bottom-0 mt-4 flex justify-center bg-white py-2 dark:bg-[#1a1c2d]">
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => setShowAllRestitution(!showAllRestitution)}
-                    >
-                      {showAllRestitution ? "Voir moins" : "Voir plus"}
-                    </button>
-                  </div>
-                )}
               </div>
-            </div>
 
-            {/* Tableau des écarts de bordereau */}
-            <div className="panel h-full">
-              <div className="mb-5 flex items-center justify-between dark:text-white-light">
-                <h5 className="text-lg font-semibold">Écarts de bordereau</h5>
-              </div>
-              <div className="relative">
-                <div
-                  className={`table-responsive ${
-                    showAllBordereau ? "max-h-[400px] overflow-y-auto" : ""
-                  }`}
-                >
-                  {loading ? (
-                    <div className="flex h-40 items-center justify-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                    </div>
-                  ) : !ecartData?.bordereau?.length ? (
-                    <div className="flex h-40 items-center justify-center text-gray-500 dark:text-gray-400">
-                      Aucune donnée disponible
-                    </div>
-                  ) : (
-                    <table className="w-full table-auto">
-                      <thead className="sticky top-0 bg-white dark:bg-[#1a1c2d]">
-                        <tr className="border-b border-[#e0e6ed] bg-white dark:border-[#191e3a] dark:bg-[#1a1c2d]">
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
-                            Direction Régionale
-                          </th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
-                            Écart C
-                          </th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
-                            Écart B
-                          </th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
-                            Écart B-C
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(showAllBordereau
-                          ? ecartData?.bordereau
-                          : ecartData?.bordereau?.slice(0, 5)
-                        )?.map((item: any, index: number) => (
-                          <tr
-                            key={index}
-                            className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]"
-                          >
-                            <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">
-                              {item.directionRegionale}
-                            </td>
-                            <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.ecartC < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
-                            >
-                              {item.ecartC.toLocaleString()} FCFA
-                            </td>
-                            <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.ecartB < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
-                            >
-                              {item.ecartB.toLocaleString()} FCFA
-                            </td>
-                            <td
-                              className={`px-6 py-3 text-left text-sm ${
-                                item.ecartBC < 0
-                                  ? "text-primary"
-                                  : "text-gray-800"
-                              } dark:text-white-light`}
-                            >
-                              {item.ecartBC.toLocaleString()} FCFA
-                            </td>
+              {/* Tableau des écarts de bordereau */}
+              <div className="panel h-full">
+                <div className="mb-5 flex items-center justify-between dark:text-white-light">
+                  <h5 className="text-lg font-semibold">Écarts de bordereau</h5>
+                </div>
+                <div className="relative">
+                  <div
+                    className={`table-responsive ${
+                      showAllBordereau ? "max-h-[400px] overflow-y-auto" : ""
+                    }`}
+                  >
+                    {loading ? (
+                      <div className="flex h-40 items-center justify-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                      </div>
+                    ) : !ecartData?.bordereau?.length ? (
+                      <div className="flex h-40 items-center justify-center text-gray-500 dark:text-gray-400">
+                        Aucune donnée disponible
+                      </div>
+                    ) : (
+                      <table className="w-full table-auto">
+                        <thead className="sticky top-0 bg-white dark:bg-[#1a1c2d]">
+                          <tr className="border-b border-[#e0e6ed] bg-white dark:border-[#191e3a] dark:bg-[#1a1c2d]">
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                              Direction Régionale
+                            </th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                              Écart C
+                            </th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                              Écart B
+                            </th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                              Écart B-C
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {(showAllBordereau
+                            ? ecartData?.bordereau
+                            : ecartData?.bordereau?.slice(0, 5)
+                          )?.map((item: any, index: number) => (
+                            <tr
+                              key={index}
+                              className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]"
+                            >
+                              <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">
+                                {item.directionRegionale}
+                              </td>
+                              <td
+                                className={`px-6 py-3 text-left text-sm ${
+                                  item.ecartC < 0
+                                    ? "text-primary"
+                                    : "text-gray-800"
+                                } dark:text-white-light`}
+                              >
+                                {item.ecartC.toLocaleString()} FCFA
+                              </td>
+                              <td
+                                className={`px-6 py-3 text-left text-sm ${
+                                  item.ecartB < 0
+                                    ? "text-primary"
+                                    : "text-gray-800"
+                                } dark:text-white-light`}
+                              >
+                                {item.ecartB.toLocaleString()} FCFA
+                              </td>
+                              <td
+                                className={`px-6 py-3 text-left text-sm ${
+                                  item.ecartBC < 0
+                                    ? "text-primary"
+                                    : "text-gray-800"
+                                } dark:text-white-light`}
+                              >
+                                {item.ecartBC.toLocaleString()} FCFA
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                  {ecartData?.bordereau?.length > 5 && (
+                    <div className="sticky bottom-0 mt-4 flex justify-center bg-white py-2 dark:bg-[#1a1c2d]">
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setShowAllBordereau(!showAllBordereau)}
+                      >
+                        {showAllBordereau ? "Voir moins" : "Voir plus"}
+                      </button>
+                    </div>
                   )}
                 </div>
-                {ecartData?.bordereau?.length > 5 && (
-                  <div className="sticky bottom-0 mt-4 flex justify-center bg-white py-2 dark:bg-[#1a1c2d]">
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => setShowAllBordereau(!showAllBordereau)}
-                    >
-                      {showAllBordereau ? "Voir moins" : "Voir plus"}
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {isFirstLogin === 1 && <DashboardTutorial />}
+          {isFirstLogin === 1 && <DashboardTutorial />}
+        </div>
       </div>
     </>
   );

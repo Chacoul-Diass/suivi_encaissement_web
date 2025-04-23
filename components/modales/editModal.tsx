@@ -20,6 +20,7 @@ import "swiper/css/pagination";
 import axios from "axios";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import axiosInstance from "@/utils/axios";
+import { Toastify } from "@/utils/toast";
 
 interface EditModalProps {
   setModalOpen: (open: boolean) => void;
@@ -76,16 +77,13 @@ export default function EditModal({
   onChange2,
   handleMontantChange,
 }: EditModalProps) {
-  const dispatch = useDispatch<TAppDispatch>();
   const maxNumber = 69;
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [montantSaisi, setMontantSaisi] = useState<string>("");
   const [montantAffiche, setMontantAffiche] = useState<string>("");
   const [dateMontantBanque, setDateMontantBanque] = useState<string>("");
   const [formError, setFormError] = useState("");
   const [montantModifie, setMontantModifie] = useState<boolean>(false);
   const [validationModalOpen, setValidationModalOpen] = useState(false);
-  const [showNewMontantInput, setShowNewMontantInput] = useState(false);
   const [newMontantSaisi, setNewMontantSaisi] = useState<string>("");
   const [newMontantAffiche, setNewMontantAffiche] = useState<string>("");
   const [newMontantError, setNewMontantError] = useState<string>("");
@@ -143,37 +141,7 @@ export default function EditModal({
       return;
     }
 
-    setIsConfirmationModalOpen(true);
-  };
-
-  const handleConfirmSubmit = () => {
-    let finalMontant = 0;
-
-    if (montantModifie && montantSaisi) {
-      finalMontant = parseFloat(montantSaisi);
-    } else if (selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0) {
-      finalMontant = selectedRow.montantReleve;
-    } else if (montantSaisi) {
-      finalMontant = parseFloat(montantSaisi);
-    }
-
-    const bordereau = selectedRow["Montant bordereau (B)"] || 0;
-
-    const updatedRow = {
-      ...selectedRow,
-      observationBanque,
-      rasChecked1,
-      rasChecked2,
-      images2,
-      montantReleve: finalMontant,
-      dateMontantBanque,
-      ecartReleve: bordereau - finalMontant,
-      statutValidation: 2,
-    };
-
-    handleSubmit(updatedRow);
-    setIsConfirmationModalOpen(false);
-    setModalOpen(false);
+    // setIsConfirmationModalOpen(true);
   };
 
   const handleValidateMontant = async () => {
@@ -191,6 +159,9 @@ export default function EditModal({
 
       if (response.status === 200) {
         console.log("Validation réussie, fermeture des modals");
+        
+        // Afficher une notification de succès
+        // toast.fire("success", "Montant validé avec succès");
 
         // Fermer d'abord la modal de validation
         setValidationModalOpen(false);
@@ -208,30 +179,25 @@ export default function EditModal({
           dateMontantBanque,
           ecartReleve: montantBordereau - montantReleve,
           statutValidation: 2,
-
         };
 
         // Utiliser un timeout pour s'assurer que la fermeture de la modal s'effectue correctement
         setTimeout(() => {
           // Fermer ensuite la modal principale et soumettre les données
-          setIsConfirmationModalOpen(false);
+          // setIsConfirmationModalOpen(false);
           setModalOpen(false);
           handleSubmit(updatedRow);
-        }, 300);
+        }, 500);
       }
     } catch (error) {
       console.error("Erreur lors de la validation du montant", error);
+      // Afficher une notification d'erreur
+      Toastify("error", "Erreur lors de la validation du montant");
       // En cas d'erreur, on ferme quand même le modal de validation
       setValidationModalOpen(false);
     } finally {
       setIsValidating(false);
     }
-  };
-
-  const handleRejectMontant = () => {
-    setShowNewMontantInput(true);
-    setNewMontantSaisi("");
-    setNewMontantAffiche("");
   };
 
   const handleNewMontantInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -452,20 +418,25 @@ export default function EditModal({
                   <div className="flex">
                     <input
                       type="text"
-                      className="form-input w-full rounded-lg border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="form-input w-full rounded-lg border-gray-300 bg-gray-100 py-3 pl-10 pr-4 text-gray-600 opacity-80 cursor-not-allowed dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
                       placeholder="Montant en F CFA"
                       value={montantAffiche}
                       onChange={handleMontantInputChange}
+                      disabled
                     />
                     <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
                       <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                      <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded dark:bg-gray-600 dark:text-gray-300">
+                        Non modifiable
+                      </span>
                     </div>
                   </div>
                   {formError && (
                     <p className="mt-2 text-sm text-red-500">{formError}</p>
                   )}
                 </div>
-
                 {/* Date du montant banque */}
                 <div className="mt-3">
                   <label htmlFor="dateMontantBanque" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -648,7 +619,7 @@ export default function EditModal({
       </div>
 
       {/* Confirmation Modal */}
-      {isConfirmationModalOpen && (
+      {/* {isConfirmationModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md transform rounded-lg bg-white p-6 shadow-xl transition-all dark:bg-gray-800">
             <div className="text-center">
@@ -734,42 +705,47 @@ export default function EditModal({
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Modal de Validation du Montant */}
       {validationModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md transform rounded-lg bg-white p-6 shadow-xl transition-all dark:bg-gray-800">
-            <div className="text-center">
+        <div 
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setValidationModalOpen(false)}
+        >
+          <div 
+            className="w-full max-w-md transform rounded-lg bg-white p-6 shadow-xl transition-all dark:bg-gray-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative text-center">
+              <button 
+                onClick={() => setValidationModalOpen(false)} 
+                className="absolute right-0 top-0 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
+                aria-label="Fermer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {showNewMontantInput ? "Saisir un nouveau montant" : "Validation du montant existant"}
+                Validation du montant
               </h3>
 
-              {!showNewMontantInput ? (
-                <div className="mt-4">
-                  <p className="text-sm text-gray-500">
-                    Un montant est déjà enregistré pour cet encaissement :
-                  </p>
-                  <p className="mt-2 text-2xl font-bold text-primary">
-                    {formatNumber(selectedRow.montantReleve || 0)} F CFA
-                  </p>
+              <div className="mt-4">
+                <p className="text-sm text-gray-500">
+                  Un montant est déjà enregistré pour cet encaissement :
+                </p>
+                <p className="mt-2 text-2xl font-bold text-primary">
+                  {formatNumber(selectedRow.montantReleve || 0)} F CFA
+                </p>
 
-                  <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                    Souhaitez-vous valider ce montant ou saisir un nouveau montant ?
-                  </p>
-
-                  <div className="mt-6 flex justify-center gap-4">
+                <div className="mt-6 flex flex-col gap-4">
+                  {/* Option 1: Valider le montant existant */}
+                  <div className="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
+                    <h4 className="font-medium text-gray-900 dark:text-white">Valider le montant existant</h4>
                     <button
                       type="button"
-                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                      onClick={handleRejectMontant}
-                      disabled={isValidating}
-                    >
-                      Saisir un nouveau montant
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:bg-gray-400"
+                      className="mt-3 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:bg-gray-400"
                       onClick={handleValidateMontant}
                       disabled={isValidating}
                     >
@@ -786,50 +762,60 @@ export default function EditModal({
                       )}
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div className="mt-4">
-                  <p className="text-sm text-gray-500 mb-4">
-                    Veuillez saisir le nouveau montant :
-                  </p>
 
-                  <div className="relative">
-                    <div className="flex">
-                      <input
-                        type="text"
-                        className="form-input w-full rounded-lg border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                        placeholder="Montant en F CFA"
-                        value={newMontantAffiche}
-                        onChange={handleNewMontantInputChange}
-                        autoFocus
-                      />
-                      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                        <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+                  {/* Option 2: Saisir un nouveau montant */}
+                  <div className="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
+                    <h4 className="font-medium text-gray-900 dark:text-white">Saisir un nouveau montant</h4>
+                    <div className="relative mt-3">
+                      <div className="flex">
+                        <input
+                          type="text"
+                          className="form-input w-full rounded-lg border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          placeholder="Montant en F CFA"
+                          value={newMontantAffiche}
+                          onChange={handleNewMontantInputChange}
+                          autoFocus
+                        />
+                        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+                          <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+                        </div>
                       </div>
+                      {newMontantError && (
+                        <p className="mt-2 text-sm text-red-500">{newMontantError}</p>
+                      )}
                     </div>
-                    {newMontantError && (
-                      <p className="mt-2 text-sm text-red-500">{newMontantError}</p>
+                    <button
+                      type="button"
+                      className="mt-3 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:bg-gray-400"
+                      onClick={handleConfirmNewMontant}
+                      disabled={
+                        !newMontantAffiche || 
+                        newMontantError !== "" || 
+                        parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) <= 0 ||
+                        parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) === selectedRow.montantReleve
+                      }
+                    >
+                      Confirmer ce nouveau montant
+                    </button>
+                    {(newMontantAffiche && 
+                      parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) === selectedRow.montantReleve) && (
+                      <p className="mt-2 text-sm text-red-500">Le nouveau montant ne peut pas être identique à l'ancien</p>
+                    )}
+                    {(newMontantAffiche && 
+                      parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) <= 0) && (
+                      <p className="mt-2 text-sm text-red-500">Le montant doit être supérieur à 0</p>
                     )}
                   </div>
-
-                  <div className="mt-6 flex justify-center gap-4">
-                    <button
-                      type="button"
-                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                      onClick={() => setValidationModalOpen(false)}
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:bg-gray-400"
-                      onClick={handleConfirmNewMontant}
-                    >
-                      Confirmer
-                    </button>
-                  </div>
                 </div>
-              )}
+
+                <button
+                  type="button"
+                  className="mt-6 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                  onClick={() => setValidationModalOpen(false)}
+                >
+                  Annuler
+                </button>
+              </div>
             </div>
           </div>
         </div>
