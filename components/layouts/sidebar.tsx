@@ -175,7 +175,7 @@ const Sidebar = () => {
       case "MES ENCAISSEMENTS":
         return t("Encaissements");
       case "LITIGES":
-        return t("Litiges");
+        return t("Reclamations");
       case "RAPPROCHEMENT":
         return t("Rapprochements");
       case "ÉTAT DES ENCAISSEMENTS":
@@ -187,7 +187,7 @@ const Sidebar = () => {
       case "HISTORIQUE CONNEXIONS":
         return t("Historique");
       case "PARAMETRES":
-        return t("Paramètres email");
+        return t("Paramètres");
       default:
         return t(name);
     }

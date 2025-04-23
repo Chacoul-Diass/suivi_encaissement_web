@@ -7,7 +7,7 @@ export const fetchcaisses = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(
-        `${API_AUTH_SUIVI}/encaissements/caisses`
+        `${API_AUTH_SUIVI}/encaissements/no-caisses`
       );
       return response.data;
     } catch (error: any) {

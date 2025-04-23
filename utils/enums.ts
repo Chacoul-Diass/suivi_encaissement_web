@@ -6,4 +6,5 @@ export enum EStatutEncaissement {
   RECLAMATION_REVERSES = 4,
   CLOTURE = 5,
   RECLAMATION_TRAITES = 6,
+  DR_DFC = 7,
 }

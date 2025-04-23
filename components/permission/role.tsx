@@ -101,12 +101,12 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
     () =>
       objetList
         ? objetList?.map(
-            (objet: { id: number; name: string; description: string }) => ({
-              id: objet.id,
-              text: objet.name,
-              description: objet.description || "",
-            })
-          )
+          (objet: { id: number; name: string; description: string }) => ({
+            id: objet.id,
+            text: objet.name,
+            description: objet.description || "",
+          })
+        )
         : [],
     [objetList]
   );
@@ -353,40 +353,35 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
             return (
               <div
                 key={role.id}
-                className={`group relative h-full overflow-hidden rounded-2xl border-0 bg-white shadow-lg ${
-                  isOpen
+                className={`group relative h-full overflow-hidden rounded-2xl border-0 bg-white shadow-lg ${isOpen
                     ? "shadow-success/10 ring-2 ring-success/30"
                     : "hover:shadow-xl"
-                }`}
+                  }`}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50/50 to-success/5 opacity-50" />
                 <div
-                  className={`absolute inset-0 bg-success/5 transition-opacity duration-300 ${
-                    isOpen ? "opacity-10" : "opacity-0"
-                  }`}
+                  className={`absolute inset-0 bg-success/5 transition-opacity duration-300 ${isOpen ? "opacity-10" : "opacity-0"
+                    }`}
                 />
 
                 <button
                   type="button"
-                  className={`relative flex w-full items-center justify-between p-5 text-left ${
-                    isOpen ? "bg-success/5" : "hover:bg-gray-50/80"
-                  }`}
+                  className={`relative flex w-full items-center justify-between p-5 text-left ${isOpen ? "bg-success/5" : "hover:bg-gray-50/80"
+                    }`}
                   onClick={() => toggleAccordion(role.id)}
                 >
                   <div className="flex items-center gap-4">
                     <div
-                      className={`flex h-14 w-14 items-center justify-center rounded-xl backdrop-blur-sm transition-all duration-300 ${
-                        isOpen
+                      className={`flex h-14 w-14 items-center justify-center rounded-xl backdrop-blur-sm transition-all duration-300 ${isOpen
                           ? "bg-success/15 shadow-lg shadow-success/10"
                           : "bg-gray-100/80 group-hover:bg-success/10"
-                      }`}
+                        }`}
                     >
                       <IconUsers
-                        className={`h-7 w-7 transition-colors duration-300 ${
-                          isOpen
+                        className={`h-7 w-7 transition-colors duration-300 ${isOpen
                             ? "text-success"
                             : "text-gray-500 group-hover:text-success"
-                        }`}
+                          }`}
                       />
                     </div>
                     <div>
@@ -421,9 +416,8 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                       </span>
                     )}
                     <IconCaretDown
-                      className={`h-5 w-5 transition-transform duration-300 ${
-                        isOpen ? "rotate-180 text-success" : "text-gray-400"
-                      }`}
+                      className={`h-5 w-5 transition-transform duration-300 ${isOpen ? "rotate-180 text-success" : "text-gray-400"
+                        }`}
                     />
                   </div>
                 </button>
@@ -476,11 +470,10 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                           return (
                             <div
                               key={permIndex}
-                              className={`group/item flex items-center justify-between rounded-xl bg-white/90 p-4 shadow-sm transition-colors duration-300 ${
-                                isChecked
+                              className={`group/item flex items-center justify-between rounded-xl bg-white/90 p-4 shadow-sm transition-colors duration-300 ${isChecked
                                   ? "shadow-success/10 ring-1 ring-success"
                                   : "hover:bg-white hover:shadow-md"
-                              }`}
+                                }`}
                             >
                               <div className="flex items-center gap-3">
                                 <div
@@ -505,11 +498,10 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                               </div>
                               <div className="flex items-center gap-3">
                                 <span
-                                  className={`flex h-7 items-center justify-center rounded-full px-3 text-xs font-medium transition-all duration-300 ${
-                                    isChecked
+                                  className={`flex h-7 items-center justify-center rounded-full px-3 text-xs font-medium transition-all duration-300 ${isChecked
                                       ? "bg-success/10 text-success"
                                       : "bg-gray-100 text-gray-500"
-                                  }`}
+                                    }`}
                                 >
                                   {isChecked ? "Activé" : "Désactivé"}
                                 </span>
@@ -639,9 +631,8 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
                         <IconCheck
-                          className={`h-5 w-5 ${
-                            globalSwitch ? "text-success" : "text-gray-400"
-                          }`}
+                          className={`h-5 w-5 ${globalSwitch ? "text-success" : "text-gray-400"
+                            }`}
                         />
                         <span className="text-sm text-gray-600">
                           Tout sélectionner
@@ -732,11 +723,10 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                       <div className="relative">
                         <button
                           type="button"
-                          className={`flex w-full items-center justify-between rounded-lg bg-white p-3 text-left text-sm font-medium shadow-sm transition-all duration-200 hover:bg-gray-50 ${
-                            treeview.includes(personalInfo.libelle)
+                          className={`flex w-full items-center justify-between rounded-lg bg-white p-3 text-left text-sm font-medium shadow-sm transition-all duration-200 hover:bg-gray-50 ${treeview.includes(personalInfo.libelle)
                               ? "bg-gray-50"
                               : ""
-                          }`}
+                            }`}
                           onClick={() => toggleTreeview(personalInfo.libelle)}
                         >
                           <div className="flex items-center gap-2">
@@ -748,11 +738,10 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                             </span>
                           </div>
                           <IconCaretDown
-                            className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
-                              treeview.includes(personalInfo.libelle)
+                            className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${treeview.includes(personalInfo.libelle)
                                 ? "rotate-180"
                                 : ""
-                            }`}
+                              }`}
                           />
                         </button>
 
@@ -782,9 +771,8 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                                       >
                                         <button
                                           type="button"
-                                          className={`flex w-full items-center justify-between rounded-lg p-3 text-left text-sm transition-all duration-200 ${
-                                            isRoleOpen ? "bg-gray-50" : ""
-                                          }`}
+                                          className={`flex w-full items-center justify-between rounded-lg p-3 text-left text-sm transition-all duration-200 ${isRoleOpen ? "bg-gray-50" : ""
+                                            }`}
                                           onClick={() =>
                                             toggleTreeview(role.text)
                                           }
@@ -798,9 +786,8 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                                             </span>
                                           </div>
                                           <IconCaretDown
-                                            className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
-                                              isRoleOpen ? "rotate-180" : ""
-                                            }`}
+                                            className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isRoleOpen ? "rotate-180" : ""
+                                              }`}
                                           />
                                         </button>
 
@@ -812,7 +799,7 @@ const Role = ({ modalEdit, selectedRole, onClose }: RoleProps) => {
                                                   (permission, permIndex) => {
                                                     if (
                                                       !individualSwitches[
-                                                        roleIndex
+                                                      roleIndex
                                                       ][permIndex]
                                                     )
                                                       return null;

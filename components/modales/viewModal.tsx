@@ -21,6 +21,7 @@ interface ViewModalProps {
   handleAmountChange: any;
   showAlertReclamation: any;
   showAlertCloture: any;
+  showAlertDRDFC: any;
   rasChecked2: any;
   handleRasChecked2Change: any;
   observationBanque: any;
@@ -60,6 +61,7 @@ export default function ViewModal({
   handleAmountChange,
   showAlertReclamation,
   showAlertCloture,
+  showAlertDRDFC,
   rasChecked2,
   handleRasChecked2Change,
   observationBanque,
@@ -97,14 +99,14 @@ export default function ViewModal({
       statut: 3,
       buttons: [
         {
-          label: "Passer en réclamation",
+          label: "Rejeter",
           className: "btn btn-danger w-full",
           onClick: () => showAlertReclamation(selectedRow.id),
         },
         {
-          label: "Cloturer",
+          label: "Valider",
           className: "btn btn-success w-full",
-          onClick: () => showAlertCloture(selectedRow.id),
+          onClick: () => showAlertDRDFC(selectedRow.id),
         },
         {
           label: "Preuve photo",
@@ -204,11 +206,25 @@ export default function ViewModal({
     },
 
     {
-      statut: EStatutEncaissement.CLOTURE,
+      statut: EStatutEncaissement.DR_DFC,
       buttons: [
+
+        {
+          label: "Cloturer",
+          className: "btn btn-success w-full",
+          onClick: () => showAlertCloture(selectedRow.id),
+        },
+
+        {
+          label: "Rejeter",
+          className: "btn btn-danger w-full",
+          onClick: () => showAlertRejete(selectedRow.id),
+        },
+
         {
           label: "Preuve photo",
           className: "btn btn-primary w-full",
+
           onClick: () => {
             setPhotoDocuments(selectedRow.documents || []);
             setPreuvePhotoModal(true);
@@ -273,20 +289,31 @@ export default function ViewModal({
     }
   };
 
+  const calculateEcart = () => {
+    const montantB = selectedRow["Montant bordereau (B)"] || selectedRow.montantBordereauBanque || 0;
+    const montantC =
+      selectedRow["Montant relevé (C)"] ||
+      selectedRow.montantReleve ||
+      selectedRow.validationEncaissement?.montantReleve ||
+      0;
+
+    return montantB - montantC;
+  };
+
+  console.log(selectedRow["Montant revelé"])
+
   return (
     <>
       {" "}
       <div>
         <div
-          className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${
-            modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
+          className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
           onClick={handleOpenConfirmationModal}
         />
         <div
-          className={`fixed bottom-0 right-0 top-0 z-[51] w-full max-w-[600px] transform bg-white shadow-xl transition-transform duration-300 dark:bg-gray-800 ${
-            modalOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`fixed bottom-0 right-0 top-0 z-[51] w-full max-w-[600px] transform bg-white shadow-xl transition-transform duration-300 dark:bg-gray-800 ${modalOpen ? "translate-x-0" : "translate-x-full"
+            }`}
         >
           <div className="flex h-full flex-col">
             {/* Header */}
@@ -368,9 +395,9 @@ export default function ViewModal({
             {/* Content */}
             <div className="flex-1 space-y-6 overflow-y-auto p-6">
               {statutValidation === EStatutEncaissement.REJETE ||
-              statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
-              (selectedRow["Observation rejet"] &&
-                selectedRow["Observation rejet"].trim() !== "") ? (
+                statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
+                (selectedRow["Observation rejet"] &&
+                  selectedRow["Observation rejet"].trim() !== "") ? (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/50">
                   <div className="flex flex-col gap-2">
                     <h3 className="font-semibold text-red-900 dark:text-red-200">
@@ -380,7 +407,7 @@ export default function ViewModal({
                       {selectedRow.observationRejete}
                     </p>
                     <p className="text-sm text-red-700 dark:text-red-300">
-                      {selectedRow["Observation rejet"]}
+                      {selectedRow["Observation réclamation"]}
                     </p>
                   </div>
                 </div>
@@ -388,9 +415,9 @@ export default function ViewModal({
 
               {(statutValidation === EStatutEncaissement.RECLAMATION_TRAITES ||
                 statutValidation ===
-                  EStatutEncaissement.RECLAMATION_REVERSES) &&
-              selectedRow.observationReclamation &&
-              selectedRow.observationReclamation.trim() !== "" ? (
+                EStatutEncaissement.RECLAMATION_REVERSES) &&
+                selectedRow.observationReclamation &&
+                selectedRow.observationReclamation.trim() !== "" ? (
                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/50">
                   <div className="flex flex-col gap-2">
                     <h3 className="font-semibold text-blue-900 dark:text-blue-200">
@@ -428,21 +455,20 @@ export default function ViewModal({
                   </div>
                   <div>
                     <p
-                      className={`text-lg font-semibold ${
-                        selectedRow["Montant caisse (A)"] -
-                          selectedRow["Montant bordereau (B)"] <
+                      className={`text-lg font-semibold ${selectedRow["Montant caisse (A)"] -
+                        selectedRow["Montant bordereau (B)"] <
                         0
-                          ? "text-red-500"
-                          : selectedRow["Montant caisse (A)"] -
-                              selectedRow["Montant bordereau (B)"] >
-                            0
+                        ? "text-red-500"
+                        : selectedRow["Montant caisse (A)"] -
+                          selectedRow["Montant bordereau (B)"] >
+                          0
                           ? "text-green-500"
                           : "text-gray-900 dark:text-white"
-                      }`}
+                        }`}
                     >
                       {formatNumber(
                         selectedRow["Montant caisse (A)"] -
-                          selectedRow["Montant bordereau (B)"]
+                        selectedRow["Montant bordereau (B)"]
                       )}{" "}
                       F CFA
                     </p>
@@ -453,7 +479,7 @@ export default function ViewModal({
 
               {/* Observation Caisse */}
               {statutValidation ===
-              EStatutEncaissement.RECLAMATION_REVERSES ? null : (
+                EStatutEncaissement.RECLAMATION_REVERSES ? null : (
                 <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
@@ -476,51 +502,44 @@ export default function ViewModal({
                 </div>
               )}
 
-              {/* Détails Bancaires */}
+              {/* Détails Bancaires (B-C) */}
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
                 <div className="mb-4">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                    Relevé du{" "}
-                    <span className="font-semibold">
-                      {formatDateData(selectedRow["Date Validation"])}
-                    </span>
+                    Détails bancaires
                   </h3>
                   <p className="mt-1 text-xs text-gray-500">
-                    Détails du relevé bancaire
+                    Comparaison des montants Banque
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {formatNumber(selectedRow["Montant bordereau (B)"])} F CFA
+                      {formatNumber(selectedRow["Montant bordereau (B)"] || selectedRow.montantBordereauBanque || 0)} F CFA
                     </p>
                     <p className="text-sm text-gray-500">Montant Bordereaux</p>
                   </div>
                   <div>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {formatNumber(selectedRow["Montant revelé (C)"])} F CFA
+                      {formatNumber(
+                        selectedRow["Montant relevé (C)"] ||
+                        selectedRow.montantReleve ||
+                        selectedRow.validationEncaissement?.montantReleve ||
+                        0
+                      )} F CFA
                     </p>
-                    <p className="text-sm text-gray-500">Montant Banque</p>
+                    <p className="text-sm text-gray-500">Montant Relevé</p>
                   </div>
                   <div>
                     <p
-                      className={`text-lg font-semibold ${
-                        selectedRow["Montant bordereau (B)"] -
-                          selectedRow["Montant revelé (C)"] <
-                        0
-                          ? "text-red-500"
-                          : selectedRow["Montant bordereau (B)"] -
-                              selectedRow["Montant revelé (C)"] >
-                            0
+                      className={`text-lg font-semibold ${calculateEcart() < 0
+                        ? "text-red-500"
+                        : calculateEcart() > 0
                           ? "text-green-500"
                           : "text-gray-900 dark:text-white"
-                      }`}
+                        }`}
                     >
-                      {formatNumber(
-                        selectedRow["Montant bordereau (B)"] -
-                          selectedRow["Montant revelé (C)"]
-                      )}{" "}
-                      F CFA
+                      {formatNumber(calculateEcart())} F CFA
                     </p>
                     <p className="text-sm text-gray-500">Écart (B-C)</p>
                   </div>
@@ -529,7 +548,7 @@ export default function ViewModal({
 
               {/* Observation Banque */}
               {statutValidation ===
-              EStatutEncaissement.RECLAMATION_REVERSES ? null : (
+                EStatutEncaissement.RECLAMATION_REVERSES ? null : (
                 <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
