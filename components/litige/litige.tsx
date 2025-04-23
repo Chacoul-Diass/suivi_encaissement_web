@@ -209,7 +209,6 @@ export default function Litige() {
                     total={Totaldata}
                     paginate={paginate}
                     loading={loading}
-                    fetchData={fetchData}
                     habilitation={habilitation}
                     handlePageChange={handlePageChange}
                     handleSearchChange={handleSearchChange}
