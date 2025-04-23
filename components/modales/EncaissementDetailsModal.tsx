@@ -11,7 +11,8 @@ interface EncaissementDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     encaissement: any;
-    formatNumber?: (num: number | undefined) => string;
+    formatNumber?: any;
+    formatDate?: any;
 }
 
 const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
