@@ -200,6 +200,15 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
 
       const allAlerts = response?.data?.result || [];
 
+      // Vérifier si le nombre de lignes dépasse 1000
+      if (allAlerts.length > 1000) {
+        // Avertir l'utilisateur
+        if (!confirm(`Attention: Le fichier contient ${allAlerts.length} lignes, ce qui pourrait causer des problèmes d'ouverture avec Excel. Voulez-vous continuer quand même?`)) {
+          Toastify("warning", "Export Excel annulé");
+          return;
+        }
+      }
+
       // En-têtes Excel
       const headers = [
         "Direction Régionale",
