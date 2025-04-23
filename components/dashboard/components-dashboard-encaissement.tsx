@@ -36,6 +36,13 @@ import IconEye from "../icon/icon-eye";
 import IconCheck from "../icon/icon-check";
 import IconFileText from "../icon/icon-file-text";
 import IconExcelFile from "../icon/icon-excel-file";
+import IconBell from "../icon/icon-bell";
+import IconHistory from "../icon/icon-history";
+
+import IconClipboardCheck from "../icon/icon-clipboard-check";
+import IconUpload from "../icon/icon-upload";
+import IconCheckCircle from "../icon/icon-check-circle";
+import IconShield from "../icon/icon-shield";
 
 // Composant pour la modale d'alertes
 interface AlertItem {
@@ -73,9 +80,18 @@ interface AlertModalProps {
   loading: boolean;
   pagination: PaginationInfo | null;
   onPageChange: (page: number) => void;
+  activeTabId?: number;
+  onTabChange?: (tabId: number) => void;
 }
 
-const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange }: AlertModalProps) => {
+// Ajout de la définition du modèle pour les onglets d'alertes
+interface AlertTab {
+  id: number;
+  name: string;
+  icon: React.ReactNode;
+}
+
+const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange, activeTabId = 0, onTabChange }: AlertModalProps) => {
   if (!isOpen) return null;
 
   const formatNumber = (num: number) => {
@@ -89,6 +105,27 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
   });
   const [searchTerm, setSearchTerm] = useState("");
   const PAGE_SIZES = [5, 10, 20, 30, 50];
+  const [activeTab, setActiveTab] = useState(activeTabId);
+
+  // Mettre à jour l'onglet actif lorsque activeTabId change
+  useEffect(() => {
+    setActiveTab(activeTabId);
+  }, [activeTabId]);
+
+  // Définition des onglets d'alertes
+  const alertTabs: AlertTab[] = [
+    { id: 0, name: "Encaissements Chargés", icon: <IconUpload className="h-4 w-4" /> },
+    { id: 2, name: "Encaissements Vérifiés", icon: <IconCheckCircle className="h-4 w-4" /> },
+    { id: 3, name: "Encaissements Validés", icon: <IconShield className="h-4 w-4" /> },
+    { id: 7, name: "Encaissements Traités", icon: <IconClipboardCheck className="h-4 w-4" /> }
+  ];
+
+  const handleTabChange = (tabId: number) => {
+    setActiveTab(tabId);
+    if (onTabChange) {
+      onTabChange(tabId); // Informer le parent du changement d'onglet
+    }
+  };
 
   const handleViewDetails = (row: AlertItem) => {
     // Implémenter l'affichage des détails
@@ -121,9 +158,9 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
       // Afficher un indicateur de chargement via le toast
       Toastify("success", "Préparation du fichier CSV en cours...");
 
-      // Récupérer toutes les données sans pagination
+      // Récupérer toutes les données sans pagination avec l'ID de l'onglet actif
       const response: any = await axiosInstance.get(
-        `${API_AUTH_SUIVI}/encaissements/alerts/0?all=true`
+        `${API_AUTH_SUIVI}/encaissements/alerts/${activeTab}?all=true`
       );
 
       if (response?.error !== false || !response?.data?.result?.length) {
@@ -170,7 +207,8 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `alertes_encaissement_${new Date().toISOString().split('T')[0]}.csv`);
+      const tabName = alertTabs.find(tab => tab.id === activeTab)?.name || "alertes";
+      link.setAttribute("download", `${tabName.toLowerCase().replace(/ /g, "_")}_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -188,9 +226,9 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
       // Afficher un indicateur de chargement via le toast
       Toastify("success", "Préparation du fichier Excel en cours...");
 
-      // Récupérer toutes les données sans pagination
+      // Récupérer toutes les données sans pagination avec l'ID de l'onglet actif
       const response: any = await axiosInstance.get(
-        `${API_AUTH_SUIVI}/encaissements/alerts/0?all=true`
+        `${API_AUTH_SUIVI}/encaissements/alerts/${activeTab}?all=true`
       );
 
       if (response?.error !== false || !response?.data?.result?.length) {
@@ -246,7 +284,8 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `alertes_encaissement_${new Date().toISOString().split('T')[0]}.xlsx`);
+      const tabName = alertTabs.find(tab => tab.id === activeTab)?.name || "alertes";
+      link.setAttribute("download", `${tabName.toLowerCase().replace(/ /g, "_")}_${new Date().toISOString().split('T')[0]}.xlsx`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -259,13 +298,14 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 backdrop-blur-sm">
       <div className="relative flex h-[90vh] w-[95%] max-w-[1600px] flex-col rounded-xl bg-white shadow-2xl dark:bg-gray-800 md:w-[90%]">
         {/* Header avec dégradé */}
-        <div className="rounded-t-xl bg-gradient-to-r from-primary to-primary/80 p-6 text-white">
+        <div className="rounded-t-xl bg-gradient-to-r from-primary to-primary/80 p-5 text-white">
           <div className="mb-0 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h3 className="text-xl font-bold">
+              <h3 className="text-xl font-bold flex items-center">
+                <IconBell className="w-5 h-5 mr-2" />
                 Alertes d'encaissements
               </h3>
               {pagination && (
@@ -283,7 +323,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                 <>
                   <button
                     onClick={exportToCSV}
-                    className="flex items-center gap-1 rounded-md bg-white/20 px-3 py-1.5 text-sm text-white transition-all hover:bg-white/30"
+                    className="flex items-center gap-1.5 rounded-md bg-white/20 px-3 py-1.5 text-sm text-white transition-all hover:bg-white/30 hover:shadow-lg"
                     title="Exporter en CSV"
                   >
                     <IconFileText className="h-4 w-4" />
@@ -291,7 +331,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                   </button>
                   <button
                     onClick={exportToExcel}
-                    className="flex items-center gap-1 rounded-md bg-white/20 px-3 py-1.5 text-sm text-white transition-all hover:bg-white/30"
+                    className="flex items-center gap-1.5 rounded-md bg-white/20 px-3 py-1.5 text-sm text-white transition-all hover:bg-white/30 hover:shadow-lg"
                     title="Exporter en Excel"
                   >
                     <IconExcelFile className="h-4 w-4" />
@@ -309,19 +349,49 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
           </div>
         </div>
 
+        {/* Onglets de navigation avec animations améliorées */}
+        <div className="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex overflow-x-auto">
+            {alertTabs.map((tab) => (
+              <button
+                key={tab.id}
+                className={`group relative flex items-center gap-2 px-4 py-4 text-sm font-medium outline-none transition-all duration-300 ${activeTab === tab.id
+                  ? "bg-gray-50 text-primary dark:bg-gray-700/50 dark:text-primary"
+                  : "text-gray-500 hover:bg-gray-50/50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700/30 dark:hover:text-gray-300"
+                  }`}
+                onClick={() => handleTabChange(tab.id)}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`transition-all duration-300 ${activeTab === tab.id
+                    ? "scale-110 text-primary"
+                    : "text-gray-400 group-hover:scale-105 group-hover:text-gray-500"}`}>
+                    {tab.icon}
+                  </span>
+                  <span className={`transform transition-all duration-300 ${activeTab === tab.id ? "translate-x-0.5 font-semibold" : ""}`}>
+                    {tab.name}
+                  </span>
+                </div>
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-0 h-0.5 w-full bg-primary transition-all duration-300"></div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Corps de la modale avec défilement */}
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Barre de recherche et pagination */}
           <div className="border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-800">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              {/* Barre de recherche - toujours visible pour permettre la recherche une fois les données chargées */}
+              {/* Barre de recherche améliorée */}
               <div className="relative w-full md:w-64">
                 <input
                   type="text"
                   placeholder="Rechercher..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="form-input w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm placeholder-gray-400 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+                  className="form-input w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm placeholder-gray-400 shadow-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
                 />
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -333,40 +403,61 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
               {/* Statistiques rapides - seulement si des données sont présentes */}
               {hasAlerts && (
                 <div className="hidden lg:flex">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-6">
                     <div className="flex items-center gap-1">
                       <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500"></span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        Ecarts positifs: {positiveEcarts}
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Ecarts positifs: <span className="font-bold">{positiveEcarts}</span>
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500"></span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        Ecarts négatifs: {negativeEcarts}
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Ecarts négatifs: <span className="font-bold">{negativeEcarts}</span>
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="inline-block h-2.5 w-2.5 rounded-full bg-gray-400"></span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        Ecarts nuls: {zeroEcarts}
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Ecarts nuls: <span className="font-bold">{zeroEcarts}</span>
                       </span>
                     </div>
                   </div>
                 </div>
               )}
 
+              {/* Sélecteur d'affichage par page - seulement si des données paginées sont présentes */}
+              {pagination && pagination.totalCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Afficher</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      onPageChange(1);
+                    }}
+                    className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700 shadow-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  >
+                    {PAGE_SIZES.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">par page</span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Tableau avec défilement */}
+          {/* Tableau avec défilement et design amélioré */}
           <div className="flex-1 overflow-auto p-6">
             <div className="relative h-full rounded-xl border border-gray-200 dark:border-gray-700">
               <div className="h-full overflow-auto">
                 {loading && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm dark:bg-gray-800/80">
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90 backdrop-blur-sm dark:bg-gray-800/90">
                     <div className="flex flex-col items-center justify-center p-4">
-                      <div className="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-gray-300 border-t-primary"></div>
+                      <div className="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-primary border-t-transparent"></div>
                       <span className="text-sm font-medium text-primary">Chargement des alertes</span>
                     </div>
                   </div>
@@ -385,11 +476,11 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                   }}
                   classNames={{
                     root: "shadow-sm",
-                    header: "border-b border-gray-200 bg-gray-50/80 py-4 text-gray-700 font-medium dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300",
+                    header: "border-b border-gray-200 bg-gray-50/80 py-4 text-gray-700 font-semibold dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300",
                     pagination: "sticky bottom-0 left-0 right-0 z-10 bg-white py-4 shadow-md dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700",
                   }}
                   rowClassName={({ ecartCaisseBanque }) =>
-                    `hover:bg-gray-50 dark:hover:bg-gray-700/30 border-b border-gray-100 dark:border-gray-700/50 transition-colors ${ecartCaisseBanque !== 0 ? "font-medium" : ""
+                    `hover:bg-gray-50 dark:hover:bg-gray-700/30 border-b border-gray-100 dark:border-gray-700/50 transition-all ${ecartCaisseBanque !== 0 ? "font-medium" : ""
                     }`
                   }
                   className="table-hover whitespace-normal text-sm"
@@ -482,26 +573,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                         );
                       },
                     },
-                    {
-                      accessor: "actions",
-                      title: "Actions",
-                      width: 100,
-                      render: (row: AlertItem) => (
-                        <div className="flex items-center justify-center gap-2 px-2 py-3">
-                          <Tippy content="Voir détails">
-                            <button
-                              onClick={() => handleViewDetails(row)}
-                              className="rounded-full p-1.5 text-gray-500 transition-all hover:bg-primary/10 hover:text-primary dark:text-gray-400 dark:hover:text-white"
-                            >
-                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                            </button>
-                          </Tippy>
-                        </div>
-                      ),
-                    },
+
                   ]}
                   highlightOnHover
                   totalRecords={pagination?.totalCount || 0}
@@ -585,6 +657,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                   }}
                   className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary/90 hover:shadow-md focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 dark:ring-offset-gray-800"
                 >
+                  <IconCheck className="mr-1.5 h-4 w-4 inline" />
                   Acquitter toutes les alertes
                 </button>
               )}
@@ -611,6 +684,7 @@ const ComponentsDashboardSales = () => {
   const [alertsLoading, setAlertsLoading] = useState(false);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo | null>(null);
   const [alertPage, setAlertPage] = useState(1);
+  const [alertTabId, setAlertTabId] = useState(0);
 
   const fetchDashboardData = async (filters?: any) => {
     const cleanArray = (arr: string[] | undefined) =>
@@ -665,11 +739,11 @@ const ComponentsDashboardSales = () => {
     }
   };
 
-  const getAlerts = async (page: number = 1) => {
+  const getAlerts = async (page: number = 1, tabId: number = 0) => {
     try {
       setAlertsLoading(true);
       const response: any = await axiosInstance.get(
-        `${API_AUTH_SUIVI}/encaissements/alerts/0?page=${page}`
+        `${API_AUTH_SUIVI}/encaissements/alerts/${tabId}?page=${page}`
       );
 
       if (response?.error === false) {
@@ -691,7 +765,7 @@ const ComponentsDashboardSales = () => {
     const checkAlertsOnLogin = async () => {
       if (!hasCheckedAlerts) {
         try {
-          const data = await getAlerts(1);
+          const data = await getAlerts(1, alertTabId);
           if (data && data.result && data.result.length > 0) {
             setAlertModalOpen(true);
           }
@@ -704,7 +778,7 @@ const ComponentsDashboardSales = () => {
     };
 
     checkAlertsOnLogin();
-  }, [hasCheckedAlerts]);
+  }, [hasCheckedAlerts, alertTabId]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -1032,7 +1106,13 @@ const ComponentsDashboardSales = () => {
 
   const handleAlertPageChange = (page: number) => {
     setAlertPage(page);
-    getAlerts(page);
+    getAlerts(page, alertTabId);
+  };
+
+  const handleAlertTabChange = (tabId: number) => {
+    setAlertTabId(tabId);
+    setAlertPage(1); // Réinitialiser la pagination lors du changement d'onglet
+    getAlerts(1, tabId);
   };
 
   return (
@@ -1044,10 +1124,12 @@ const ComponentsDashboardSales = () => {
         loading={alertsLoading}
         pagination={paginationInfo}
         onPageChange={handleAlertPageChange}
+        activeTabId={alertTabId}
+        onTabChange={handleAlertTabChange}
       />
       <div className="panel">
         <div className="panel relative mb-8">
-          <div className=" flex border-b border-gray-200 dark:border-gray-700">
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
             <button
               className={`group relative flex items-center gap-3 px-8 py-5 text-sm font-medium outline-none transition-all duration-300 ease-in-out hover:bg-gray-50/50 dark:hover:bg-gray-700/50 ${activeTab === 1
                 ? "text-primary"
@@ -1132,7 +1214,7 @@ const ComponentsDashboardSales = () => {
               <li>
                 <Link
                   href="/dashboard"
-                  className="flex items-center gap-2 rounded-md bg-white px-4 py-2.5 font-semibold text-primary shadow transition-all hover:bg-primary hover:text-white dark:bg-[#191e3a] dark:hover:bg-primary"
+                  className="flex items-center gap-2 rounded-md bg-white px-4 py-2.5 font-semibold text-primary shadow-sm transition-all hover:bg-primary hover:text-white hover:shadow dark:bg-[#191e3a] dark:hover:bg-primary"
                 >
                   <IconHome className="h-4.5 w-4.5" />
                   Tableau de bord
@@ -1149,7 +1231,7 @@ const ComponentsDashboardSales = () => {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="flex items-center gap-2 rounded-md border border-primary px-4 py-2 text-primary transition-all hover:bg-primary hover:text-white"
+                className="flex items-center gap-2 rounded-md border border-primary bg-white px-4 py-2 text-primary transition-all hover:bg-primary hover:text-white hover:shadow dark:bg-transparent"
                 onClick={handleRefresh}
                 id="tuto-dashboard-refresh"
               >
@@ -1208,7 +1290,7 @@ const ComponentsDashboardSales = () => {
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    className="group flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                    className="group flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:shadow dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                   >
                     <IconRefresh className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
                     Réinitialiser
@@ -1217,7 +1299,7 @@ const ComponentsDashboardSales = () => {
                     type="button"
                     onClick={handleApplyFilters}
                     disabled={selectedDRIds?.length === 0}
-                    className="group flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-primary/90 hover:shadow-sm disabled:cursor-not-allowed disabled:bg-primary/60"
+                    className="group flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-primary/60 dark:ring-offset-gray-800"
                   >
                     <IconFilter className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                     Appliquer
@@ -1235,11 +1317,15 @@ const ComponentsDashboardSales = () => {
                 <div className="mb-6 grid gap-6 xl:grid-cols-3">
                   <div className="panel h-full xl:col-span-2">
                     <div className="mb-5 flex items-center justify-between dark:text-white-light">
-                      <h5 className="text-lg font-semibold">Revenue</h5>
+                      <h5 className="text-lg font-semibold flex items-center">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary mr-2">
+                          <IconCashBanknotes className="h-5 w-5" />
+                        </span>
+                        Revenue
+                      </h5>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-sm ${!isTableView ? "text-primary" : "text-gray-500"
-                            }`}
+                          className={`text-sm ${!isTableView ? "text-primary font-medium" : "text-gray-500"}`}
                         >
                           Graphique
                         </span>
@@ -1253,8 +1339,7 @@ const ComponentsDashboardSales = () => {
                           <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700"></div>
                         </label>
                         <span
-                          className={`text-sm ${isTableView ? "text-primary" : "text-gray-500"
-                            }`}
+                          className={`text-sm ${isTableView ? "text-primary font-medium" : "text-gray-500"}`}
                         >
                           Tableau
                         </span>
@@ -1268,8 +1353,11 @@ const ComponentsDashboardSales = () => {
                         </div>
                       </div>
                     ) : banques.length === 0 ? (
-                      <div className="flex items-center justify-center py-4 text-center text-gray-500 dark:text-gray-400">
-                        Aucun élément disponible pour le moment.
+                      <div className="flex h-[325px] items-center justify-center rounded-lg bg-white/50 py-4 text-center text-gray-500 dark:bg-black/20 dark:text-gray-400">
+                        <div className="flex flex-col items-center">
+                          <IconBox className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
+                          <p>Aucun élément disponible pour le moment.</p>
+                        </div>
                       </div>
                     ) : (
                       <div className="relative">
@@ -1375,7 +1463,10 @@ const ComponentsDashboardSales = () => {
                   </div>
                   <div className="panel h-auto">
                     <div className="mb-5 flex items-center justify-between dark:text-white-light">
-                      <h5 className="text-lg font-semibold">
+                      <h5 className="text-lg font-semibold flex items-center">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-success/10 text-success mr-2">
+                          <IconTag className="h-5 w-5" />
+                        </span>
                         Résumé catégoriel
                       </h5>
                     </div>
@@ -1406,20 +1497,20 @@ const ComponentsDashboardSales = () => {
                       ) : (
                         <>
                           {/* Clôture */}
-                          <div className="flex items-center justify-center transition-all hover:scale-105">
-                            <div className="h-9 w-9 ltr:mr-3 rtl:ml-3">
-                              <div className="grid h-9 w-9 place-content-center rounded-full bg-secondary-light text-secondary shadow-sm dark:bg-secondary dark:text-secondary-light">
-                                <IconInbox />
+                          <div className="flex items-center justify-center rounded-lg p-3 transition-all hover:bg-secondary/5 hover:scale-102 group">
+                            <div className="h-10 w-10 ltr:mr-3 rtl:ml-3">
+                              <div className="grid h-10 w-10 place-content-center rounded-full bg-secondary-light text-secondary shadow group-hover:shadow-lg dark:bg-secondary dark:text-secondary-light">
+                                <IconInbox className="h-5 w-5" />
                               </div>
                             </div>
                             <div className="flex-1 text-center">
                               <div className="mb-2 flex justify-between font-semibold text-white-dark">
-                                <h6>Traités</h6>
-                                <p>{completionRate.completionRateCloture}%</p>
+                                <h6 className="text-sm">Traités</h6>
+                                <p className="text-sm">{completionRate.completionRateCloture}%</p>
                               </div>
-                              <div className="h-2 rounded-full bg-dark-light shadow dark:bg-[#1b2e4b]">
+                              <div className="h-2.5 rounded-full bg-dark-light shadow dark:bg-[#1b2e4b]">
                                 <div
-                                  className="h-full rounded-full bg-gradient-to-r from-[#7579ff] to-[#b224ef]"
+                                  className="h-full rounded-full bg-gradient-to-r from-[#7579ff] to-[#b224ef] transition-all duration-500"
                                   style={{
                                     width: `${completionRate.completionRateCloture}%`,
                                   }}
@@ -1429,22 +1520,22 @@ const ComponentsDashboardSales = () => {
                           </div>
 
                           {/* Validation */}
-                          <div className="flex items-center justify-center transition-all hover:scale-105">
-                            <div className="h-9 w-9 ltr:mr-3 rtl:ml-3">
-                              <div className="grid h-9 w-9 place-content-center rounded-full bg-success-light text-success shadow-sm dark:bg-success dark:text-success-light">
-                                <IconTag />
+                          <div className="flex items-center justify-center rounded-lg p-3 transition-all hover:bg-success/5 hover:scale-102 group">
+                            <div className="h-10 w-10 ltr:mr-3 rtl:ml-3">
+                              <div className="grid h-10 w-10 place-content-center rounded-full bg-success-light text-success shadow group-hover:shadow-lg dark:bg-success dark:text-success-light">
+                                <IconTag className="h-5 w-5" />
                               </div>
                             </div>
                             <div className="flex-1 text-center">
                               <div className="mb-2 flex justify-between font-semibold text-white-dark">
-                                <h6>Validés</h6>
-                                <p>
+                                <h6 className="text-sm">Validés</h6>
+                                <p className="text-sm">
                                   {completionRate.completionRateValidation}%
                                 </p>
                               </div>
-                              <div className="h-2 rounded-full bg-dark-light shadow dark:bg-[#1b2e4b]">
+                              <div className="h-2.5 rounded-full bg-dark-light shadow dark:bg-[#1b2e4b]">
                                 <div
-                                  className="h-full rounded-full bg-gradient-to-r from-[#3cba92] to-[#0ba360]"
+                                  className="h-full rounded-full bg-gradient-to-r from-[#3cba92] to-[#0ba360] transition-all duration-500"
                                   style={{
                                     width: `${completionRate.completionRateValidation}%`,
                                   }}
@@ -1454,22 +1545,22 @@ const ComponentsDashboardSales = () => {
                           </div>
 
                           {/* Réclamation */}
-                          <div className="flex items-center justify-center transition-all hover:scale-105">
-                            <div className="h-9 w-9 ltr:mr-3 rtl:ml-3">
-                              <div className="grid h-9 w-9 place-content-center rounded-full bg-warning-light text-warning shadow-sm dark:bg-warning dark:text-warning-light">
-                                <IconCreditCard />
+                          <div className="flex items-center justify-center rounded-lg p-3 transition-all hover:bg-warning/5 hover:scale-102 group">
+                            <div className="h-10 w-10 ltr:mr-3 rtl:ml-3">
+                              <div className="grid h-10 w-10 place-content-center rounded-full bg-warning-light text-warning shadow group-hover:shadow-lg dark:bg-warning dark:text-warning-light">
+                                <IconCreditCard className="h-5 w-5" />
                               </div>
                             </div>
                             <div className="flex-1 text-center">
                               <div className="mb-2 flex justify-between font-semibold text-white-dark">
-                                <h6>Litiges</h6>
-                                <p>
+                                <h6 className="text-sm">Litiges</h6>
+                                <p className="text-sm">
                                   {completionRate.completionRateReclamation}%
                                 </p>
                               </div>
-                              <div className="h-2 w-full rounded-full bg-dark-light shadow dark:bg-[#1b2e4b]">
+                              <div className="h-2.5 w-full rounded-full bg-dark-light shadow dark:bg-[#1b2e4b]">
                                 <div
-                                  className="h-full rounded-full bg-gradient-to-r from-[#f09819] to-[#ff5858]"
+                                  className="h-full rounded-full bg-gradient-to-r from-[#f09819] to-[#ff5858] transition-all duration-500"
                                   style={{
                                     width: `${completionRate.completionRateReclamation}%`,
                                   }}
@@ -1479,20 +1570,20 @@ const ComponentsDashboardSales = () => {
                           </div>
 
                           {/* Reversement */}
-                          <div className="flex items-center justify-center transition-all hover:scale-105">
-                            <div className="h-9 w-9 ltr:mr-3 rtl:ml-3">
-                              <div className="grid h-9 w-9 place-content-center rounded-full bg-primary-light text-primary shadow-sm dark:bg-primary dark:text-primary-light">
-                                <IconInbox />
+                          <div className="flex items-center justify-center rounded-lg p-3 transition-all hover:bg-primary/5 hover:scale-102 group">
+                            <div className="h-10 w-10 ltr:mr-3 rtl:ml-3">
+                              <div className="grid h-10 w-10 place-content-center rounded-full bg-primary-light text-primary shadow group-hover:shadow-lg dark:bg-primary dark:text-primary-light">
+                                <IconInbox className="h-5 w-5" />
                               </div>
                             </div>
                             <div className="flex-1 text-center">
                               <div className="mb-2 flex justify-between font-semibold text-white-dark">
-                                <h6>Chargés</h6>
-                                <p>{completionRate.completionRateReverse}%</p>
+                                <h6 className="text-sm">Chargés</h6>
+                                <p className="text-sm">{completionRate.completionRateReverse}%</p>
                               </div>
-                              <div className="h-2 w-full rounded-full bg-dark-light shadow dark:bg-[#1b2e4b]">
+                              <div className="h-2.5 w-full rounded-full bg-dark-light shadow dark:bg-[#1b2e4b]">
                                 <div
-                                  className="h-full rounded-full bg-gradient-to-r from-[#00c6ff] to-[#0072ff]"
+                                  className="h-full rounded-full bg-gradient-to-r from-[#00c6ff] to-[#0072ff] transition-all duration-500"
                                   style={{
                                     width: `${completionRate.completionRateReverse}%`,
                                   }}
@@ -1506,7 +1597,7 @@ const ComponentsDashboardSales = () => {
 
                     <div className="mt-auto p-4">
                       <img
-                        className="h-[150px] w-full object-contain transition-all hover:scale-105"
+                        className="h-[150px] w-full object-contain transition-all duration-300 hover:scale-105"
                         src="/assets/images/pilonne.png"
                         alt="logo"
                       />
@@ -1518,17 +1609,20 @@ const ComponentsDashboardSales = () => {
               <div className=" h-full">
                 <div className="mb-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   <div className="panel h-full pb-0 sm:col-span-2 xl:col-span-1">
-                    <h5 className="mb-5 text-lg font-semibold dark:text-white-light">
+                    <h5 className="mb-5 text-lg font-semibold dark:text-white-light flex items-center">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary mr-2">
+                        <IconCreditCard className="h-5 w-5" />
+                      </span>
                       Banques avec le plus d'écart
                     </h5>
 
                     {loading ? (
-                      <div className="space-y-3">
+                      <div className="space-y-3 p-3">
                         {Array.from({ length: 5 }).map((_, index) => (
-                          <div
-                            key={index}
-                            className="h-4 w-full animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"
-                          ></div>
+                          <div key={index} className="flex items-center gap-3">
+                            <div className="h-8 w-8 animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"></div>
+                            <div className="h-4 w-full animate-pulse rounded-md bg-gray-300 dark:bg-gray-700"></div>
+                          </div>
                         ))}
                       </div>
                     ) : (
@@ -1545,28 +1639,43 @@ const ComponentsDashboardSales = () => {
                                   ? "badge-outline-success bg-success-light"
                                   : "badge-outline-danger bg-danger-light";
 
+                            const bgColor = index === 0
+                              ? "hover:bg-primary/5"
+                              : index === 1
+                                ? "hover:bg-success/5"
+                                : "hover:bg-danger/5";
+
+                            const iconColor = index === 0
+                              ? "text-primary"
+                              : index === 1
+                                ? "text-success"
+                                : "text-danger";
+
                             return (
                               <div
                                 key={index}
-                                className="group relative flex items-center py-1.5"
+                                className={`group relative flex items-center rounded-lg py-3 px-2 transition-all duration-300 ${bgColor}`}
                               >
-                                <div
-                                  className={`h-1.5 w-1.5 rounded-full ${index === 0
-                                    ? "bg-primary"
-                                    : index === 1
-                                      ? "bg-success"
-                                      : "bg-danger"
-                                    } ltr:mr-1 rtl:ml-1.5`}
-                                ></div>
-                                <div className="flex-1">{banque?.banque}</div>
-                                <div className="text-xs text-white-dark dark:text-gray-500 ltr:ml-auto rtl:mr-auto">
-                                  {banque?.totalEcartReleve.toLocaleString(
-                                    "fr-FR"
-                                  )}{" "}
-                                  F CFA
+                                <div className={`flex h-8 w-8 items-center justify-center rounded-md ${index === 0 ? "bg-primary/10" : index === 1 ? "bg-success/10" : "bg-danger/10"} mr-3`}>
+                                  <svg
+                                    className={`h-4 w-4 ${iconColor}`}
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                                    <line x1="2" y1="10" x2="22" y2="10" />
+                                  </svg>
+                                </div>
+                                <div className="flex-1 ml-1 font-medium">{banque?.banque}</div>
+                                <div className="text-sm font-semibold tabular-nums text-gray-700 dark:text-gray-300 ltr:ml-auto rtl:mr-auto">
+                                  {banque?.totalEcartReleve.toLocaleString("fr-FR")} F CFA
                                 </div>
                                 <span
-                                  className={`badge ${badgeClass} absolute text-xs opacity-0 group-hover:opacity-100 dark:bg-black ltr:right-0 rtl:left-0`}
+                                  className={`badge ${badgeClass} absolute text-xs opacity-0 group-hover:opacity-100 dark:bg-black ltr:right-2 rtl:left-0`}
                                 >
                                   {index + 1}ère banque
                                 </span>
@@ -1580,8 +1689,11 @@ const ComponentsDashboardSales = () => {
 
                   <div className="panel h-full">
                     <div className="mb-5 flex items-center">
-                      <h5 className="text-lg font-semibold dark:text-white-light">
-                        Les caisses avec le plus et le moins d'ecarts
+                      <h5 className="text-lg font-semibold dark:text-white-light flex items-center">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-warning/10 text-warning mr-2">
+                          <IconHistory className="h-5 w-5" />
+                        </span>
+                        Les caisses avec le plus et le moins d'écarts
                       </h5>
                     </div>
                     <div>
@@ -1608,17 +1720,20 @@ const ComponentsDashboardSales = () => {
                             const textColorClass = isPositive
                               ? "text-success"
                               : "text-danger";
+                            const bgColorClass = isPositive
+                              ? "hover:bg-success/5"
+                              : "hover:bg-danger/5";
                             const signe = isPositive ? "+" : "";
 
                             return (
-                              <div className="flex" key={index}>
+                              <div className={`flex items-center rounded-lg p-3 transition-all duration-300 ${bgColorClass}`} key={index}>
                                 <span
-                                  className={`grid h-9 w-9 shrink-0 place-content-center rounded-md ${badgeClass}`}
+                                  className={`grid h-10 w-10 shrink-0 place-content-center rounded-lg shadow-sm ${badgeClass}`}
                                 >
                                   J{index + 1}
                                 </span>
                                 <div className="flex-1 px-3">
-                                  <div>{`Journée ${caisse?.numeroJourneeCaisse}`}</div>
+                                  <div className="font-medium">{`Journée ${caisse?.numeroJourneeCaisse}`}</div>
                                   <div className="text-xs text-white-dark dark:text-gray-500">
                                     {isPositive
                                       ? "Écart positif"
@@ -1626,7 +1741,7 @@ const ComponentsDashboardSales = () => {
                                   </div>
                                 </div>
                                 <span
-                                  className={`whitespace-pre px-1 text-base ${textColorClass} ltr:ml-auto rtl:mr-auto`}
+                                  className={`whitespace-pre px-1 text-base font-semibold ${textColorClass} ltr:ml-auto rtl:mr-auto`}
                                 >
                                   {`${signe}${caisse?.totalEcartReleve?.toLocaleString(
                                     "fr-FR"
@@ -1640,12 +1755,15 @@ const ComponentsDashboardSales = () => {
                   </div>
 
                   <div className="panel h-full overflow-hidden border-0 p-0">
-                    <div className="min-h-[70px] bg-primary bg-gradient-to-r to-[#160f6b] p-4">
+                    <div className="min-h-[70px] bg-gradient-to-r from-primary via-primary/90 to-primary/80 p-4">
                       <div className="flex items-center justify-between text-white">
-                        <p className="text-xl">Écarts</p>
+                        <p className="text-xl font-semibold flex items-center">
+                          <IconCashBanknotes className="h-5 w-5 mr-2" />
+                          Écarts
+                        </p>
                       </div>
                     </div>
-                    <div className="-mt-6 grid grid-cols-2 gap-2 px-8">
+                    <div className="-mt-6 grid grid-cols-2 gap-4 px-8">
                       {loading ? (
                         Array.from({ length: 2 }).map((_, index) => (
                           <div
@@ -1656,9 +1774,9 @@ const ComponentsDashboardSales = () => {
                       ) : (
                         <>
                           {/* Écart (A-B) */}
-                          <div className="rounded-md bg-white px-4 py-2.5 shadow transition-all hover:shadow-md dark:bg-[#060818]">
+                          <div className="rounded-lg bg-white px-4 py-3 shadow-lg transition-all hover:shadow-xl dark:bg-[#060818]">
                             <span className="mb-4 flex items-center justify-between dark:text-white">
-                              Écart (A-B)
+                              <span className="font-medium">Écart (A-B)</span>
                               <IconCaretDown
                                 className={`h-4 w-4 ${ecart?.ecartAB >= 0
                                   ? "text-success"
@@ -1666,14 +1784,14 @@ const ComponentsDashboardSales = () => {
                                   }`}
                               />
                             </span>
-                            <div className="btn w-full border-0 bg-[#ebedf2] py-1 text-base text-[#515365] shadow-none dark:bg-black dark:text-[#bfc9d4]">
+                            <div className="mt-2 flex items-center justify-center rounded-md bg-[#ebedf2] px-3 py-2 text-base font-bold text-[#515365] shadow-sm dark:bg-black dark:text-[#bfc9d4]">
                               {ecart?.ecartAB?.toLocaleString("fr-FR")} F CFA
                             </div>
                           </div>
                           {/* Écart (B-C) */}
-                          <div className="rounded-md bg-white px-4 py-2.5 shadow transition-all hover:shadow-md dark:bg-[#060818]">
+                          <div className="rounded-lg bg-white px-4 py-3 shadow-lg transition-all hover:shadow-xl dark:bg-[#060818]">
                             <span className="mb-4 flex items-center justify-between dark:text-white">
-                              Écart (B-C)
+                              <span className="font-medium">Écart (B-C)</span>
                               <IconCaretDown
                                 className={`h-4 w-4 ${ecart?.ecartBC >= 0
                                   ? "text-success"
@@ -1681,7 +1799,7 @@ const ComponentsDashboardSales = () => {
                                   }`}
                               />
                             </span>
-                            <div className="btn w-full border-0 bg-[#ebedf2] py-1 text-base text-[#515365] shadow-none dark:bg-black dark:text-[#bfc9d4]">
+                            <div className="mt-2 flex items-center justify-center rounded-md bg-[#ebedf2] px-3 py-2 text-base font-bold text-[#515365] shadow-sm dark:bg-black dark:text-[#bfc9d4]">
                               {ecart?.ecartBC?.toLocaleString("fr-FR")} F CFA
                             </div>
                           </div>
@@ -1691,11 +1809,12 @@ const ComponentsDashboardSales = () => {
 
                     <div className="p-5">
                       <div className="mb-5">
-                        <span className="rounded-full bg-[#1b2e4b] px-4 py-1.5 text-xs text-white before:inline-block before:h-1.5 before:w-1.5 before:rounded-full before:bg-white ltr:before:mr-2 rtl:before:ml-2">
+                        <span className="inline-flex items-center rounded-full bg-[#1b2e4b] px-4 py-1.5 text-xs font-medium text-white">
+                          <span className="mr-2 h-1.5 w-1.5 rounded-full bg-white"></span>
                           Liste des caisses avec le plus de traités
                         </span>
                       </div>
-                      <div className="mb-5 space-y-1">
+                      <div className="mb-5 space-y-2.5">
                         {loading
                           ? Array.from({ length: 5 }).map((_, index) => (
                             <div
@@ -1707,13 +1826,16 @@ const ComponentsDashboardSales = () => {
                             (caisse: any, index: number) => (
                               <div
                                 key={index}
-                                className="flex items-center justify-between"
+                                className="flex items-center justify-between rounded-lg p-2 transition-all hover:bg-gray-50 dark:hover:bg-gray-700/30"
                               >
-                                <p className="font-semibold text-[#515365]">
+                                <p className="font-semibold text-[#515365] flex items-center">
+                                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary mr-2 text-xs">
+                                    {index + 1}
+                                  </span>
                                   Journée {caisse.numeroJourneeCaisse}
                                 </p>
                                 <p className="text-base">
-                                  <span className="font-semibold">
+                                  <span className="font-semibold text-primary">
                                     {caisse.nombreDossiersClotures}
                                   </span>
                                   <span className="text-sm font-light text-gray-500">
@@ -1738,11 +1860,16 @@ const ComponentsDashboardSales = () => {
             {/* Tableau des écarts de restitution */}
             <div className="panel h-full">
               <div className="mb-5 flex items-center justify-between dark:text-white-light">
-                <h5 className="text-lg font-semibold">Écarts de restitution</h5>
+                <h5 className="text-lg font-semibold flex items-center">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary mr-2">
+                    <IconRefresh className="h-5 w-5" />
+                  </span>
+                  Écarts de restitution
+                </h5>
               </div>
               <div className="relative">
                 <div
-                  className={`table-responsive ${showAllRestitution ? "max-h-[400px] overflow-y-auto" : ""
+                  className={`table-responsive overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 ${showAllRestitution ? "max-h-[400px] overflow-y-auto" : ""
                     }`}
                 >
                   {loading ? (
@@ -1750,23 +1877,24 @@ const ComponentsDashboardSales = () => {
                       <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
                     </div>
                   ) : !ecartData?.restitution?.length ? (
-                    <div className="flex h-40 items-center justify-center text-gray-500 dark:text-gray-400">
-                      Aucune donnée disponible
+                    <div className="flex h-40 flex-col items-center justify-center text-center text-gray-500 dark:text-gray-400">
+                      <IconBox className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
+                      <p>Aucune donnée disponible</p>
                     </div>
                   ) : (
                     <table className="w-full table-auto">
-                      <thead className="sticky top-0 bg-white dark:bg-[#1a1c2d]">
-                        <tr className="border-b border-[#e0e6ed] bg-white dark:border-[#191e3a] dark:bg-[#1a1c2d]">
-                          <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                      <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">
+                        <tr className="border-b border-[#e0e6ed] dark:border-[#191e3a]">
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
                             Direction Régionale
                           </th>
-                          <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
                             Écart A
                           </th>
-                          <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
                             Écart B
                           </th>
-                          <th className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
+                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white-light">
                             Écart A-B
                           </th>
                         </tr>
@@ -1778,14 +1906,14 @@ const ComponentsDashboardSales = () => {
                         )?.map((item: any, index: number) => (
                           <tr
                             key={index}
-                            className="border-b border-[#e0e6ed] hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]"
+                            className="border-b border-[#e0e6ed] transition-colors hover:bg-gray-50 dark:border-[#191e3a] dark:hover:bg-[#1a1c2d]"
                           >
-                            <td className="px-6 py-3 text-left text-sm text-gray-800 dark:text-white-light">
+                            <td className="px-6 py-3 text-left text-sm font-medium text-gray-800 dark:text-white-light">
                               {item.directionRegionale}
                             </td>
                             <td
                               className={`px-6 py-3 text-left text-sm ${item.montantA - item.montantB < 0
-                                ? "text-primary"
+                                ? "text-primary font-medium"
                                 : "text-gray-800"
                                 } dark:text-white-light`}
                             >

@@ -1,10 +1,10 @@
 import React from 'react';
 
-interface IconClipboardCheckProps {
+interface IconUploadProps {
     className?: string;
 }
 
-const IconClipboardCheck: React.FC<IconClipboardCheckProps> = ({ className = "" }) => {
+const IconUpload: React.FC<IconUploadProps> = ({ className = "" }) => {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -18,11 +18,11 @@ const IconClipboardCheck: React.FC<IconClipboardCheckProps> = ({ className = "" 
             strokeLinecap="round"
             strokeLinejoin="round"
         >
-            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-            <path d="M9 14l2 2 4-4"></path>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
         </svg>
     );
 };
 
-export default IconClipboardCheck;
+export default IconUpload; 
