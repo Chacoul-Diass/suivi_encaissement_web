@@ -1,30 +1,21 @@
 "use client";
 import Dropdown from "@/components/dropdown";
-import IconMenu from "@/components/icon/icon-menu";
 import { getTranslation } from "@/i18n";
 import { TRootState } from "@/store";
-import { toggleSidebar } from "@/store/themeConfigSlice";
 import { logout } from "@/store/reducers/auth/user.slice";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import IconCaretDown from "@/components/icon/icon-caret-down";
 import IconLogout from "@/components/icon/icon-logout";
-import IconMenuApps from "@/components/icon/menu/icon-menu-apps";
-import IconMenuComponents from "@/components/icon/menu/icon-menu-components";
-import IconMenuDashboard from "@/components/icon/menu/icon-menu-dashboard";
-
 import { API_AUTH_SUIVI } from "@/config/constants";
 import { handleApiError } from "@/utils/apiErrorHandler";
 import axios from "@/utils/axios";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import IconArrowDown from "../icon/icon-arrow-down";
 import IconSettings from "../icon/icon-settings";
-import IconSquareRotated from "../icon/icon-square-rotated";
 import IconUser from "../icon/icon-user";
 import { useClientSide, safeDOM } from "@/hooks/useClientSide";
 import getUserHabilitation from "@/utils/getHabilitation";
@@ -42,7 +33,6 @@ const Header = () => {
 
   const pathname = usePathname();
   const dispatch = useDispatch();
-  const { t } = getTranslation();
 
   const {
     email = "",
@@ -95,42 +85,44 @@ const Header = () => {
   const [search, setSearch] = useState(false);
 
   const handleLogout = async () => {
-    let refresh_token = localStorage.getItem("refresh_token");
+    // Récupérer le refresh token avec le nom de clé correct
+    const refreshToken = localStorage.getItem("refreshToken");
 
-    const payload = {
-      refreshToken: refresh_token,
+    // Fonction pour nettoyer la session et rediriger
+    const cleanSessionAndRedirect = () => {
+      // Supprimer le cookie d'accès
+      document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+      // Nettoyer le stockage local
+      // localStorage.clear();
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("accessToken");
+      // etc. pour chaque élément que vous voulez supprimer
+      // Mettre à jour l'état Redux
+      // dispatch(logout());
+      // Rediriger vers la page de connexion
+      window.location.href = "/login";
     };
 
+    // Si aucun refresh token n'est trouvé, simplement nettoyer et rediriger
+    if (!refreshToken) {
+      cleanSessionAndRedirect();
+      return;
+    }
+
     try {
-      const response: any = await axios.post(
-        `${API_AUTH_SUIVI}/auth/logout`,
-        payload
-      );
-
-      document.cookie =
-        "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-      localStorage.clear();
-      window.location.href = "/login";
-
-      // if (response.statusCode === 201) {
-      //   // Dispatch l'action logout du reducer
-      //   dispatch(logout());
-      //   // Supprimer le cookie
-      //   document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-      //   // Nettoyer le localStorage
-      //   localStorage.clear();
-      //   // Rediriger vers la page de login
-      //   window.location.href = "/login";
-      // }
+      // Appeler l'API de déconnexion
+      await axios.post(`${API_AUTH_SUIVI}/auth/logout`, { refreshToken });
+      cleanSessionAndRedirect();
     } catch (error: any) {
+      // Journaliser l'erreur pour le débogage
+      console.error("Erreur lors de la déconnexion:", error);
+      
+      // Afficher un message d'erreur
       const errorMessage = handleApiError(error);
       toast.error(errorMessage);
-      // En cas d'erreur, on déconnecte quand même l'utilisateur
-      dispatch(logout());
-      document.cookie =
-        "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-      localStorage.clear();
-      window.location.href = "/login";
+      
+      // Même en cas d'erreur, déconnecter l'utilisateur
+      cleanSessionAndRedirect();
     }
   };
 
