@@ -90,6 +90,7 @@ export default function EditModal({
   const [newMontantAffiche, setNewMontantAffiche] = useState<string>("");
   const [newMontantError, setNewMontantError] = useState<string>("");
   const [isValidating, setIsValidating] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (modalOpen) {
@@ -185,9 +186,13 @@ export default function EditModal({
         statutValidation: 2,
       };
 
-      handleSubmit(updatedRow);
-      setValidationModalOpen(false);
-      setIsConfirmationModalOpen(true);
+      // Après la validation, nous attendons un court instant avant de soumettre
+      // pour s'assurer que l'API a terminé toutes ses opérations
+      setTimeout(() => {
+        handleSubmit(updatedRow);
+        setValidationModalOpen(false);
+        // On laissera la modalConfirmation s'ouvrir par elle-même
+      }, 300);
     } catch (error) {
       console.error("Erreur lors de la validation du montant", error);
       // Afficher une notification d'erreur
@@ -225,40 +230,48 @@ export default function EditModal({
     setMontantModifie(true);
   };
 
-const handleConfirmSubmit = () => {
-    let finalMontant = 0;
+  const handleConfirmSubmit = () => {
+    setLoading(true);
+    try {
+      const montantVal = montantSaisi ? parseFloat(montantSaisi) : 0;
+      const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
 
-    if (montantModifie && montantSaisi) {
-      finalMontant = parseFloat(montantSaisi);
-    } else if (selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0) {
-      finalMontant = selectedRow.montantReleve;
-    } else if (montantSaisi) {
-      finalMontant = parseFloat(montantSaisi);
+      // Create updatedRow object using the current data
+      const updatedRow = {
+        ...selectedRow,
+        observationBanque,
+        rasChecked1,
+        rasChecked2,
+        images2,
+        montantReleve: montantVal,
+        dateMontantBanque,
+        ecartReleve: montantBordereau - montantVal,
+        statutValidation: 2,
+      };
+
+      // Prepare files if available - fix for the type issue
+      const files = images2 && images2.length > 0
+        ? images2.map((image) => image.file).filter((file): file is File => file !== undefined)
+        : [];
+
+      // Submit the updated data
+      handleSubmit(updatedRow);
+
+      // Close the modal
+      setIsConfirmationModalOpen(false);
+      setModalOpen(false);
+    } catch (error) {
+      console.error("Erreur lors de la confirmation :", error);
+      Toastify("error", "Une erreur est survenue lors de la validation");
+    } finally {
+      setLoading(false);
     }
-
-    const bordereau = selectedRow["Montant bordereau (B)"] || 0;
-
-    const updatedRow = {
-      ...selectedRow,
-      observationBanque,
-      rasChecked1,
-      rasChecked2,
-      images2,
-      montantReleve: finalMontant,
-      dateMontantBanque,
-      ecartReleve: bordereau - finalMontant,
-      statutValidation: 2,
-    };
-
-    handleSubmit(updatedRow);
-    setIsConfirmationModalOpen(false);
-    setModalOpen(false);
   };
 
   return (
     <>
       <div
-        className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        className={`fixed inset-0 z-50 bg-gray-600/20 backdrop-blur-sm transition-opacity duration-300 ${modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
           }`}
         onClick={handleCloseModal}
       />
@@ -449,8 +462,8 @@ const handleConfirmSubmit = () => {
                       type="text"
                       ref={montantInputRef}
                       className={`form-input w-full rounded-lg border-gray-300 py-3 pl-10 pr-4 ${selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0 && (selectedRow.isCorrect === 0 || selectedRow.isCorrect === 1)
-                          ? "bg-gray-100 text-gray-600 opacity-80 cursor-not-allowed dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
-                          : "bg-white text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        ? "bg-gray-100 text-gray-600 opacity-80 cursor-not-allowed dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
+                        : "bg-white text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                         }`}
                       placeholder="Montant en F CFA"
                       defaultValue={montantSaisi}
@@ -488,8 +501,8 @@ const handleConfirmSubmit = () => {
                 </div>
 
                 {formError && (
-                    <p className="text-sm text-red-500">{formError}</p>
-                  )}
+                  <p className="text-sm text-red-500">{formError}</p>
+                )}
               </div>
             </div>
 
@@ -658,7 +671,7 @@ const handleConfirmSubmit = () => {
 
       {/* Confirmation Modal */}
       {isConfirmationModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gray-600/20 backdrop-blur-sm">
           <div className="w-full max-w-md transform rounded-lg bg-white p-6 shadow-xl transition-all dark:bg-gray-800">
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -743,12 +756,12 @@ const handleConfirmSubmit = () => {
             </div>
           </div>
         </div>
-      )} 
+      )}
 
       {/* Modal de Validation du Montant */}
       {validationModalOpen && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-gray-600/20 backdrop-blur-sm"
           onClick={() => setValidationModalOpen(false)}
         >
           <div

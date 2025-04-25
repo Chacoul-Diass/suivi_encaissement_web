@@ -128,6 +128,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const [search, setSearch] = useState("");
     const [hideCols, setHideCols] = useState<string[]>([]);
     const [modalOpen, setModalOpen] = useState(false);
+    const [emailModalOpen, setEmailModalOpen] = useState(false);
+    const [preuvePhotoModal, setPreuvePhotoModal] = useState(false);
+    const [photoDocuments, setPhotoDocuments] = useState<DocumentType[]>([]);
+    const [rowToView, setRowToView] = useState<DataReverse | null>(null);
     const formatDateData = (dateString: string | null | undefined): string => {
       if (!dateString) return "N/A";
 
@@ -355,6 +359,37 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     console.log(loading, "loadingdata");
 
+    const refreshTableData = async () => {
+      // Réinitialiser les données
+      setRecordsData([]);
+
+      try {
+        const result = await dispatch(
+          fetchDataReleve({
+            id: statutValidation,
+            page: currentPage,
+            limit: pageSize,
+            search: search || "",
+            ...params
+          })
+        ).unwrap();
+
+        // Forcer un remontage complet
+        setForceRender(prev => prev + 1);
+
+        // Mettre à jour la liste manuellement
+        if (result && result.result) {
+          const newData = filterAndMapData(result.result, statutValidation);
+          setRecordsData(newData);
+        }
+
+        return result;
+      } catch (error) {
+        console.error("Erreur lors du rafraîchissement des données:", error);
+        throw error;
+      }
+    };
+
     const showAlertValide = async (encaissementId: number) => {
       const swalWithBootstrapButtons = Swal.mixin({
         customClass: {
@@ -387,24 +422,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Appel à la fonction Redux ou autre logique de soumission
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 swalWithBootstrapButtons.fire(
                   "Valider",
                   "Votre encaissement a été validé avec succès.",
                   "success"
                 );
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -437,8 +468,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
           cancelButtonText: "Annuler",
           reverseButtons: true,
           padding: "2em",
-          // Suppression de la section 'html' avec le textarea
-          // Suppression de 'preConfirm' car il n'y a plus de validation de champ
         })
         .then((result) => {
           if (result.isConfirmed) {
@@ -450,24 +479,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 swalWithBootstrapButtons.fire(
                   "Validé",
                   "Votre encaissement a été ramené avec succès.",
                   "success"
                 );
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -569,7 +594,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // ✅ Envoi de la requête Redux
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 setObeservationRejete(response?.observationRejete);
                 swalWithBootstrapButtons.fire(
                   "Rejeter ✅",
@@ -577,18 +602,13 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -676,24 +696,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Appel à la fonction Redux ou autre logique de soumission
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 swalWithBootstrapButtons.fire(
                   "Rejeté",
                   `Votre encaissement a été rejeté avec la raison : "${userInput}"`,
                   "success"
                 );
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -741,24 +757,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Appel à la fonction Redux ou autre logique de soumission
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 swalWithBootstrapButtons.fire(
                   "Clôturer",
                   "Votre encaissement a été clôturé avec succès.",
                   "success"
                 );
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -806,24 +818,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Appel à la fonction Redux ou autre logique de soumission
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
-              .then((response) => {
+              .then(async (response) => {
                 swalWithBootstrapButtons.fire(
                   "Valider",
                   "Votre encaissement a été validé avec succès.",
                   "success"
                 );
-                dispatch(
-                  fetchDataReleve({
-                    id: statutValidation,
-                    page: currentPage,
-                    limit: 5,
-                    search: search,
-                  })
-                );
+
+                // Utiliser la nouvelle fonction de rafraîchissement
+                await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
-                const errorMessage = handleApiError(error); // Utilisation de la fonction
+                const errorMessage = handleApiError(error);
                 toast.error(errorMessage);
               });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -873,11 +881,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const [uploadedFiles, setUploadedFiles] = useState<
       { file: File; preview: string }[]
     >([]);
-
-    const [emailModalOpen, setEmailModalOpen] = useState(false);
-    const [preuvePhotoModal, setPreuvePhotoModal] = useState(false);
-
-    const [photoDocuments, setPhotoDocuments] = useState<DocumentType[]>([]);
 
     const baseCols = [
       {
@@ -1326,22 +1329,49 @@ const ComponentsDatatablesColumnChooser: React.FC<
         payload.files = files;
       }
 
+      // Ajouter la date du montant banque si présente
+      if (updatedRow.dateMontantBanque) {
+        payload.dateMontantReleve = updatedRow.dateMontantBanque;
+      }
+
       // ✅ Envoi de la requête
       dispatch(submitEncaissementValidation(payload))
         .unwrap()
         .then(() => {
+          // Afficher un toast de succès
+          toast.success("Les modifications ont été enregistrées avec succès.");
+
+          // Réinitialiser les données avant de rafraîchir
+          setRecordsData([]);
+
+          // Rafraîchir les données
           dispatch(
             fetchDataReleve({
               id: statutValidation,
               page: currentPage,
-              limit: 5,
-              search: search,
+              limit: pageSize,
+              search: search || "",
+              ...params
             })
-          );
-          setModalOpen(false);
+          ).unwrap()
+            .then((result) => {
+              // Forcer un remontage complet
+              setForceRender(prev => prev + 1);
+
+              // Mettre à jour la liste manuellement
+              if (result && result.result) {
+                const newData = filterAndMapData(result.result, statutValidation);
+                setRecordsData(newData);
+              }
+            })
+            .catch((error) => {
+              console.error("Erreur lors du rafraîchissement des données:", error);
+            });
+
+          // Le modal sera fermé par le composant EditModal
         })
         .catch((error) => {
-          const errorMessage = handleApiError(error); // Utilisation de la fonction
+          const errorMessage = handleApiError(error);
           toast.error(errorMessage);
         });
     };
@@ -1366,17 +1396,32 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     const handleRefresh = async () => {
       setIsRefreshing(true);
+      // Réinitialiser le tableau avant de recharger les données
+      setRecordsData([]);
       try {
-        await dispatch(
+        const result = await dispatch(
           fetchDataReleve({
             id: statutValidation,
             page: currentPage,
-            limit: 5,
-            search: search,
+            limit: pageSize,
+            search: search || "",
+            ...params
           })
-        );
+        ).unwrap();
+
+        // Forcer un remontage complet du composant
+        setForceRender(prev => prev + 1);
+
+        // Mettre à jour la liste manuellement pour s'assurer qu'elle est à jour
+        if (result && result.result) {
+          const newData = filterAndMapData(result.result, statutValidation);
+          setRecordsData(newData);
+        }
+
+        toast.success("Données actualisées avec succès");
       } catch (error) {
         console.error("Erreur lors de l'actualisation :", error);
+        toast.error("Erreur lors de l'actualisation des données");
       } finally {
         setIsRefreshing(false);
       }
@@ -1398,11 +1443,14 @@ const ComponentsDatatablesColumnChooser: React.FC<
         fetchDataReleve({
           id: statutValidation,
           page: currentPage || 1,
-          limit: 5,
+          limit: pageSize,
           search: search || "",
           ...params,
         })
-      );
+      ).then(() => {
+        // Forcer la mise à jour du tableau
+        setForceRender(prev => prev + 1);
+      });
     };
 
     const [montantBanque, setMontantBanque] = useState("");
@@ -1414,6 +1462,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
     };
 
     console.log(paginate, "paginate");
+
+    // Ajouter un état pour forcer le remontage du composant
+    const [forceRender, setForceRender] = useState(0);
 
     return (
       <>
@@ -1553,6 +1604,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   </div>
                 )}
                 <DataTable<DataReverse>
+                  key={`datatable-${forceRender}`}
                   style={{
                     position: "relative",
                     width: "100%",
@@ -1720,28 +1772,28 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     statutValidation={statutValidation}
                     observationCaisse={observationCaisse}
                     setObservationCaisse={setObservationCaisse}
+                    observationBanque={observationBanque}
+                    setObservationBanque={setObservationBanque}
                     handleAmountChange={handleAmountChange}
                     showAlertReclamation={showAlertReclamation}
                     showAlertCloture={showAlertCloture}
                     showAlertDRDFC={showAlertDRDFC}
                     rasChecked2={rasChecked2}
                     handleRasChecked2Change={handleRasChecked2Change}
-                    observationBanque={observationBanque}
-                    setObservationBanque={setObservationBanque}
                     showAlertRejete={showAlertRejete}
                     showAlertValide={showAlertValide}
                     showAlertRamener={showAlertRamener}
-                    handleSubmit={handleSubmit}
                     today={today}
                     setPreuvePhotoModal={setPreuvePhotoModal}
-                    observationRejete={observationRejete}
-                    handleSendEmail={handleSubmit}
+                    handleSendEmail={handleSendEmail}
                     handleMultipleFileUpload={handleMultipleFileUpload}
                     uploadedFiles={uploadedFiles}
                     removeFile={removeFile}
                     params={params}
                     setParams={setParams}
+                    observationRejete={observationRejete}
                     handleOpenConfirmationModal={handleOpenConfirmationModal}
+                    handleSubmit={handleSubmit}
                     setPhotoDocuments={setPhotoDocuments}
                     setImages2={setImages2}
                     images2={images2}
