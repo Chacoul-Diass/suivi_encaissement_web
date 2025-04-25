@@ -373,12 +373,12 @@ const ComponentsDatatablesColumnChooser: React.FC<
             page: currentPage,
             limit: pageSize,
             search: search || "",
-            ...params,
+            ...params
           })
         ).unwrap();
 
         // Forcer un remontage complet
-        setForceRender((prev) => prev + 1);
+        setForceRender(prev => prev + 1);
 
         // Mettre à jour la liste manuellement
         if (result && result.result) {
@@ -661,7 +661,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
+                // Utiliser la nouvelle fonction de rafraîchissement
                 await refreshTableData();
+
                 setModalOpen(false);
               })
               .catch((error) => {
@@ -1336,13 +1338,12 @@ const ComponentsDatatablesColumnChooser: React.FC<
               page: currentPage,
               limit: pageSize,
               search: search || "",
-              ...params,
+              ...params
             })
-          )
-            .unwrap()
+          ).unwrap()
             .then((result) => {
               // Forcer un remontage complet
-              setForceRender((prev) => prev + 1);
+              setForceRender(prev => prev + 1);
 
               // Mettre à jour la liste manuellement
               if (result && result.result) {
@@ -1351,10 +1352,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
               }
             })
             .catch((error) => {
-              console.error(
-                "Erreur lors du rafraîchissement des données:",
-                error
-              );
+              console.error("Erreur lors du rafraîchissement des données:", error);
             });
 
           // Le modal sera fermé par le composant EditModal
@@ -1394,18 +1392,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
             page: currentPage,
             limit: pageSize,
             search: search || "",
-            ...params,
+            ...params
           })
         ).unwrap();
 
         // Forcer un remontage complet du composant
-        setForceRender((prev) => prev + 1);
+        setForceRender(prev => prev + 1);
 
         // Mettre à jour la liste manuellement pour s'assurer qu'elle est à jour
         if (result && result.result) {
           const newData = filterAndMapData(result.result, statutValidation);
           setRecordsData(newData);
         }
+
+        toast.success("Données actualisées avec succès");
       } catch (error) {
         console.error("Erreur lors de l'actualisation :", error);
         toast.error("Erreur lors de l'actualisation des données");
@@ -1436,7 +1436,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         })
       ).then(() => {
         // Forcer la mise à jour du tableau
-        setForceRender((prev) => prev + 1);
+        setForceRender(prev => prev + 1);
       });
     };
 
