@@ -23,7 +23,6 @@ import dayjs from "dayjs";
 
 interface GlobalFiltreProps {
   drData: any;
-  showHideColumns: any;
   onApplyFilters: (params: any) => void;
   statutValidation: any;
 }
