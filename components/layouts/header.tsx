@@ -77,13 +77,6 @@ const Header = () => {
     }
   }, [pathname, isClient]);
 
-  const isRtl =
-    useSelector((state: TRootState) => state.themeConfig.rtlClass) === "rtl";
-
-  const themeConfig = useSelector((state: TRootState) => state.themeConfig);
-
-  const [search, setSearch] = useState(false);
-
   const handleLogout = async () => {
     // Récupérer le refresh token avec le nom de clé correct
     const refreshToken = localStorage.getItem("refreshToken");
@@ -96,6 +89,7 @@ const Header = () => {
       // localStorage.clear();
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("hasCheckedAlerts");
       // etc. pour chaque élément que vous voulez supprimer
       // Mettre à jour l'état Redux
       // dispatch(logout());
