@@ -258,9 +258,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     const totalUnvalidatedRecords = unvalidatedRecords.length;
     const encaissementText = `${statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
-        statutValidation === EStatutEncaissement.RECLAMATION_TRAITES
-        ? ` Réclamation${totalUnvalidatedRecords > 1 ? "s " : " "}`
-        : ` Encaissement${totalUnvalidatedRecords > 1 ? "s " : " "}`
+      statutValidation === EStatutEncaissement.RECLAMATION_TRAITES
+      ? ` Réclamation${totalUnvalidatedRecords > 1 ? "s " : " "}`
+      : ` Encaissement${totalUnvalidatedRecords > 1 ? "s " : " "}`
       }`;
 
     const [currentPage, setCurrentPage] = useState(paginate.currentPage || 1);
@@ -527,7 +527,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         case EStatutEncaissement.TRAITE:
           payloadStatutValidation = EStatutEncaissement.REJETE;
           break;
-        case EStatutEncaissement.DR_DFC:
+        case EStatutEncaissement.DFC:
           payloadStatutValidation = EStatutEncaissement.REJETE;
           break;
         case EStatutEncaissement.RECLAMATION_TRAITES:
@@ -627,88 +627,41 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const showAlertReclamation = async (encaissementId: number) => {
       const swalWithBootstrapButtons = Swal.mixin({
         customClass: {
-          confirmButton:
-            "btn btn-primary disabled:opacity-50 disabled:pointer-events-none",
+          confirmButton: "btn btn-primary",
           cancelButton: "btn btn-dark ltr:mr-3 rtl:ml-3",
           popup: "sweet-alerts",
         },
         buttonsStyling: false,
       });
 
-      let userInput = ""; // Variable pour stocker l'observation saisie
-
       await swalWithBootstrapButtons
         .fire({
-          title: "Êtes-vous sûr de vouloir rejeter cet encaissement ?",
-          text: "Cette action rejetera l'encaissement.",
+          title: "Êtes-vous sûr de vouloir passer cet encaissement en réclamation ?",
+          text: "Cette action passera l'encaissement en réclamation.",
           icon: "warning",
           showCancelButton: true,
           confirmButtonText: "Confirmer",
           cancelButtonText: "Annuler",
           reverseButtons: true,
-          html: `
-          <div>
-            <textarea
-              id="reason-textarea"
-              class="form-control w-full border rounded-md p-2 mt-4"
-              rows="4"
-              placeholder="Veuillez indiquer la raison ici..."
-              style="width: 100%; box-sizing: border-box;"
-            ></textarea>
-          </div>
-        `,
-          preConfirm: () => {
-            const textareaValue = (
-              document.getElementById("reason-textarea") as HTMLTextAreaElement
-            )?.value.trim();
-            if (!textareaValue) {
-              Swal.showValidationMessage("Le champ de texte est requis !");
-              return false; // Empêche la confirmation tant que le champ est vide
-            }
-            userInput = textareaValue; // Stocke l'observation saisie
-            return true;
-          },
-          didOpen: () => {
-            const confirmButton = Swal.getConfirmButton();
-            const textarea = document.getElementById(
-              "reason-textarea"
-            ) as HTMLTextAreaElement;
-
-            // Désactive le bouton de confirmation initialement
-            confirmButton?.setAttribute("disabled", "true");
-
-            // Écoute les événements d'entrée pour activer/désactiver le bouton
-            textarea?.addEventListener("input", () => {
-              if (textarea.value.trim()) {
-                confirmButton?.removeAttribute("disabled");
-              } else {
-                confirmButton?.setAttribute("disabled", "true");
-              }
-            });
-          },
+          padding: "2em",
         })
         .then((result) => {
-          if (result.isConfirmed && userInput) {
-            // Payload à envoyer
+          if (result.isConfirmed) {
             const payload = {
-              encaissementId: selectedRow?.id, // ID de l'encaissement
-              observationReclamation: userInput, // Observation saisie dans le textarea
-              statutValidation: EStatutEncaissement.REJETE, // Statut Rejeté
+              encaissementId,
+              statutValidation: EStatutEncaissement.RECLAMATION_REVERSES,
             };
 
-            // Appel à la fonction Redux ou autre logique de soumission
             dispatch(submitEncaissementValidation(payload))
               .unwrap()
               .then(async (response) => {
                 swalWithBootstrapButtons.fire(
-                  "Rejeté",
-                  `Votre encaissement a été rejeté avec la raison : "${userInput}"`,
+                  "Réclamation",
+                  "Votre encaissement a été passé en réclamation avec succès.",
                   "success"
                 );
 
-                // Utiliser la nouvelle fonction de rafraîchissement
                 await refreshTableData();
-
                 setModalOpen(false);
               })
               .catch((error) => {
@@ -815,7 +768,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Payload à soumettre sans 'observationReclamation'
             const payload = {
               encaissementId, // ID de l'encaissement
-              statutValidation: EStatutEncaissement.DR_DFC, // Statut clôturé
+              statutValidation: EStatutEncaissement.DFC, // Statut clôturé
             };
 
             // Appel à la fonction Redux ou autre logique de soumission
@@ -1079,47 +1032,65 @@ const ComponentsDatatablesColumnChooser: React.FC<
             statutValidation === 0 &&
             hasPermission("ENCAISSEMENTS CHARGES", "MODIFIER");
 
+          const seeEmailIcon =
+            (statutValidation === 4 &&
+              hasPermission("LITIGES", "MODIFIER")) ||
+            statutValidation === 6;
+
           return (
             <div className="flex items-center justify-center gap-3">
-              {canEditComptable ? (
-                <div className="flex items-center gap-3">
+              {canEditComptable && (
+                <>
                   <Tippy content="Modifier">
                     <button
                       type="button"
                       className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                      id="tuto-edit-btn"
                       onClick={() => handleOpenModal(row)}
                     >
                       <IconPencil className="h-5 w-5 stroke-[1.5]" />
                     </button>
                   </Tippy>
-                  <Tippy content="Envoyer un mail">
+                  {/* Reclamation action  */}
+                  <Tippy content="Passer en réclamation">
                     <button
                       type="button"
-                      className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                      id="tuto-mail-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedRow(row); // Sauvegarder la ligne sélectionnée
-                        setEmailModalOpen(true);
-                      }}
+                      className="flex items-center justify-center rounded-lg p-2 text-warning hover:text-warning"
+                      onClick={() => showAlertReclamation(row.id)}
                     >
-                      <IconMail className="h-5 w-5 stroke-[1.5]" />
+                      <IconAlertTriangle className="h-5 w-5 stroke-[1.5]" />
                     </button>
                   </Tippy>
-                </div>
-              ) : (
-                statutValidation !== 0 && (
-                  <Tippy content="Voir">
-                    <button
-                      type="button"
-                      className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                      onClick={() => handleOpenModal(row)}
-                    >
-                      <IconEye className="h-5 w-5 stroke-[1.5]" />
-                    </button>
-                  </Tippy>
-                )
+                </>
+              )}
+
+              {/* Icône Voir si l'utilisateur ne peut pas modifier et statutValidation !== 0 */}
+              {!canEditComptable && statutValidation !== 0 && (
+                <Tippy content="Voir">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                    onClick={() => handleOpenModal(row)}
+                  >
+                    <IconEye className="h-5 w-5 stroke-[1.5]" />
+                  </button>
+                </Tippy>
+              )}
+
+              {/* Icône Envoyer un mail si statutValidation === 4 */}
+              {seeEmailIcon && (
+                <Tippy content="Envoyer un mail">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedRow(row);
+                      setEmailModalOpen(true);
+                    }}
+                  >
+                    <IconMail className="h-5 w-5 stroke-[1.5]" />
+                  </button>
+                </Tippy>
               )}
             </div>
           );
@@ -1435,8 +1406,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
           const newData = filterAndMapData(result.result, statutValidation);
           setRecordsData(newData);
         }
-
-        toast.success("Données actualisées avec succès");
       } catch (error) {
         console.error("Erreur lors de l'actualisation :", error);
         toast.error("Erreur lors de l'actualisation des données");
@@ -1479,10 +1448,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
       setMontantBanque(formattedValue);
     };
 
-
-
-    // Ajouter un état pour forcer le remontage du composant
-    const [forceRender, setForceRender] = useState(0);
+    console.log(paginate, "paginate");
 
     // Ajouter un état pour forcer le remontage du composant
     const [forceRender, setForceRender] = useState(0);
@@ -1609,22 +1575,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
             <div className="relative" id="tuto-datatable">
               <div className="overflow-x-auto">
-                {loading && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-[#1b2e4b]/70">
-                    <div className="flex flex-col items-center justify-center p-4">
-                      <span className="mb-2 text-primary">
-                        Chargement en cours
-                      </span>
-                      <div className="flex items-center justify-center space-x-2">
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 <DataTable<DataReverse>
                   key={`datatable-${forceRender}`}
                   style={{
@@ -1665,15 +1615,27 @@ const ComponentsDatatablesColumnChooser: React.FC<
                           <div className="flex items-center justify-center gap-3">
                             {/* Icône Modifier si l'utilisateur peut modifier */}
                             {canEditComptable && (
-                              <Tippy content="Modifier">
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                                  onClick={() => handleOpenModal(row)}
-                                >
-                                  <IconPencil className="h-5 w-5 stroke-[1.5]" />
-                                </button>
-                              </Tippy>
+                              <>
+                                <Tippy content="Modifier">
+                                  <button
+                                    type="button"
+                                    className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
+                                    onClick={() => handleOpenModal(row)}
+                                  >
+                                    <IconPencil className="h-5 w-5 stroke-[1.5]" />
+                                  </button>
+                                </Tippy>
+                                {/* Reclamation action  */}
+                                <Tippy content="Passer en réclamation">
+                                  <button
+                                    type="button"
+                                    className="flex items-center justify-center rounded-lg p-2 text-warning hover:text-warning"
+                                    onClick={() => showAlertReclamation(row.id)}
+                                  >
+                                    <IconAlertTriangle className="h-5 w-5 stroke-[1.5]" />
+                                  </button>
+                                </Tippy>
+                              </>
                             )}
 
                             {/* Icône Voir si l'utilisateur ne peut pas modifier et statutValidation !== 0 */}
