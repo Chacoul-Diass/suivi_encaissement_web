@@ -802,7 +802,10 @@ const ComponentsDashboardSales = () => {
   const [loading, setLoading] = useState(false);
   const [alertModalOpen, setAlertModalOpen] = useState(false);
   const [alertsData, setAlertsData] = useState<AlertItem[]>([]);
-  const [hasCheckedAlerts, setHasCheckedAlerts] = useState(false);
+  const [hasCheckedAlerts, setHasCheckedAlerts] = useState(() => {
+    // Vérifier si les alertes ont déjà été vérifiées dans le localStorage
+    return localStorage.getItem('hasCheckedAlerts') === 'true';
+  });
   const [alertsLoading, setAlertsLoading] = useState(false);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo | null>(null);
   const [alertPage, setAlertPage] = useState(1);
@@ -899,9 +902,12 @@ const ComponentsDashboardSales = () => {
             setAlertModalOpen(true);
           }
           setHasCheckedAlerts(true);
+          // Sauvegarder l'état dans le localStorage
+          localStorage.setItem('hasCheckedAlerts', 'true');
         } catch (error) {
           console.error("Erreur lors de la vérification des alertes:", error);
           setHasCheckedAlerts(true);
+          localStorage.setItem('hasCheckedAlerts', 'true');
         }
       }
     };

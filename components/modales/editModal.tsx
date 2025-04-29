@@ -12,8 +12,7 @@ import IconPaperclip from "../icon/icon-paperclip";
 import IconPackage from "../icon/icon-package";
 import IconFileText from "../icon/icon-file-text";
 import ImageUploading, { ImageListType } from "react-images-uploading";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, Autoplay } from "swiper/modules";
+
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -21,6 +20,7 @@ import axios from "axios";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import axiosInstance from "@/utils/axios";
 import { Toastify } from "@/utils/toast";
+import { toast } from "react-toastify";
 
 interface EditModalProps {
   setModalOpen: (open: boolean) => void;
@@ -150,6 +150,9 @@ export default function EditModal({
       setFormError(
         "Le montant banque est obligatoire et doit être supérieur à 0"
       );
+      toast.error(
+        `Le montant banque est obligatoire et doit être supérieur à 0`
+      );
       return;
     }
 
@@ -169,7 +172,9 @@ export default function EditModal({
 
       setIsValidating(true);
       // Appel API pour valider le montant
-      const response: any = await axiosInstance.patch(`${API_AUTH_SUIVI}/encaissements/validate-amount/${selectedRow.id}`);
+      const response: any = await axiosInstance.patch(
+        `${API_AUTH_SUIVI}/encaissements/validate-amount/${selectedRow.id}`
+      );
 
       const montantReleve = selectedRow.montantReleve || 0;
       const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
@@ -204,7 +209,9 @@ export default function EditModal({
     }
   };
 
-  const handleNewMontantInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNewMontantInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const inputValue = e.target.value.replace(/[^\d]/g, ""); // Garde uniquement les chiffres
     if (inputValue === "") {
       setNewMontantSaisi("");
@@ -220,7 +227,9 @@ export default function EditModal({
 
   const handleConfirmNewMontant = () => {
     if (!newMontantSaisi || parseFloat(newMontantSaisi) <= 0) {
-      setNewMontantError("Le montant est obligatoire et doit être supérieur à 0");
+      setNewMontantError(
+        "Le montant est obligatoire et doit être supérieur à 0"
+      );
       return;
     }
 
@@ -250,9 +259,12 @@ export default function EditModal({
       };
 
       // Prepare files if available - fix for the type issue
-      const files = images2 && images2.length > 0
-        ? images2.map((image) => image.file).filter((file): file is File => file !== undefined)
-        : [];
+      const files =
+        images2 && images2.length > 0
+          ? images2
+              .map((image) => image.file)
+              .filter((file): file is File => file !== undefined)
+          : [];
 
       // Submit the updated data
       handleSubmit(updatedRow);
@@ -271,13 +283,15 @@ export default function EditModal({
   return (
     <>
       <div
-        className={`fixed inset-0 z-50 bg-gray-600/20 backdrop-blur-sm transition-opacity duration-300 ${modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
+        className={`fixed inset-0 z-50 bg-gray-600/20 backdrop-blur-sm transition-opacity duration-300 ${
+          modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
         onClick={handleCloseModal}
       />
       <div
-        className={`fixed bottom-0 right-0 top-0 z-[51] w-full max-w-[600px] transform bg-white shadow-xl transition-transform duration-300 dark:bg-gray-800 ${modalOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+        className={`fixed bottom-0 right-0 top-0 z-[51] w-full max-w-[600px] transform bg-white shadow-xl transition-transform duration-300 dark:bg-gray-800 ${
+          modalOpen ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         <form onSubmit={handleFormSubmit} className="flex h-full flex-col">
           {/* Header */}
@@ -379,20 +393,21 @@ export default function EditModal({
                 </div>
                 <div>
                   <p
-                    className={`text-lg font-semibold ${selectedRow["Montant caisse (A)"] -
-                      selectedRow["Montant bordereau (B)"] <
+                    className={`text-lg font-semibold ${
+                      selectedRow["Montant caisse (A)"] -
+                        selectedRow["Montant bordereau (B)"] <
                       0
-                      ? "text-red-500"
-                      : selectedRow["Montant caisse (A)"] -
-                        selectedRow["Montant bordereau (B)"] >
-                        0
+                        ? "text-red-500"
+                        : selectedRow["Montant caisse (A)"] -
+                            selectedRow["Montant bordereau (B)"] >
+                          0
                         ? "text-green-500"
                         : "text-gray-900 dark:text-white"
-                      }`}
+                    }`}
                   >
                     {formatNumber(
                       selectedRow["Montant caisse (A)"] -
-                      selectedRow["Montant bordereau (B)"]
+                        selectedRow["Montant bordereau (B)"]
                     )}{" "}
                     F CFA
                   </p>
@@ -431,62 +446,85 @@ export default function EditModal({
                       Montant Banque
                     </h3>
                     <p className="mt-1 text-xs text-gray-500">
-                      {selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0
+                      {selectedRow.montantReleve !== undefined &&
+                      selectedRow.montantReleve > 0
                         ? "Un montant est déjà saisi, vous pouvez le valider ou le modifier"
                         : "Veuillez saisir le montant du relevé bancaire"}
                     </p>
                   </div>
 
-                  {selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0 && selectedRow.isCorrect === 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setValidationModalOpen(true)}
-                      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                    >
-                      Valider ce montant
-                    </button>
-                  )}
+                  {selectedRow.montantReleve !== undefined &&
+                    selectedRow.montantReleve > 0 &&
+                    selectedRow.isCorrect === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setValidationModalOpen(true)}
+                        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      >
+                        Valider ce montant
+                      </button>
+                    )}
 
-                  {selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0 && selectedRow.isCorrect === 1 && (
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-                      <svg className="mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
-                        <circle cx="4" cy="4" r="3" />
-                      </svg>
-                      Montant validé
-                    </span>
-                  )}
+                  {selectedRow.montantReleve !== undefined &&
+                    selectedRow.montantReleve > 0 &&
+                    selectedRow.isCorrect === 1 && (
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
+                        <svg
+                          className="mr-1.5 h-2 w-2 text-green-400"
+                          fill="currentColor"
+                          viewBox="0 0 8 8"
+                        >
+                          <circle cx="4" cy="4" r="3" />
+                        </svg>
+                        Montant validé
+                      </span>
+                    )}
                 </div>
                 <div className="relative">
                   <div className="flex">
                     <input
                       type="text"
                       ref={montantInputRef}
-                      className={`form-input w-full rounded-lg border-gray-300 py-3 pl-10 pr-4 ${selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0 && (selectedRow.isCorrect === 0 || selectedRow.isCorrect === 1)
-                        ? "bg-gray-100 text-gray-600 opacity-80 cursor-not-allowed dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
-                        : "bg-white text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                        }`}
+                      className={`form-input w-full rounded-lg border-gray-300 py-3 pl-10 pr-4 ${
+                        selectedRow.montantReleve !== undefined &&
+                        selectedRow.montantReleve > 0 &&
+                        (selectedRow.isCorrect === 0 ||
+                          selectedRow.isCorrect === 1)
+                          ? "cursor-not-allowed bg-gray-100 text-gray-600 opacity-80 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
+                          : "bg-white text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      }`}
                       placeholder="Montant en F CFA"
                       defaultValue={montantSaisi}
                       onChange={handleMontantInputChange}
                       onBlur={handleMontantBlur}
-                      disabled={selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0 && (selectedRow.isCorrect === 0 || selectedRow.isCorrect === 1)}
+                      disabled={
+                        selectedRow.montantReleve !== undefined &&
+                        selectedRow.montantReleve > 0 &&
+                        (selectedRow.isCorrect === 0 ||
+                          selectedRow.isCorrect === 1)
+                      }
                     />
                     <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
                       <IconCashBanknotes className="h-5 w-5 text-gray-400" />
                     </div>
-                    {selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0 && (selectedRow.isCorrect === 0 || selectedRow.isCorrect === 1) && (
-                      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-                        <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded dark:bg-gray-600 dark:text-gray-300">
-                          Non modifiable
-                        </span>
-                      </div>
-                    )}
+                    {selectedRow.montantReleve !== undefined &&
+                      selectedRow.montantReleve > 0 &&
+                      (selectedRow.isCorrect === 0 ||
+                        selectedRow.isCorrect === 1) && (
+                        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                          <span className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-500 dark:bg-gray-600 dark:text-gray-300">
+                            Non modifiable
+                          </span>
+                        </div>
+                      )}
                   </div>
-
                 </div>
                 {/* Date du montant banque */}
                 <div className="mt-3">
-                  <label htmlFor="dateMontantBanque" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label
+                    htmlFor="dateMontantBanque"
+                    className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
                     Date du relevé
                   </label>
                   <div className="relative">
@@ -545,8 +583,9 @@ export default function EditModal({
                     <button
                       type="button"
                       onClick={onImageUpload}
-                      className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-primary dark:border-gray-600 dark:hover:border-primary ${isDragging ? "border-primary" : ""
-                        }`}
+                      className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-primary dark:border-gray-600 dark:hover:border-primary ${
+                        isDragging ? "border-primary" : ""
+                      }`}
                       {...dragProps}
                     >
                       <IconPaperclip className="h-5 w-5 text-gray-400" />
@@ -613,20 +652,21 @@ export default function EditModal({
                 </div>
                 <div className="">
                   <p
-                    className={`text-lg font-semibold ${selectedRow["Montant bordereau (B)"] -
-                      (montantSaisi ? parseFloat(montantSaisi) : 0) <
+                    className={`text-lg font-semibold ${
+                      selectedRow["Montant bordereau (B)"] -
+                        (montantSaisi ? parseFloat(montantSaisi) : 0) <
                       0
-                      ? "text-red-500"
-                      : selectedRow["Montant bordereau (B)"] -
-                        (montantSaisi ? parseFloat(montantSaisi) : 0) >
-                        0
+                        ? "text-red-500"
+                        : selectedRow["Montant bordereau (B)"] -
+                            (montantSaisi ? parseFloat(montantSaisi) : 0) >
+                          0
                         ? "text-green-500"
                         : "text-gray-900 dark:text-white"
-                      }`}
+                    }`}
                   >
                     {formatNumber(
                       selectedRow["Montant bordereau (B)"] -
-                      (montantSaisi ? parseFloat(montantSaisi) : 0)
+                        (montantSaisi ? parseFloat(montantSaisi) : 0)
                     )}{" "}
                     F CFA
                   </p>
@@ -686,8 +726,14 @@ export default function EditModal({
                 </p>
 
                 <div className="mt-3">
-                  <label htmlFor="confirmationDate" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300 text-left">
-                    Date du relevé {!dateMontantBanque && <span className="text-red-500">*</span>}
+                  <label
+                    htmlFor="confirmationDate"
+                    className="mb-1 block text-left text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Date du relevé{" "}
+                    {!dateMontantBanque && (
+                      <span className="text-red-500">*</span>
+                    )}
                   </label>
                   <div className="relative">
                     <input
@@ -699,7 +745,9 @@ export default function EditModal({
                     />
                   </div>
                   {!dateMontantBanque && (
-                    <p className="mt-1 text-xs text-red-500 text-left">Ce champ est obligatoire</p>
+                    <p className="mt-1 text-left text-xs text-red-500">
+                      Ce champ est obligatoire
+                    </p>
                   )}
                 </div>
 
@@ -713,20 +761,21 @@ export default function EditModal({
                     Écart 2 (Bordereau - Relevé) :
                   </p>
                   <p
-                    className={`text-lg font-semibold ${selectedRow["Montant bordereau (B)"] -
-                      parseFloat(montantSaisi) <
+                    className={`text-lg font-semibold ${
+                      selectedRow["Montant bordereau (B)"] -
+                        parseFloat(montantSaisi) <
                       0
-                      ? "text-red-500"
-                      : selectedRow["Montant bordereau (B)"] -
-                        parseFloat(montantSaisi) >
-                        0
+                        ? "text-red-500"
+                        : selectedRow["Montant bordereau (B)"] -
+                            parseFloat(montantSaisi) >
+                          0
                         ? "text-green-500"
                         : "text-gray-900"
-                      }`}
+                    }`}
                   >
                     {formatNumber(
                       selectedRow["Montant bordereau (B)"] -
-                      parseFloat(montantSaisi)
+                        parseFloat(montantSaisi)
                     )}{" "}
                     F CFA
                   </p>
@@ -774,8 +823,17 @@ export default function EditModal({
                 className="absolute right-0 top-0 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
                 aria-label="Fermer"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -792,8 +850,10 @@ export default function EditModal({
 
                 <div className="mt-6 flex flex-col gap-4">
                   {/* Option 1: Valider le montant existant */}
-                  <div className="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
-                    <h4 className="font-medium text-gray-900 dark:text-white">Valider le montant existant</h4>
+                  <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                      Valider le montant existant
+                    </h4>
                     <button
                       type="button"
                       className="mt-3 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:bg-gray-400"
@@ -802,9 +862,24 @@ export default function EditModal({
                     >
                       {isValidating ? (
                         <div className="flex items-center justify-center">
-                          <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg
+                            className="mr-2 h-4 w-4 animate-spin"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                              fill="none"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
                           </svg>
                           Validation...
                         </div>
@@ -815,8 +890,10 @@ export default function EditModal({
                   </div>
 
                   {/* Option 2: Saisir un nouveau montant */}
-                  <div className="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
-                    <h4 className="font-medium text-gray-900 dark:text-white">Saisir un nouveau montant</h4>
+                  <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                      Saisir un nouveau montant
+                    </h4>
                     <div className="relative mt-3">
                       <div className="flex">
                         <input
@@ -832,7 +909,9 @@ export default function EditModal({
                         </div>
                       </div>
                       {newMontantError && (
-                        <p className="mt-2 text-sm text-red-500">{newMontantError}</p>
+                        <p className="mt-2 text-sm text-red-500">
+                          {newMontantError}
+                        </p>
                       )}
                     </div>
                     <button
@@ -842,19 +921,32 @@ export default function EditModal({
                       disabled={
                         !newMontantAffiche ||
                         newMontantError !== "" ||
-                        parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) <= 0 ||
-                        parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) === selectedRow.montantReleve
+                        parseFloat(
+                          newMontantAffiche.replace(/\s/g, "").replace(",", ".")
+                        ) <= 0 ||
+                        parseFloat(
+                          newMontantAffiche.replace(/\s/g, "").replace(",", ".")
+                        ) === selectedRow.montantReleve
                       }
                     >
                       Confirmer ce nouveau montant
                     </button>
-                    {(newMontantAffiche &&
-                      parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) === selectedRow.montantReleve) && (
-                        <p className="mt-2 text-sm text-red-500">Le nouveau montant ne peut pas être identique à l'ancien</p>
+                    {newMontantAffiche &&
+                      parseFloat(
+                        newMontantAffiche.replace(/\s/g, "").replace(",", ".")
+                      ) === selectedRow.montantReleve && (
+                        <p className="mt-2 text-sm text-red-500">
+                          Le nouveau montant ne peut pas être identique à
+                          l'ancien
+                        </p>
                       )}
-                    {(newMontantAffiche &&
-                      parseFloat(newMontantAffiche.replace(/\s/g, "").replace(",", ".")) <= 0) && (
-                        <p className="mt-2 text-sm text-red-500">Le montant doit être supérieur à 0</p>
+                    {newMontantAffiche &&
+                      parseFloat(
+                        newMontantAffiche.replace(/\s/g, "").replace(",", ".")
+                      ) <= 0 && (
+                        <p className="mt-2 text-sm text-red-500">
+                          Le montant doit être supérieur à 0
+                        </p>
                       )}
                   </div>
                 </div>
