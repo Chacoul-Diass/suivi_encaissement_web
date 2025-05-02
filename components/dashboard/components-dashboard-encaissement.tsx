@@ -44,6 +44,7 @@ import IconUpload from "../icon/icon-upload";
 import IconCheckCircle from "../icon/icon-check-circle";
 import IconShield from "../icon/icon-shield";
 import IconWarning from "../icon/icon-warning";
+import * as XLSX from "xlsx"; // Importer la bibliothèque XLSX pour l'exportation Excel
 
 // Interface pour la modal de confirmation
 interface ConfirmModalProps {
@@ -329,7 +330,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
     }
   };
 
-  // Fonction pour exporter en Excel (utilise le blob CSV avec extension .xlsx)
+  // Fonction pour exporter en Excel (utilise la bibliothèque xlsx directement)
   const exportToExcel = async () => {
     try {
       // Afficher un indicateur de chargement via le toast
@@ -348,7 +349,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
       const allAlerts = response?.data?.result || [];
 
       // Vérifier si le nombre de lignes dépasse 1000
-      if (allAlerts.length > 1000) {
+      if (allAlerts.length > 1048576) {
         // Informer le parent pour afficher la modal de confirmation
         onShowConfirmModal && onShowConfirmModal(
           "Attention",
@@ -369,48 +370,30 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
   // Fonction pour traiter l'export Excel une fois confirmé
   const processExcelExport = (allAlerts: any[]) => {
     try {
-      // En-têtes Excel
-      const headers = [
-        "Direction Régionale",
-        "Code Exploitation",
-        "Date Encaissement",
-        "Banque",
-        "Produit",
-        "Numéro Bordereau",
-        "Montant Caisse",
-        "Montant Bordereau",
-        "Écart"
-      ];
+      // Préparer les données pour Excel
+      const data = allAlerts.map(alert => ({
+        "Direction Régionale": alert.directionRegionale || "",
+        "Code Exploitation": alert.codeExpl || "",
+        "Date Encaissement": alert.dateEncaissement || "",
+        "Banque": alert.banque || "",
+        "Produit": alert.produit || "",
+        "Numéro Bordereau": alert.numeroBordereau || "",
+        "Montant Caisse": alert.montantRestitutionCaisse,
+        "Montant Bordereau": alert.montantBordereauBanque,
+        "Écart": alert.ecartCaisseBanque
+      }));
 
-      // Formater les données
-      const excelData = allAlerts.map((alert: AlertItem) => [
-        alert.directionRegionale || "",
-        alert.codeExpl || "",
-        alert.dateEncaissement || "",
-        alert.banque || "",
-        alert.produit || "",
-        alert.numeroBordereau || "",
-        alert.montantRestitutionCaisse.toString(),
-        alert.montantBordereauBanque.toString(),
-        alert.ecartCaisseBanque.toString()
-      ]);
-
-      // Combiner les en-têtes et les données
-      const csvContent = [
-        headers.join("\t"),
-        ...excelData.map((row: string[]) => row.join("\t"))
-      ].join("\n");
-
-      // Créer un blob et un lien de téléchargement
-      const blob = new Blob([csvContent], { type: "application/vnd.ms-excel" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
+      // Générer un fichier Excel en utilisant la bibliothèque XLSX
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
       const tabName = alertTabs.find(tab => tab.id === activeTab)?.name || "alertes";
-      link.setAttribute("download", `${tabName.toLowerCase().replace(/ /g, "_")}_${new Date().toISOString().split('T')[0]}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      XLSX.utils.book_append_sheet(workbook, worksheet, tabName.substring(0, 31)); // Excel limite les noms d'onglets à 31 caractères
+
+      // Définir le nom du fichier
+      const fileName = `${tabName.toLowerCase().replace(/ /g, "_")}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      // Générer et télécharger le fichier
+      XLSX.writeFile(workbook, fileName);
 
       Toastify("success", `Export Excel réussi (${allAlerts.length} enregistrements)`);
     } catch (error) {
@@ -549,7 +532,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
               )}
 
               {/* Sélecteur d'affichage par page - seulement si des données paginées sont présentes */}
-              {pagination && pagination.totalCount > 0 && (
+              {/* {pagination && pagination.totalCount > 0 && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Afficher</span>
                   <select
@@ -568,7 +551,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                   </select>
                   <span className="text-sm text-gray-600 dark:text-gray-400">par page</span>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
 
@@ -701,7 +684,15 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                   totalRecords={pagination?.totalCount || 0}
                   recordsPerPage={pageSize}
                   page={pagination?.currentPage || 1}
-                  onPageChange={onPageChange}
+                  onPageChange={(page) => {
+                    // Ne pas permettre de naviguer à une page qui dépasse le nombre total
+                    if (pagination && pagination.totalPages && page <= pagination.totalPages) {
+                      onPageChange(page);
+                    } else if (page === 1) {
+                      // Toujours permettre de revenir à la première page
+                      onPageChange(page);
+                    }
+                  }}
                   recordsPerPageOptions={PAGE_SIZES}
                   onRecordsPerPageChange={(size) => {
                     setPageSize(size);
@@ -710,16 +701,22 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                   sortStatus={sortStatus}
                   onSortStatusChange={setSortStatus}
                   minHeight={400}
-                  paginationText={({ from, to, totalRecords }) =>
-                    `Affichage de ${from} à ${to} sur ${totalRecords} entrées`
-                  }
+                  paginationText={({ from, to, totalRecords }) => {
+                    // Vérifiez si les données de la page sont vides mais qu'il y a une pagination
+                    if (filteredAlerts?.length === 0 && pagination && pagination.totalCount > 0) {
+                      return `Page ${pagination.currentPage} - Aucune donnée sur cette page (total: ${totalRecords})`;
+                    }
+                    return `Affichage de ${from} à ${to} sur ${totalRecords} entrées`;
+                  }}
                   paginationSize="md"
                   noRecordsText={
                     loading
                       ? "Chargement en cours..."
-                      : searchTerm
-                        ? "Aucun résultat ne correspond à votre recherche"
-                        : "Aucune alerte disponible"
+                      : pagination && pagination.totalCount > 0 && filteredAlerts?.length === 0
+                        ? "Aucune donnée sur cette page, utilisez la pagination pour naviguer"
+                        : searchTerm
+                          ? "Aucun résultat ne correspond à votre recherche"
+                          : "Aucune alerte disponible"
                   }
                   emptyState={
                     <div className="flex flex-col items-center justify-center py-10">
@@ -729,10 +726,20 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                         </svg>
                       </div>
                       <p className="text-center text-gray-500 dark:text-gray-400">
-                        {searchTerm
-                          ? "Aucun élément ne correspond à votre recherche"
-                          : "Aucune alerte pour le moment"}
+                        {pagination && pagination.totalCount > 0 && filteredAlerts?.length === 0
+                          ? "Cette page ne contient pas de données"
+                          : searchTerm
+                            ? "Aucun élément ne correspond à votre recherche"
+                            : "Aucune alerte pour le moment"}
                       </p>
+                      {pagination && pagination.totalCount > 0 && filteredAlerts?.length === 0 && (
+                        <button
+                          onClick={() => onPageChange(1)}
+                          className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-white hover:bg-primary/90"
+                        >
+                          Retour à la première page
+                        </button>
+                      )}
                     </div>
                   }
                 />
@@ -879,13 +886,28 @@ const ComponentsDashboardSales = () => {
       );
 
       if (response?.error === false) {
+        // Stocker les résultats même s'ils sont vides
         setAlertsData(response?.data?.result || []);
-        setPaginationInfo(response?.data?.pagination || null);
+
+        // Toujours conserver la pagination, même si les résultats sont vides
+        if (response?.data?.pagination) {
+          setPaginationInfo(response?.data?.pagination);
+        } else if (page > 1 && (!response?.data?.pagination)) {
+          // Si la pagination n'est pas disponible mais que nous sommes sur une page > 1
+          // Créer une pagination fictive pour maintenir l'interface
+          console.log("Pagination maintenue malgré l'absence de données");
+          // Ne pas modifier la pagination existante
+        }
+
         return response?.data;
       }
+
+      // En cas d'erreur de l'API, on ne modifie pas l'état de pagination
+      // pour éviter que l'interface disparaisse
       return null;
     } catch (error) {
       console.error("Erreur lors de la récupération des alertes:", error);
+      // Ne pas modifier l'état de pagination en cas d'erreur
       return null;
     } finally {
       setAlertsLoading(false);
@@ -1242,8 +1264,22 @@ const ComponentsDashboardSales = () => {
   };
 
   const handleAlertPageChange = (page: number) => {
+    // S'assurer que la page demandée est dans des limites raisonnables
+    if (page < 1) {
+      page = 1;
+    } else if (paginationInfo && paginationInfo.totalPages && page > paginationInfo.totalPages) {
+      // Si la page demandée dépasse le nombre total de pages, limiter à la dernière page
+      page = paginationInfo.totalPages;
+    }
+
+    // Mettre à jour la page actuelle et récupérer les données
     setAlertPage(page);
     getAlerts(page, alertTabId);
+
+    // Si nous avions affiché un message d'erreur précédemment, le réinitialiser
+    if (alertsData.length === 0 && paginationInfo && paginationInfo.totalCount > 0) {
+      console.log(`Navigation vers la page ${page}, réinitialisation de l'état d'erreur`);
+    }
   };
 
   const handleAlertTabChange = (tabId: number) => {

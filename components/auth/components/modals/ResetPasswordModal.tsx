@@ -1,13 +1,14 @@
 "use client";
 
 import IconEye from "@/components/icon/icon-eye";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 
 import { Toastify } from "@/utils/toast";
 import { TRootState } from "@/store";
 import { OTPresetPassword } from "@/store/reducers/auth/reset-password-otp.slice";
+import IconEyeSlash from "@/components/icon/icon-eye-slash";
 
 interface ResetPasswordModalProps {
   closeModal: () => void;
@@ -26,15 +27,50 @@ export default function ResetPasswordModal({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showPassword1, setShowPassword1] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // États pour la validation
+  const [isMinLength, setIsMinLength] = useState(false);
+  const [hasUppercase, setHasUppercase] = useState(false);
+  const [hasDigit, setHasDigit] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
+
+  // Valider le mot de passe en temps réel
+  useEffect(() => {
+    setIsMinLength(password.length >= 8);
+    setHasUppercase(/[A-Z]/.test(password));
+    setHasDigit(/[0-9]/.test(password));
+
+    if (confirmPassword) {
+      setPasswordsMatch(password === confirmPassword);
+    }
+  }, [password, confirmPassword]);
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
-  const togglePasswordVisibility1 = () => setShowPassword1(!showPassword1);
+  const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
+  };
+
+  const isPasswordValid = () => {
+    return isMinLength && hasUppercase && hasDigit;
+  };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!isPasswordValid()) {
+      Toastify("error", "Le mot de passe ne respecte pas les critères requis");
+      return;
+    }
+
     if (password !== confirmPassword) {
+      setPasswordsMatch(false);
       Toastify("error", "Les mots de passe ne correspondent pas !");
       return;
     }
@@ -47,111 +83,155 @@ export default function ResetPasswordModal({
       Toastify("success", result.payload.message || "Mot de passe modifié !");
       closeModal();
       router.push("/login");
+    } else {
+      Toastify("error", error || "Une erreur est survenue !");
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75">
-      <div className="relative w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-        <h3 className="mb-4 text-2xl font-bold">
-          Réinitialisation du mot de passe
-        </h3>
-        <p className="mb-4 text-gray-500">
-          Votre nouveau mot de passe doit être différent des précédents.
-        </p>
-        <form onSubmit={handleResetPassword} className="text-black">
-          <div>
-            <label
-              htmlFor="otpCode"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Code OTP
-            </label>
-            <input
-              id="otpCode"
-              type="text"
-              placeholder="Entrez votre code OTP"
-              className="mb-4 w-full rounded-md border px-4 py-3 shadow-sm focus:border-primary focus:ring-primary"
-              value={otpCode}
-              onChange={(e) => setOtpCode(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Nouveau mot de passe
-            </label>
-            <div className="relative mt-1">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Nouveau mot de passe"
-                className="w-full rounded-md border px-4 py-3 shadow-sm focus:border-primary focus:ring-primary"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <span
-                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                onClick={togglePasswordVisibility}
-              >
-                <IconEye
-                  className={showPassword ? "text-primary" : "text-gray-500"}
-                />
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Confirmer le mot de passe
-            </label>
-            <div className="relative mt-1">
-              <input
-                id="confirmPassword"
-                type={showPassword1 ? "text" : "password"}
-                placeholder="Confirmer le mot de passe"
-                className="w-full rounded-md border px-4 py-3 shadow-sm focus:border-primary focus:ring-primary"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-              <span
-                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                onClick={togglePasswordVisibility1}
-              >
-                <IconEye
-                  className={showPassword1 ? "text-primary" : "text-gray-500"}
-                />
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-end space-x-4">
+      <div className="relative w-full max-w-md overflow-hidden rounded-lg bg-white shadow-lg">
+        {/* Header avec titre et bouton fermer */}
+        <div className="bg-orange-500 p-4 text-white">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-medium">Changer mon mot de passe</h3>
             <button
               type="button"
-              className="rounded-md bg-gray-300 px-4 py-2 hover:bg-gray-400"
+              className="text-white hover:text-gray-200"
               onClick={closeModal}
             >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="rounded-md bg-primary px-4 py-2 text-white hover:bg-orange-600"
-              disabled={isLoading}
-            >
-              {isLoading ? "Envoi..." : "Envoyer"}
+              ×
             </button>
           </div>
-        </form>
-        {error && <p className="mt-4 text-red-500">{error}</p>}
+        </div>
+
+        <div className="p-6">
+          <form onSubmit={handleResetPassword} className="space-y-5">
+            {/* Code OTP */}
+            <div>
+              <label
+                htmlFor="otpCode"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Code OTP
+              </label>
+              <input
+                id="otpCode"
+                type="text"
+                placeholder="Entrez votre code OTP"
+                className="w-full rounded-md border border-gray-300 px-4 py-2.5 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Nouveau mot de passe */}
+            <div>
+              <label
+                htmlFor="password"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Nouveau mot de passe
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Votre nouveau mot de passe"
+                  className="w-full text-black rounded-md border border-gray-300 px-4 py-2.5 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  required
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? "Cacher le mot de passe" : "Afficher le mot de passe"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-1 text-gray-500 hover:text-orange-500 focus:outline-none"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? (
+                    <IconEye className="h-5 w-5 text-orange-500" />
+                  ) : (
+                    <IconEyeSlash className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+
+              {/* Critères du mot de passe */}
+              <div className="mt-2 space-y-1 text-xs text-gray-600">
+                <p className={isMinLength ? "text-green-600" : "text-gray-600"}>
+                  • Au moins 8 caractères
+                </p>
+                <p className={hasUppercase ? "text-green-600" : "text-gray-600"}>
+                  • Au moins une majuscule
+                </p>
+                <p className={hasDigit ? "text-green-600" : "text-gray-600"}>
+                  • Au moins un chiffre
+                </p>
+              </div>
+            </div>
+
+            {/* Confirmer le nouveau mot de passe */}
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Confirmer le nouveau mot de passe
+              </label>
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirmez votre nouveau mot de passe"
+                  className={`w-full rounded-md border text-black ${!passwordsMatch && confirmPassword ? "border-red-500" : "border-gray-300"
+                    } px-4 py-2.5 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500`}
+                  value={confirmPassword}
+                  onChange={handleConfirmPasswordChange}
+                  required
+                />
+                <button
+                  type="button"
+                  aria-label={showConfirmPassword ? "Cacher le mot de passe" : "Afficher le mot de passe"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-1 text-gray-500 hover:text-orange-500 focus:outline-none"
+                  onClick={toggleConfirmPasswordVisibility}
+                >
+                  {showConfirmPassword ? (
+                    <IconEye className="h-5 w-5 text-orange-500" />
+                  ) : (
+                    <IconEyeSlash className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              {!passwordsMatch && confirmPassword && (
+                <p className="mt-1 text-xs text-red-500">
+                  Les mots de passe ne correspondent pas
+                </p>
+              )}
+            </div>
+
+            {/* Boutons d'action */}
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                className="rounded-md px-4 py-2 text-gray-700 hover:text-gray-900"
+                onClick={closeModal}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="rounded-md bg-orange-500 px-4 py-2 text-white hover:bg-orange-600 disabled:bg-orange-300"
+                disabled={isLoading || !isPasswordValid() || !passwordsMatch || !confirmPassword}
+              >
+                Enregistrer
+              </button>
+            </div>
+          </form>
+
+          {error && <p className="mt-4 text-center text-sm text-red-500">{error}</p>}
+        </div>
       </div>
     </div>
   );

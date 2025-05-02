@@ -36,7 +36,7 @@ export default function ForgotPasswordModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75">
       <div className="relative w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-        <h3 className="mb-4 text-2xl font-bold">Mot de passe oublié</h3>
+        <h3 className="mb-4 text-2xl font-bold text-black">Mot de passe oublié</h3>
         <p className="mb-4 text-gray-500">
           Veuillez entrer votre adresse e-mail pour réinitialiser votre mot de
           passe.

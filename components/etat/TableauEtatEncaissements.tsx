@@ -14,8 +14,8 @@ import IconExcel from "../icon/excel";
 import Csv from "../icon/csv";
 import Pdf from "../icon/pdf";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import 'jspdf-autotable';
+import { jsPDF } from "jspdf";
+import autoTable from 'jspdf-autotable';
 import EncaissementActions from "@/components/encaissements/EncaissementActions";
 import { MenuName } from "@/types/habilitation";
 import { API_AUTH_SUIVI } from "@/config/constants";
@@ -76,6 +76,16 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
     // États pour le modal de détails
     const [selectedEncaissement, setSelectedEncaissement] = useState<Encaissement | null>(null);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+
+    // États pour le modal d'erreur
+    const [errorModalOpen, setErrorModalOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [fallbackFormat, setFallbackFormat] = useState<'csv' | null>(null);
+    const [currentRecord, setCurrentRecord] = useState<Encaissement | null>(null);
+
+    // Ajouter un nouvel état pour le modal de chargement
+    const [loadingModalOpen, setLoadingModalOpen] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState("");
 
     // Ouverture du modal avec l'encaissement sélectionné
     const openDetailsModal = (encaissement: Encaissement) => {
@@ -392,46 +402,73 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
         window.URL.revokeObjectURL(url);
     };
 
-    const exportToPDF = (record: Encaissement) => {
-        const doc = new jsPDF({ orientation: "landscape" });
-
-        doc.text("Détail d'encaissement", 14, 15);
-
-        const headers = [
-            ["Direction", "Code", "Date", "Banque", "Produit", "Mode", "Montant Caisse", "Montant Banque", "Écart", "Statut"]
-        ];
-
-        const body = [[
-            record.directionRegionale || "N/A",
-            record.codeExpl || "N/A",
-            record.dateEncaissement ? formatDisplayDate(record.dateEncaissement) : "N/A",
-            record.banque || "N/A",
-            record.produit || "N/A",
-            record.modeReglement || "N/A",
-            formatMontant(record.montantRestitutionCaisse || 0),
-            formatMontant(record.montantBordereauBanque || 0),
-            formatMontant(record.ecartCaisseBanque || 0),
-            record.statut || "N/A"
-        ]];
-
-        doc.autoTable({
-            head: headers,
-            body: body,
-            startY: 20,
-            theme: "grid",
-            headStyles: { fillColor: [54, 162, 235], textColor: 255 },
-            styles: {
-                fontSize: 8,
-                cellPadding: 3,
-                overflow: "linebreak",
-            },
-            margin: { top: 20, left: 10, right: 10 },
-        });
-
-        doc.save(`encaissement_${record.id}.pdf`);
+    const showErrorModal = (message: string, record: Encaissement | null = null, fallback: 'csv' | null = null) => {
+        setErrorMessage(message);
+        setCurrentRecord(record);
+        setFallbackFormat(fallback);
+        setErrorModalOpen(true);
     };
 
-    // Ajout des fonctions pour l'export global des données
+    // Corriger la fonction formatMontantForPDF
+    const formatMontantForPDF = (montant: number): string => {
+        // Formatter simplement le nombre avec un espace comme séparateur de milliers
+        const formattedNumber = new Intl.NumberFormat("fr-FR", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(montant);
+
+        // Retourner le format standard sans remplacer les espaces
+        return `${formattedNumber} F CFA`;
+    };
+
+    // Modifier la fonction exportToPDF
+    const exportToPDF = (record: Encaissement) => {
+        try {
+            // Créer une instance de jsPDF
+            const doc = new jsPDF({ orientation: "landscape" });
+
+            doc.text("Détail d'encaissement", 14, 15);
+
+            const headers = [
+                ["Direction", "Code", "Date", "Banque", "Produit", "Mode", "Montant Caisse", "Montant Banque", "Écart", "Statut"]
+            ];
+
+            const body = [[
+                record.directionRegionale || "N/A",
+                record.codeExpl || "N/A",
+                record.dateEncaissement ? formatDisplayDate(record.dateEncaissement) : "N/A",
+                record.banque || "N/A",
+                record.produit || "N/A",
+                record.modeReglement || "N/A",
+                formatMontantForPDF(record.montantRestitutionCaisse || 0),
+                formatMontantForPDF(record.montantBordereauBanque || 0),
+                formatMontantForPDF(record.ecartCaisseBanque || 0),
+                record.statut || "N/A"
+            ]];
+
+            // Utiliser autoTable comme une fonction externe
+            autoTable(doc, {
+                head: headers,
+                body: body,
+                startY: 20,
+                theme: "grid",
+                headStyles: { fillColor: [54, 162, 235], textColor: 255 },
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 3,
+                    overflow: "linebreak",
+                },
+                margin: { top: 20, left: 10, right: 10 },
+            });
+
+            doc.save(`encaissement_${record.id}.pdf`);
+        } catch (error) {
+            console.error("Erreur lors de la génération du PDF:", error);
+            showErrorModal(`Erreur lors de la génération du PDF: ${error}`, record, 'csv');
+        }
+    };
+
+    // Modifier la fonction handleExportAllData
     const handleExportAllData = (format: 'excel' | 'csv' | 'pdf') => {
         console.log(`Démarrage de l'exportation en format ${format}...`);
 
@@ -441,12 +478,13 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
             const apiUrl = API_AUTH_SUIVI;
 
             if (!token) {
-                alert("Vous n'êtes pas authentifié. Veuillez vous reconnecter.");
+                showErrorModal("Vous n'êtes pas authentifié. Veuillez vous reconnecter.");
                 return;
             }
 
             // Afficher un message de chargement
-            alert("Récupération des données en cours...");
+            setLoadingMessage("Récupération des données en cours...");
+            setLoadingModalOpen(true);
 
             // Créer l'URL pour récupérer toutes les données
             const dataUrl = `${apiUrl}/encaissements?all=true`;
@@ -476,6 +514,9 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                     const data = response.data.result;
                     console.log(`Données récupérées: ${Array.isArray(data) ? data.length : 'non-tableau'} éléments`);
 
+                    // Fermer le modal de chargement
+                    setLoadingModalOpen(false);
+
                     // Selon le format demandé, générer le fichier approprié
                     switch (format) {
                         case 'excel':
@@ -484,19 +525,23 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                         case 'csv':
                             generateCSVFile(data);
                             break;
-
+                        case 'pdf':
+                            generatePDFFile(data);
+                            break;
                         default:
                             throw new Error(`Format non supporté: ${format}`);
                     }
                 })
                 .catch(error => {
+                    setLoadingModalOpen(false);
                     console.error(`Erreur lors de l'exportation ${format}:`, error);
-                    alert(`Erreur lors de l'exportation: ${error.message}`);
+                    showErrorModal(`Erreur lors de l'exportation: ${error.message}`);
                 });
 
         } catch (error: any) {
+            setLoadingModalOpen(false);
             console.error("Erreur lors de la préparation de l'exportation:", error);
-            alert(`Erreur: ${error.message}`);
+            showErrorModal(`Erreur: ${error.message}`);
         }
     };
 
@@ -618,23 +663,14 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                 item.banque || "N/A",
                 item.produit || "N/A",
                 item.modeReglement || "N/A",
-                formatMontant(item.montantRestitutionCaisse || 0),
-                formatMontant(item.montantBordereauBanque || 0),
-                formatMontant(item.ecartCaisseBanque || 0),
+                formatMontantForPDF(item.montantRestitutionCaisse || 0),
+                formatMontantForPDF(item.montantBordereauBanque || 0),
+                formatMontantForPDF(item.ecartCaisseBanque || 0),
                 item.statut || "N/A"
             ]);
 
-            // Vérifier que autoTable est disponible
-            if (typeof doc.autoTable !== 'function') {
-                console.error("Le plugin autoTable n'est pas correctement chargé");
-                // Solution alternative: télécharger en CSV au lieu de PDF
-                alert("Erreur lors de la génération du PDF. Téléchargement en CSV à la place.");
-                generateCSVFile(data);
-                return;
-            }
-
-            // Générer le tableau
-            (doc as any).autoTable({
+            // Utiliser autoTable comme une fonction externe
+            autoTable(doc, {
                 head: headers,
                 body: body,
                 startY: 20,
@@ -654,12 +690,7 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
             console.log('Exportation PDF réussie!');
         } catch (error) {
             console.error("Erreur lors de la génération du fichier PDF:", error);
-            alert(`Erreur lors de la génération du fichier PDF: ${error}`);
-
-            // Solution de secours: proposer le téléchargement en CSV
-            if (confirm("Voulez-vous essayer de télécharger les données en format CSV à la place?")) {
-                generateCSVFile(data);
-            }
+            showErrorModal(`Erreur lors de la génération du fichier PDF: ${error}`, null, 'csv');
         }
     };
 
@@ -736,7 +767,15 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                                         <Csv className="h-5 w-5" />
                                     </button>
                                 </Tippy>
-
+                                <Tippy content="Exporter en PDF" animation="scale" placement="top">
+                                    <button
+                                        type="button"
+                                        className="rounded-lg p-2 text-gray-600 transition-all hover:bg-gray-100"
+                                        onClick={() => handleExportAllData('pdf')}
+                                    >
+                                        <Pdf className="h-5 w-5" />
+                                    </button>
+                                </Tippy>
                             </div>
                         </div>
 
@@ -813,6 +852,68 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                     formatNumber={formatMontant}
                     formatDate={formatDisplayDate}
                 />
+
+                {/* Modal d'erreur */}
+                {errorModalOpen && (
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-gray-600/20 backdrop-blur-sm">
+                        <div className="w-full max-w-md transform rounded-lg bg-white p-6 shadow-xl transition-all dark:bg-gray-800">
+                            <div className="mb-5 flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                    Erreur d'exportation
+                                </h3>
+                                <button
+                                    onClick={() => setErrorModalOpen(false)}
+                                    className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+                                >
+                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="mb-5">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    {errorMessage}
+                                </p>
+                            </div>
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    onClick={() => setErrorModalOpen(false)}
+                                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                                >
+                                    Fermer
+                                </button>
+                                {fallbackFormat === 'csv' && currentRecord && (
+                                    <button
+                                        onClick={() => {
+                                            exportToCSV(currentRecord);
+                                            setErrorModalOpen(false);
+                                        }}
+                                        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary"
+                                    >
+                                        Exporter en CSV à la place
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Ajouter le modal de chargement */}
+                {loadingModalOpen && (
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-gray-600/20 backdrop-blur-sm">
+                        <div className="w-full max-w-md transform rounded-lg bg-white p-6 shadow-xl transition-all dark:bg-gray-800">
+                            <div className="flex flex-col items-center justify-center space-y-4">
+                                <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                    Exportation en cours
+                                </h3>
+                                <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+                                    {loadingMessage}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
