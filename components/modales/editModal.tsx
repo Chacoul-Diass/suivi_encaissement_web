@@ -166,6 +166,8 @@ export default function EditModal({
     setValidationModalOpen(false);
     setMontantAutomatique(newMontantSaisi);
     setMontantAutomatiqueAffiche(newMontantAffiche);
+    // Mise à jour du montant dans selectedRow pour l'affichage immédiat
+    selectedRow.montantReleve = parseFloat(newMontantSaisi);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
