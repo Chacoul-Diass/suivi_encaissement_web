@@ -206,7 +206,7 @@ export default function ViewModal({
     },
 
     {
-      statut: EStatutEncaissement.DR_DFC,
+      statut: EStatutEncaissement.DFC,
       buttons: [
 
         {
