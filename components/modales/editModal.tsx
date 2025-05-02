@@ -99,6 +99,7 @@ export default function EditModal({
   useEffect(() => {
     if (modalOpen) {
       const montantInitial = selectedRow.montantReleve || 0;
+      console.log("Montant initial:", montantInitial, typeof montantInitial, selectedRow.montantReleve);
 
       if (montantInitial > 0) {
         // Initialisation pour le cas automatique
@@ -214,21 +215,27 @@ export default function EditModal({
       const montantReleve = selectedRow.montantReleve || 0;
       const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
 
-      const updatedRow = {
-        ...selectedRow,
-        observationBanque,
-        rasChecked1,
-        rasChecked2,
-        images2,
-        montantReleve: montantReleve,
-        dateMontantBanque,
-        ecartReleve: montantBordereau - montantReleve,
-        statutValidation: 2,
-      };
+      // const updatedRow = {
+      //   ...selectedRow,
+      //   observationBanque,
+      //   rasChecked1,
+      //   rasChecked2,
+      //   images2,
+      //   montantReleve: montantReleve,
+      //   dateMontantBanque,
+      //   ecartReleve: montantBordereau - montantReleve,
+      //   statutValidation: 2,
+      //   isCorrect: 1
+      // };
 
-      // Après la validation, nous attendons un court instant avant de soumettre
+      // On met à jour localement le selectedRow pour mettre à jour l'UI immédiatement
+      selectedRow.isCorrect = 1;
+
+      // On soumet immédiatement les données mises à jour au composant parent
+      // handleSubmit(updatedRow);
+
+      // Fermer la modale de validation après un court délai
       setTimeout(() => {
-        handleSubmit(updatedRow);
         setValidationModalOpen(false);
       }, 300);
     } catch (error) {
@@ -516,7 +523,7 @@ export default function EditModal({
                 )}
 
                 {/* CAS 2: Aucun montant remonté - saisie directe */}
-                {(selectedRow.montantReleve === undefined || selectedRow.montantReleve <= 0) && (
+                {(selectedRow.montantReleve === undefined || selectedRow.montantReleve === 0 || selectedRow.montantReleve <= 0) && (
                   <div className="relative">
                     <div className="flex">
                       <input

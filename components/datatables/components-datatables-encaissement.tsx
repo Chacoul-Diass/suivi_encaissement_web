@@ -258,9 +258,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     const totalUnvalidatedRecords = unvalidatedRecords.length;
     const encaissementText = `${statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
-        statutValidation === EStatutEncaissement.RECLAMATION_TRAITES
-        ? ` Réclamation${totalUnvalidatedRecords > 1 ? "s " : " "}`
-        : ` Encaissement${totalUnvalidatedRecords > 1 ? "s " : " "}`
+      statutValidation === EStatutEncaissement.RECLAMATION_TRAITES
+      ? ` Réclamation${totalUnvalidatedRecords > 1 ? "s " : " "}`
+      : ` Encaissement${totalUnvalidatedRecords > 1 ? "s " : " "}`
       }`;
 
     const [currentPage, setCurrentPage] = useState(paginate.currentPage || 1);
@@ -1448,7 +1448,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
       setMontantBanque(formattedValue);
     };
 
-    console.log(paginate, "paginate");
+
 
     // Ajouter un état pour forcer le remontage du composant
     const [forceRender, setForceRender] = useState(0);
