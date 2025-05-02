@@ -1131,6 +1131,8 @@ const ComponentsDashboardSales = () => {
 
       if (response?.error === false) {
         setEcartData(response?.data);
+
+        console.log(response?.data, "ecartData");
       }
     } catch (error) {
       console.error("Erreur lors de la récupération des écarts:", error);
@@ -2070,7 +2072,7 @@ const ComponentsDashboardSales = () => {
                                 : "text-gray-800"
                                 } dark:text-white-light`}
                             >
-                              {(item.montantA - item.montantB).toLocaleString()}{" "}
+                              {(item.montantA).toLocaleString()}{" "}
                               FCFA
                             </td>
                             <td
