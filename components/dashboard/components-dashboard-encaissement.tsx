@@ -2203,7 +2203,7 @@ const ComponentsDashboardSales = () => {
           </div>
         )}
 
-        {isFirstLogin === 1 && <DashboardTutorial />}
+        {/* {isFirstLogin === 1 && <DashboardTutorial />} */}
       </div>
     </>
   );

@@ -104,7 +104,7 @@ const formatNumber = (num: number | undefined): string => {
 interface EncaissementComptableProps {
   statutValidation: number;
   data: any[];
-  loading: boolean;
+  fetchLoading: boolean;
   paginate: Paginations;
   habilitation: any[];
   handlePageChange?: (page: number) => void;
@@ -117,7 +117,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
 > = ({
   statutValidation,
   data,
-  loading,
+  fetchLoading,
   paginate,
   habilitation,
   handlePageChange,
@@ -132,7 +132,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const [emailModalOpen, setEmailModalOpen] = useState(false);
     const [preuvePhotoModal, setPreuvePhotoModal] = useState(false);
     const [photoDocuments, setPhotoDocuments] = useState<DocumentType[]>([]);
-    const [rowToView, setRowToView] = useState<DataReverse | null>(null);
     const formatDateData = (dateString: string | null | undefined): string => {
       if (!dateString) return "N/A";
 
@@ -168,10 +167,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
         return "N/A";
       }
     };
-
-    const user = getUserPermission();
-
-    const isFirstLogin = user?.isFirstLogin;
 
     const filterAndMapData = useCallback(
       (data: any[], statutValidation: number): any[] => {
@@ -258,9 +253,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     const totalUnvalidatedRecords = unvalidatedRecords.length;
     const encaissementText = `${statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
-      statutValidation === EStatutEncaissement.RECLAMATION_TRAITES
-      ? ` Réclamation${totalUnvalidatedRecords > 1 ? "s " : " "}`
-      : ` Encaissement${totalUnvalidatedRecords > 1 ? "s " : " "}`
+        statutValidation === EStatutEncaissement.RECLAMATION_TRAITES
+        ? ` Réclamation${totalUnvalidatedRecords > 1 ? "s " : " "}`
+        : ` Encaissement${totalUnvalidatedRecords > 1 ? "s " : " "}`
       }`;
 
     const [currentPage, setCurrentPage] = useState(paginate.currentPage || 1);
@@ -353,14 +348,14 @@ const ComponentsDatatablesColumnChooser: React.FC<
           return isPlural ? "validés" : "validé";
         case EStatutEncaissement.CLOTURE:
           return isPlural ? "cloturés" : "cloturé";
+        case EStatutEncaissement.RECLAMATION_TRAITES:
+          return isPlural ? "traités" : "traité";
+        case EStatutEncaissement.RECLAMATION_REVERSES:
+          return isPlural ? "chargés" : "chargé";
         default:
           return isPlural ? "inconnus" : "inconnu";
       }
     };
-
-    console.log(data, "data");
-
-    console.log(loading, "loadingdata");
 
     const refreshTableData = async () => {
       // Réinitialiser les données
@@ -830,8 +825,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
         setEmailSubject(`Retard sur le bordereau N°${numeroBordereau || ""}`);
       }
     }, [emailSubject, numeroBordereau]);
-
-    console.log(emailSubject, "emailSubject");
 
     const [uploadedFiles, setUploadedFiles] = useState<
       { file: File; preview: string }[]
@@ -1475,9 +1468,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
             <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
               {/* Actualisation */}
               <RefreshBtn
-                isRefreshing={isRefreshing}
+                isRefreshing={fetchLoading}
                 handleRefresh={handleRefresh}
-              />
+              />  
               <div className="flex flex-wrap items-center gap-2">
                 <ExportBtn
                   filteredData={filteredData}
@@ -1588,7 +1581,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   }
                   className="table-hover whitespace-nowrap"
                   records={
-                    !loading && filteredData?.length > 0 ? filteredData : []
+                    !fetchLoading && filteredData?.length > 0 ? filteredData : []
                   }
                   columns={[
                     ...cols
@@ -1673,7 +1666,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     },
                   ]}
                   highlightOnHover
-                  totalRecords={!loading ? paginate.totalCount : 0}
+                  totalRecords={!fetchLoading ? paginate.totalCount : 0}
                   recordsPerPage={pageSize}
                   page={currentPage}
                   onPageChange={(page) => {
@@ -1693,7 +1686,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     `Affichage de ${from} à ${to} sur ${totalRecords} entrées`
                   }
                   noRecordsText={
-                    loading
+                    fetchLoading
                       ? ((
                         <>
                           <span className="delay-800 mt-2 animate-pulse text-black">
@@ -1839,7 +1832,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
           </div>
         </div>
 
-        {isFirstLogin === 1 && <EncaissementTutorial />}
+        {/* {isFirstLogin === 1 && <EncaissementTutorial />} */}
       </>
     );
   };

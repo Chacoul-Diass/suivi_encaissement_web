@@ -42,6 +42,13 @@ export default function Litige() {
     }
   };
 
+  const dataReverseloading: any = useSelector(
+    (state: any) => state?.encaissementReleve?.loading
+  );
+
+  console.log(dataReverseloading, "dataReverseloading");
+
+
   const allTabs = [
     {
       id: EStatutEncaissement.RECLAMATION_REVERSES,
@@ -62,13 +69,15 @@ export default function Litige() {
     habilitation?.some(
       (h: { name: string; LIRE: boolean }) =>
         h.name.normalize("NFKC").toUpperCase() ===
-        tab.habilitationName.normalize("NFKC").toUpperCase() &&
+          tab.habilitationName.normalize("NFKC").toUpperCase() &&
         h.LIRE === true
     )
   );
 
   const [ecartDataEncaissement, setEcartDataEncaissement] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
+  console.log(loading, "loading")
 
   const fetchData = async (filters?: Record<string, any>) => {
     setLoading(true);
@@ -157,7 +166,7 @@ export default function Litige() {
             <button className="flex items-center justify-center rounded-md border border-gray-500/20 p-2.5 shadow hover:text-gray-500/70 dark:border-0 dark:bg-[#191e3a] dark:hover:text-white-dark/70">
               <Link className="flex" href="/litige">
                 <IconHome className="shrink-0 ltr:mr-2 rtl:ml-2" />
-                Litige
+                Réclamations
               </Link>
             </button>
           </li>
@@ -179,10 +188,11 @@ export default function Litige() {
                 <Tab as={Fragment} key={tab.id}>
                   {({ selected }) => (
                     <button
-                      className={`${selected
-                        ? "text-primary !outline-none before:!w-full"
-                        : ""
-                        }relative -mb-[1px] flex items-center p-5 py-3`}
+                      className={`${
+                        selected
+                          ? "text-primary !outline-none before:!w-full"
+                          : ""
+                      }relative -mb-[1px] flex items-center p-5 py-3`}
                     >
                       <tab.icon className="ltr:mr-2 rtl:ml-2" />
                       {tab.label}
@@ -194,22 +204,12 @@ export default function Litige() {
             <Tab.Panels>
               {filteredTabs.map((tab) => (
                 <Tab.Panel key={tab.id}>
-                  {/* <EncaissementComptable
-                    statutValidation={tab.id}
-                    data={dataEncaissementReverse || []}
-                    total={Totaldata}
-                    paginate={paginate}
-                    loading={dataReverseloading}
-                    habilitation={habilitation}
-                  /> */}
-
                   <EncaissementComptable
                     statutValidation={tab.id}
                     data={dataEncaissementReverse || []}
                     total={Totaldata}
                     paginate={paginate}
-                    loading={loading}
-                    fetchData={fetchData}
+                    fetchLoading={loading}
                     habilitation={habilitation}
                     handlePageChange={handlePageChange}
                     handleSearchChange={handleSearchChange}

@@ -87,6 +87,7 @@ const Header = () => {
       document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
       // Nettoyer le stockage local
       // localStorage.clear();
+      localStorage.removeItem("persist:suivi-encaissement");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("accessToken");
       localStorage.removeItem("hasCheckedAlerts");
@@ -110,11 +111,11 @@ const Header = () => {
     } catch (error: any) {
       // Journaliser l'erreur pour le débogage
       console.error("Erreur lors de la déconnexion:", error);
-
+      
       // Afficher un message d'erreur
       const errorMessage = handleApiError(error);
       toast.error(errorMessage);
-
+      
       // Même en cas d'erreur, déconnecter l'utilisateur
       cleanSessionAndRedirect();
     }

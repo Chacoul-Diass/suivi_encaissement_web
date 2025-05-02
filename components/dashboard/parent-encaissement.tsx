@@ -79,13 +79,8 @@ const ComponentsDashboardValider = () => {
     setIsMounted(true);
   }, []);
 
-  const dataReverse: any = useSelector(
-    (state: TRootState) => state?.encaissementReleve?.data
-  );
 
-  const dataReverseloading: any = useSelector(
-    (state: any) => state?.encaissementReleve?.loading
-  );
+
 
   // Déterminer le statut initial en fonction de l'URL et des habilitations
   const getInitialTab = () => {
@@ -177,7 +172,11 @@ const ComponentsDashboardValider = () => {
     }
   };
 
+  const [loading, setLoading] = useState(false);
+
+
   const fetchData = async (filters?: Record<string, any>) => {
+    setLoading(true);
     try {
       console.log("📞 Appel API avec ID:", activeTab, "Valeur convertie:", activeTab.toString());
 
@@ -232,6 +231,8 @@ const ComponentsDashboardValider = () => {
       }
     } catch (error) {
       console.error("❌ Erreur lors de la récupération :", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -349,11 +350,7 @@ const ComponentsDashboardValider = () => {
                       data={dataEncaissementReverse || []}
                       total={Totaldata}
                       paginate={paginate}
-                      loading={
-                        dataReverseloading !== undefined
-                          ? dataReverseloading
-                          : false
-                      }
+                      fetchLoading={loading}
                       habilitation={habilitation}
                       handlePageChange={handlePageChange}
                       handleSearchChange={handleSearchChange}

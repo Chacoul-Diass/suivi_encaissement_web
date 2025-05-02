@@ -13,8 +13,7 @@ interface EncaissementComptableProps {
   data: any[];
   total: ITotal;
   paginate: Paginations;
-  loading: boolean;
-  fetchData : any;
+  fetchLoading: boolean;
   habilitation: any[];
   handlePageChange?: (page: number) => void;
   handleSearchChange?: (value: string) => void;
@@ -26,8 +25,7 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
   data,
   total,
   paginate,
-  fetchData,
-  loading,
+  fetchLoading,
   habilitation,
   handlePageChange,
   handleSearchChange,
@@ -132,7 +130,7 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                 <IconCircleCheck className="-ml-7 -mt-[25px] h-full w-full text-success opacity-20" />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:gap-6">
-                {loading ? (
+                {fetchLoading ? (
                   <>
                     {/* Skeleton loaders */}
                     <div className="min-w-[180px]">
@@ -214,8 +212,7 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
         <ComponentsDatatablesColumnChooser
           statutValidation={statutValidation}
           data={data}
-          fetchData={fetchData}
-          loading={loading}
+          fetchLoading={fetchLoading}
           paginate={paginate}
           habilitation={habilitation}
           handlePageChange={handlePageChange}
@@ -224,7 +221,7 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
         />
       </div>
 
-      {isFirstLogin === 1 && <EncaissementTutorial />}
+      {/* {isFirstLogin === 1 && <EncaissementTutorial />} */}
     </div>
   );
 };
