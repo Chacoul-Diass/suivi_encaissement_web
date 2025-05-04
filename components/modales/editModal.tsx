@@ -104,40 +104,40 @@ const UnvalidatedAmount: React.FC<{
   onMontantSaisiChange,
   onValidateClick,
 }) => (
-  <div className="space-y-2">
-    <div className="relative">
-      <input
-        type="text"
-        className="form-input w-full cursor-not-allowed rounded-lg border-gray-300 bg-gray-100 py-3 pl-10 pr-4 text-gray-600 opacity-80 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
-        placeholder="Montant automatique remonté"
-        value={formatNumber(montantAuto)}
-        disabled={true}
-      />
-      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-        <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+    <div className="space-y-2">
+      <div className="relative">
+        <input
+          type="text"
+          className="form-input w-full cursor-not-allowed rounded-lg border-gray-300 bg-gray-100 py-3 pl-10 pr-4 text-gray-600 opacity-80 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
+          placeholder="Montant automatique remonté"
+          value={formatNumber(montantAuto)}
+          disabled={true}
+        />
+        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+          <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+        </div>
       </div>
-    </div>
-    <div className="relative">
-      <input
-        type="text"
-        className="form-input w-full rounded-lg border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-        placeholder="Modifier le montant banque"
-        value={montantSaisi}
-        onChange={onMontantSaisiChange}
-      />
-      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-        <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+      <div className="relative">
+        <input
+          type="text"
+          className="form-input w-full rounded-lg border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          placeholder="Modifier le montant banque"
+          value={montantSaisi}
+          onChange={onMontantSaisiChange}
+        />
+        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+          <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+        </div>
       </div>
+      <button
+        type="button"
+        onClick={onValidateClick}
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      >
+        Valider ce montant
+      </button>
     </div>
-    <button
-      type="button"
-      onClick={onValidateClick}
-      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-    >
-      Valider ce montant
-    </button>
-  </div>
-);
+  );
 
 // Composant pour le cas sans montant
 const NoAmount: React.FC<{
@@ -411,8 +411,8 @@ export default function EditModal({
       const files =
         images2 && images2.length > 0
           ? images2
-              .map((image) => image.file)
-              .filter((file): file is File => file !== undefined)
+            .map((image) => image.file)
+            .filter((file): file is File => file !== undefined)
           : [];
       // Soumettre les données
       handleSubmit(updatedRow);
@@ -447,15 +447,13 @@ export default function EditModal({
   return (
     <>
       <div
-        className={`fixed inset-0 z-50 bg-gray-600/20 backdrop-blur-sm transition-opacity duration-300 ${
-          modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
+        className={`fixed inset-0 z-50 bg-gray-600/20 backdrop-blur-sm transition-opacity duration-300 ${modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
         onClick={handleCloseModal}
       />
       <div
-        className={`fixed bottom-0 right-0 top-0 z-[51] w-full max-w-[600px] transform bg-white shadow-xl transition-transform duration-300 dark:bg-gray-800 ${
-          modalOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed bottom-0 right-0 top-0 z-[51] w-full max-w-[600px] transform bg-white shadow-xl transition-transform duration-300 dark:bg-gray-800 ${modalOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <form onSubmit={handleFormSubmit} className="flex h-full flex-col">
           {/* Header */}
@@ -557,21 +555,20 @@ export default function EditModal({
                 </div>
                 <div>
                   <p
-                    className={`text-lg font-semibold ${
-                      selectedRow["Montant caisse (A)"] -
+                    className={`text-lg font-semibold ${selectedRow["Montant caisse (A)"] -
                         selectedRow["Montant bordereau (B)"] <
-                      0
+                        0
                         ? "text-red-500"
                         : selectedRow["Montant caisse (A)"] -
-                            selectedRow["Montant bordereau (B)"] >
+                          selectedRow["Montant bordereau (B)"] >
                           0
-                        ? "text-green-500"
-                        : "text-gray-900 dark:text-white"
-                    }`}
+                          ? "text-green-500"
+                          : "text-gray-900 dark:text-white"
+                      }`}
                   >
                     {formatNumber(
                       selectedRow["Montant caisse (A)"] -
-                        selectedRow["Montant bordereau (B)"]
+                      selectedRow["Montant bordereau (B)"]
                     )}{" "}
                     F CFA
                   </p>
@@ -640,9 +637,8 @@ export default function EditModal({
                     <button
                       type="button"
                       onClick={onImageUpload}
-                      className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-primary dark:border-gray-600 dark:hover:border-primary ${
-                        isDragging ? "border-primary" : ""
-                      }`}
+                      className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-primary dark:border-gray-600 dark:hover:border-primary ${isDragging ? "border-primary" : ""
+                        }`}
                       {...dragProps}
                     >
                       <IconPaperclip className="h-5 w-5 text-gray-400" />
@@ -689,7 +685,7 @@ export default function EditModal({
                     </h3>
                     <p className="mt-1 text-xs text-gray-500">
                       {selectedRow.montantReleve !== undefined &&
-                      selectedRow.montantReleve > 0
+                        selectedRow.montantReleve > 0
                         ? "Un montant est déjà saisi, vous pouvez le valider ou le modifier"
                         : "Veuillez saisir le montant du relevé bancaire"}
                     </p>
@@ -698,7 +694,7 @@ export default function EditModal({
 
                 {/* Affichage conditionnel selon le cas */}
                 {selectedRow.montantReleve !== undefined &&
-                selectedRow.montantReleve > 0 ? (
+                  selectedRow.montantReleve > 0 ? (
                   selectedRow.isCorrect === 0 ? (
                     <UnvalidatedAmount
                       montantAuto={selectedRow.montantReleve}
