@@ -17,6 +17,12 @@ export default function ForgotPasswordModal({
   const dispatch = useDispatch();
   const [isModalResetOpen, setIsModalResetOpen] = useState(false);
 
+  // Fonction pour fermer la modale de réinitialisation et la modale principale
+  const handleCloseAll = () => {
+    setIsModalResetOpen(false);
+    closeModal();
+  };
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -69,7 +75,7 @@ export default function ForgotPasswordModal({
       </div>
 
       {isModalResetOpen && (
-        <ResetPasswordModal closeModal={() => setIsModalResetOpen(false)} />
+        <ResetPasswordModal closeModal={handleCloseAll} />
       )}
     </div>
   );
