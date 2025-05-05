@@ -29,6 +29,7 @@ const DatatablesLitigesView = (data: any) => {
 				Passer en litige
 			</button> */}
 
+
       {/* Détails des montants */}
       <div className="mb-6 rounded-lg bg-[#afb7c2] p-4 text-white  shadow-lg ">
         <h3 className="mb-2 ">

@@ -253,9 +253,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     const totalUnvalidatedRecords = unvalidatedRecords.length;
     const encaissementText = `${statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
-        statutValidation === EStatutEncaissement.RECLAMATION_TRAITES
-        ? ` Réclamation${totalUnvalidatedRecords > 1 ? "s " : " "}`
-        : ` Encaissement${totalUnvalidatedRecords > 1 ? "s " : " "}`
+      statutValidation === EStatutEncaissement.RECLAMATION_TRAITES
+      ? ` Réclamation${totalUnvalidatedRecords > 1 ? "s " : " "}`
+      : ` Encaissement${totalUnvalidatedRecords > 1 ? "s " : " "}`
       }`;
 
     const [currentPage, setCurrentPage] = useState(paginate.currentPage || 1);
@@ -1458,11 +1458,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
               {getStatutLibelle(statutValidation, totalUnvalidatedRecords)}
             </h5>
           </div>
-          <GlobalFiltre
-            drData={drData}
-            onApplyFilters={handleApplyFilters}
-            statutValidation={statutValidation}
-          />
+
 
           <div className="panel datatables">
             <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -1470,7 +1466,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
               <RefreshBtn
                 isRefreshing={fetchLoading}
                 handleRefresh={handleRefresh}
-              />  
+              />
               <div className="flex flex-wrap items-center gap-2">
                 <ExportBtn
                   filteredData={filteredData}

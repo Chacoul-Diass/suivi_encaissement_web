@@ -20,6 +20,7 @@ import { fetchDataReleve } from "@/store/reducers/encaissements/releve.slice";
 import axiosInstance from "@/utils/axios";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import { active } from "sortablejs";
+import GlobalFiltre from "@/components/filtre/globalFiltre";
 
 const ComponentsDashboardValider = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -79,8 +80,24 @@ const ComponentsDashboardValider = () => {
     setIsMounted(true);
   }, []);
 
+  // Données des directions régionales pour le filtre
+  const [drData, setDrData] = useState([]);
 
+  // Charger les données des DR au chargement du composant
+  useEffect(() => {
+    const fetchDrData = async () => {
+      try {
+        const response = await axiosInstance.get(`${API_AUTH_SUIVI}/direction-regionale`);
+        if (response?.data && !response.data.error) {
+          setDrData(response.data || []);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des directions régionales:", error);
+      }
+    };
 
+    fetchDrData();
+  }, []);
 
   // Déterminer le statut initial en fonction de l'URL et des habilitations
   const getInitialTab = () => {
@@ -178,8 +195,6 @@ const ComponentsDashboardValider = () => {
   const fetchData = async (filters?: Record<string, any>) => {
     setLoading(true);
     try {
-      console.log("📞 Appel API avec ID:", activeTab, "Valeur convertie:", activeTab.toString());
-
       const cleanArray = (arr?: string[]): string[] =>
         arr ? arr.map((item) => item.trim()) : [];
 
@@ -218,15 +233,17 @@ const ComponentsDashboardValider = () => {
 
       // Utiliser directement activeTab au lieu de filters?.id
       const apiUrl = `${API_AUTH_SUIVI}/encaissements/${activeTab}?page=${page}&search=${search}&limit=${limit}`;
-      console.log("🔗 URL API:", apiUrl);
+
 
       const response: any = await axiosInstance.get(
         apiUrl,
         { params }
       );
 
-      if (response?.error === false) {
+      if (response?.data && !response.data.error) {
         setEcartDataEncaissement(response.data);
+
+        console.log(ecartDataEncaissement, "EcartDataEncaissement");
         console.log("✅ Données reçues pour activeTab:", activeTab);
       }
     } catch (error) {
@@ -314,6 +331,9 @@ const ComponentsDashboardValider = () => {
       </div>
 
       <div className="panel mb-5">
+
+
+
         {isMounted && (
           <>
             {console.log("⚡ Rendu du Tab.Group avec activeTab =", activeTab)}
@@ -340,11 +360,16 @@ const ComponentsDashboardValider = () => {
                   </Tab>
                 ))}
               </Tab.List>
+
+              <GlobalFiltre
+                drData={drData}
+                statutValidation={activeTab}
+                onApplyFilters={fetchData}
+              />
               <Tab.Panels>
                 {filteredTabs.map((tab) => (
                   <Tab.Panel key={tab.id}>
                     {/* Log pour le débogage - tab.id vs activeTab */}
-
                     <EncaissementComptable
                       statutValidation={activeTab}
                       data={dataEncaissementReverse || []}
@@ -363,6 +388,7 @@ const ComponentsDashboardValider = () => {
           </>
         )}
       </div>
+
     </div>
   );
 };

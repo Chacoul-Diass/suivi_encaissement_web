@@ -117,6 +117,14 @@ const UnvalidatedAmount: React.FC<{
           <IconCashBanknotes className="h-5 w-5 text-gray-400" />
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={onValidateClick}
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      >
+        Valider ce montant
+      </button>
       <div className="relative">
         <input
           type="text"
@@ -129,13 +137,7 @@ const UnvalidatedAmount: React.FC<{
           <IconCashBanknotes className="h-5 w-5 text-gray-400" />
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onValidateClick}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-      >
-        Valider ce montant
-      </button>
+
     </div>
   );
 
@@ -556,14 +558,14 @@ export default function EditModal({
                 <div>
                   <p
                     className={`text-lg font-semibold ${selectedRow["Montant caisse (A)"] -
-                        selectedRow["Montant bordereau (B)"] <
+                      selectedRow["Montant bordereau (B)"] <
+                      0
+                      ? "text-red-500"
+                      : selectedRow["Montant caisse (A)"] -
+                        selectedRow["Montant bordereau (B)"] >
                         0
-                        ? "text-red-500"
-                        : selectedRow["Montant caisse (A)"] -
-                          selectedRow["Montant bordereau (B)"] >
-                          0
-                          ? "text-green-500"
-                          : "text-gray-900 dark:text-white"
+                        ? "text-green-500"
+                        : "text-gray-900 dark:text-white"
                       }`}
                   >
                     {formatNumber(

@@ -19,6 +19,7 @@ import EncaissementComptable from "../dashboard/enfant1-encaissement";
 import { fetchDataReleve } from "@/store/reducers/encaissements/releve.slice";
 import axiosInstance from "@/utils/axios";
 import { API_AUTH_SUIVI } from "@/config/constants";
+import GlobalFiltre from "@/components/filtre/globalFiltre";
 
 export default function Litige() {
   const habilitation = getUserHabilitation();
@@ -26,6 +27,25 @@ export default function Litige() {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  // Données des directions régionales pour le filtre
+  const [drData, setDrData] = useState([]);
+
+  // Charger les données des DR au chargement du composant
+  useEffect(() => {
+    const fetchDrData = async () => {
+      try {
+        const response = await axiosInstance.get(`${API_AUTH_SUIVI}/direction-regionale`);
+        if (response?.data && !response.data.error) {
+          setDrData(response.data || []);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des directions régionales:", error);
+      }
+    };
+
+    fetchDrData();
   }, []);
 
   const [activeTab, setActiveTab] = useState<EStatutEncaissement>(
@@ -45,8 +65,6 @@ export default function Litige() {
   const dataReverseloading: any = useSelector(
     (state: any) => state?.encaissementReleve?.loading
   );
-
-  console.log(dataReverseloading, "dataReverseloading");
 
 
   const allTabs = [
@@ -69,7 +87,7 @@ export default function Litige() {
     habilitation?.some(
       (h: { name: string; LIRE: boolean }) =>
         h.name.normalize("NFKC").toUpperCase() ===
-          tab.habilitationName.normalize("NFKC").toUpperCase() &&
+        tab.habilitationName.normalize("NFKC").toUpperCase() &&
         h.LIRE === true
     )
   );
@@ -123,7 +141,7 @@ export default function Litige() {
         { params }
       );
 
-      if (response?.error === false) {
+      if (response?.data && !response.data.error) {
         setEcartDataEncaissement(response.data);
       }
     } catch (error) {
@@ -188,11 +206,10 @@ export default function Litige() {
                 <Tab as={Fragment} key={tab.id}>
                   {({ selected }) => (
                     <button
-                      className={`${
-                        selected
-                          ? "text-primary !outline-none before:!w-full"
-                          : ""
-                      }relative -mb-[1px] flex items-center p-5 py-3`}
+                      className={`${selected
+                        ? "text-primary !outline-none before:!w-full"
+                        : ""
+                        }relative -mb-[1px] flex items-center p-5 py-3`}
                     >
                       <tab.icon className="ltr:mr-2 rtl:ml-2" />
                       {tab.label}
@@ -201,6 +218,13 @@ export default function Litige() {
                 </Tab>
               ))}
             </Tab.List>
+
+            <GlobalFiltre
+              drData={drData}
+              statutValidation={activeTab}
+              onApplyFilters={fetchData}
+            />
+
             <Tab.Panels>
               {filteredTabs.map((tab) => (
                 <Tab.Panel key={tab.id}>
