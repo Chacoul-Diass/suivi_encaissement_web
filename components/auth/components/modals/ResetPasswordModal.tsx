@@ -119,7 +119,7 @@ export default function ResetPasswordModal({
                 id="otpCode"
                 type="text"
                 placeholder="Entrez votre code OTP"
-                className="w-full rounded-md border border-gray-300 px-4 py-2.5 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                className="w-full text-black rounded-md border border-gray-300 px-4 py-2.5 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
                 required
