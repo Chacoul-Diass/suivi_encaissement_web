@@ -346,27 +346,25 @@ export default function EditModal({
         `${API_AUTH_SUIVI}/encaissements/validate-amount/${selectedRow.id}`
       );
 
+      // S'assurer que selectedRow.montantReleve a une valeur valide
+      if (!selectedRow.montantReleve || selectedRow.montantReleve <= 0) {
+        // Si montantReleve n'est pas défini ou est 0, utiliser le montant de la réponse API
+        if (response && response.data && response.data.montantReleve) {
+          selectedRow.montantReleve = response.data.montantReleve;
+        } else {
+          // Fallback: utiliser le montant automatique si disponible
+          const montantAuto = selectedRow.montantReleve ?? 0;
+          if (montantAuto > 0) {
+            selectedRow.montantReleve = montantAuto;
+          }
+        }
+      }
+
       const montantReleve = selectedRow.montantReleve ?? 0;
       const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
 
-      // const updatedRow = {
-      //   ...selectedRow,
-      //   observationBanque,
-      //   rasChecked1,
-      //   rasChecked2,
-      //   images2,
-      //   montantReleve: montantReleve,
-      //   dateMontantBanque,
-      //   ecartReleve: montantBordereau - montantReleve,
-      //   statutValidation: 2,
-      //   isCorrect: 1
-      // };
-
       // On met à jour localement le selectedRow pour mettre à jour l'UI immédiatement
       selectedRow.isCorrect = 1;
-
-      // On soumet immédiatement les données mises à jour au composant parent
-      // handleSubmit(updatedRow);
 
       // Fermer la modale de validation après un court délai
       setTimeout(() => {
@@ -766,7 +764,9 @@ export default function EditModal({
                 </div>
                 <div>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {montantSaisiAffichage ? `${formatNumber(parseFloat(montantSaisiAffichage))} F CFA` : "Non saisi"}
+                    {selectedRow.isCorrect === 1
+                      ? `${formatNumber(selectedRow.montantReleve ?? 0)} F CFA`
+                      : montantSaisiAffichage ? `${formatNumber(parseFloat(montantSaisiAffichage))} F CFA` : "Non saisi"}
                   </p>
                   <p className="text-sm text-gray-500">Montant Banque</p>
                 </div>
@@ -850,7 +850,9 @@ export default function EditModal({
                     : "Vous avez saisi le montant suivant :"}
                 </p>
                 <p className="mt-2 text-2xl font-bold text-primary">
-                  {montantSaisiAffichage ? `${formatNumber(parseFloat(montantSaisiAffichage))} F CFA` : "0"}
+                  {selectedRow.isCorrect === 1
+                    ? `${formatNumber(selectedRow.montantReleve ?? 0)} F CFA`
+                    : montantSaisiAffichage ? `${formatNumber(parseFloat(montantSaisiAffichage))} F CFA` : "0"}
                 </p>
 
                 <div className="mt-3">
@@ -885,25 +887,47 @@ export default function EditModal({
                   </p>
                 )}
                 {/* Affichage de l'écart spécifique confirmation */}
-                {selectedRow.isCorrect !== 1 && (
+                {selectedRow.isCorrect !== 1 ? (
                   <div className="mt-4 space-y-2">
                     <p className="text-sm text-gray-500">
-                      Écart (Automatique - Saisi) :
+                      Écart (Bordereau - Saisi) :
                     </p>
                     <p
                       className={`text-lg font-semibold ${(() => {
-                        const montantAuto = selectedRow.montantReleve ?? 0;
+                        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
                         const montantSaisi = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
-                        const ecart = montantAuto - montantSaisi;
+                        const ecart = montantBordereau - montantSaisi;
                         if (ecart < 0) return "text-red-500";
                         if (ecart > 0) return "text-green-500";
                         return "text-gray-900";
                       })()}`}
                     >
                       {(() => {
-                        const montantAuto = selectedRow.montantReleve ?? 0;
+                        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
                         const montantSaisi = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
-                        return formatNumber(montantAuto - montantSaisi);
+                        return formatNumber(montantBordereau - montantSaisi);
+                      })()} F CFA
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm text-gray-500">
+                      Écart (Bordereau - Banque) :
+                    </p>
+                    <p
+                      className={`text-lg font-semibold ${(() => {
+                        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
+                        const montantReleve = selectedRow.montantReleve ?? 0;
+                        const ecart = montantBordereau - montantReleve;
+                        if (ecart < 0) return "text-red-500";
+                        if (ecart > 0) return "text-green-500";
+                        return "text-gray-900";
+                      })()}`}
+                    >
+                      {(() => {
+                        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
+                        const montantReleve = selectedRow.montantReleve ?? 0;
+                        return formatNumber(montantBordereau - montantReleve);
                       })()} F CFA
                     </p>
                   </div>
