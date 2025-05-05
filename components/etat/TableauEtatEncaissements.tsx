@@ -713,7 +713,9 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
         <div className="panel overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
             <div className="p-5">
                 <div className="flex items-center justify-between mb-4">
-                    <h5 className="text-lg font-semibold text-gray-800">État des encaissements</h5>
+                    <h5 className="text-lg font-semibold text-gray-800">
+                        État des encaissements <span className="text-primary">({pagination?.totalCount || 0})</span>
+                    </h5>
                     <div className="flex items-center gap-3">
                         {/* Bouton actualiser */}
                         <button

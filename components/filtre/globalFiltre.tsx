@@ -510,6 +510,7 @@ export default function GlobalFiltre({
                           className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
                           value={dateRange.startDate || ""}
                           onChange={(e) => handleDateChange('startDate', e.target.value)}
+                          max={new Date().toISOString().split('T')[0]}
                         />
                       </div>
                     </div>
@@ -521,6 +522,7 @@ export default function GlobalFiltre({
                           className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
                           value={dateRange.endDate || ""}
                           onChange={(e) => handleDateChange('endDate', e.target.value)}
+                          max={new Date().toISOString().split('T')[0]}
                         />
                       </div>
                     </div>

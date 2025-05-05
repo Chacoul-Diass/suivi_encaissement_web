@@ -41,7 +41,7 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
   const [limit, setLimit] = useState(5);
 
   // Récupération des données depuis le store Redux
-  const etatStore = useSelector((state: TRootState) => state.etatEncaissement);
+  const etatStore = useSelector((state: TRootState) => state.etatEncaissement).data;
   const etatEncaissements = useSelector(
     (state: TRootState) => state.etatEncaissement?.data?.result || []
   );
@@ -149,6 +149,9 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
     }
   };
 
+  const nombreEtats = etatStore?.pagination?.totalCount;
+
+
   return (
     <div className="mb-5">
       {/* En-tête intégré avec filtres */}
@@ -166,7 +169,7 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
             <span className="text-gray-400">/</span>
             <span className="inline-flex items-center font-medium text-primary">
               <IconBox className="mr-1 h-3.5 w-3.5" />
-              État des encaissements
+              {etatEncaissements.length > 0 ? "État des encaissements" : "Aucune donnée disponible"}
             </span>
           </div>
 
