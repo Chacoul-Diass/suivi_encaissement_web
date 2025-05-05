@@ -9,7 +9,7 @@ const SessionExpiredModal: React.FC<SessionExpiredModalProps> = ({
     isOpen,
     onConfirm,
 }) => {
-    const [timeRemaining, setTimeRemaining] = useState(60); // 2 minutes en secondes
+    const [timeRemaining, setTimeRemaining] = useState(30);
     const [progress, setProgress] = useState(100); // Pour la barre de progression
 
     useEffect(() => {
