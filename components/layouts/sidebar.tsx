@@ -28,16 +28,31 @@ import { TRootState } from "@/store";
 import { safeLocalStorage } from "@/hooks/useLocalStorage";
 import IconHistory from "../icon/icon-history";
 import IconMenu2 from "../icon/icon-menu-2";
-import { IconReport } from "@tabler/icons-react";
+import { IconReport, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
   const { t } = getTranslation();
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const [habilitation, setHabilitation] = useState<any>(null);
   console.log(habilitation, "Habilitation");
   const themeConfig = useSelector((state: TRootState) => state.themeConfig);
   const auth = useSelector((state: TRootState) => state.auth);
+
+  // États pour les sections rétractables
+  const [expandedSections, setExpandedSections] = useState({
+    Analyse: true,
+    Menu: true,
+    Administration: true
+  });
+
+  // Fonction pour basculer l'état d'une section
+  const toggleSection = (section: 'Analyse' | 'Menu' | 'Administration') => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const { initLocale } = getTranslation();
   const [isLoading, setIsLoading] = useState(true);
@@ -232,12 +247,15 @@ const Sidebar = () => {
           <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/20 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
           <div className="relative flex items-center gap-3">
             <div
-              className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-500 ${pathname === menu.path
+              className={`relative flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-500 ${pathname === menu.path
                 ? "bg-primary/20 text-primary"
                 : "bg-black/20 text-white group-hover:bg-black/40 group-hover:text-white group-hover:shadow-lg group-hover:shadow-primary/20"
                 }`}
             >
               {menu.icon}
+              {pathname === menu.path && (
+                <span className="absolute -inset-1 rounded-xl bg-primary/20 animate-pulse opacity-75"></span>
+              )}
             </div>
             <span className="font-medium tracking-wide text-white transition-all duration-500 group-hover:translate-x-1">
               {translateMenuName(menu.name)}
@@ -322,8 +340,16 @@ const Sidebar = () => {
     >
       <div className="dark">
         <nav
-          className={`sidebar fixed bottom-0 top-0 z-50 h-full min-h-screen w-[280px] animate-slideIn bg-gradient-to-br from-[#0E1726] via-[#162236] to-[#1a2941] text-white-dark shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] backdrop-blur-sm transition-all duration-500 ease-in-out`}
+          className={`sidebar fixed bottom-0 top-0 z-50 h-full min-h-screen w-[280px] animate-slideIn bg-gradient-to-br from-[#0E1726] via-[#162236] to-[#1a2941] text-white-dark shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] backdrop-blur-sm transition-all duration-500 ease-in-out overflow-hidden`}
         >
+          {/* Bulles d'animation en arrière-plan */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="bubble-1 animate-float1"></div>
+            <div className="bubble-2 animate-float2"></div>
+            <div className="bubble-3 animate-float3"></div>
+            <div className="bubble-4 animate-float4"></div>
+          </div>
+
           <div className="h-full">
             {/* Header avec effet glassmorphism amélioré et animation */}
             <div className="relative border-b border-white/10 bg-gradient-to-r from-[#1a2941]/80 to-[#0E1726]/80 px-6 py-5 backdrop-blur-md">
@@ -347,40 +373,114 @@ const Sidebar = () => {
 
                   {hasMenuInSection("Analyse") && (
                     <div className="animate-fadeIn overflow-hidden rounded-2xl bg-black/20 p-4 backdrop-blur-sm transition-all duration-300 hover:bg-black/30 hover:shadow-lg hover:shadow-primary/10">
-                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase tracking-wider text-white/90">
-                        <IconMinus className="h-4 w-4 text-primary/80" />
-                        <span className="animate-slideRight">
-                          {t("Analyse")}
-                        </span>
+                      <h2
+                        onClick={() => toggleSection("Analyse")}
+                        className="relative mb-4 flex items-center justify-between cursor-pointer px-2 py-2 text-sm font-bold uppercase tracking-wider text-white/90 rounded-xl hover:bg-white/5 transition-all duration-300"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/70 to-primary/20 transition-all duration-300 group-hover:shadow-lg ${pathname.startsWith('/dashboard') ? 'shadow-md shadow-primary/30' : ''}`}>
+                            <IconMinus className="h-4 w-4 text-white" />
+                            {pathname.startsWith('/dashboard') && (
+                              <span className="absolute -inset-0.5 rounded-full bg-primary/20 animate-ping opacity-75"></span>
+                            )}
+                          </span>
+                          <span className="animate-slideRight">
+                            {t("Analyse")}
+                          </span>
+                        </div>
+                        <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-black/40 hover:bg-primary/30 transition-all duration-300">
+                          {expandedSections.Analyse ?
+                            <IconChevronUp className="h-4 w-4 text-white/80 transition-transform duration-300" /> :
+                            <IconChevronDown className="h-4 w-4 text-white/80 transition-transform duration-300" />
+                          }
+                          {expandedSections.Analyse && pathname.startsWith('/dashboard') && (
+                            <span className="absolute -inset-1 rounded-full bg-primary/20 animate-pulse opacity-75"></span>
+                          )}
+                        </div>
                       </h2>
-                      <ul className="space-y-2 px-2">
-                        {renderMenu("Analyse")}
-                      </ul>
+                      <div
+                        className={`overflow-hidden transition-all duration-500 ease-in-out ${expandedSections.Analyse ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                          }`}
+                      >
+                        <ul className="space-y-2 px-2 animate-fadeIn">
+                          {renderMenu("Analyse")}
+                        </ul>
+                      </div>
                     </div>
                   )}
 
                   {hasMenuInSection("Menu") && (
                     <div className="animate-fadeIn overflow-hidden rounded-2xl bg-black/20 p-4 backdrop-blur-sm transition-all duration-300 hover:bg-black/30 hover:shadow-lg hover:shadow-primary/10">
-                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase tracking-wider text-white/90">
-                        <IconMinus className="h-4 w-4 text-primary/80" />
-                        <span className="animate-slideRight">{t("Menu")}</span>
+                      <h2
+                        onClick={() => toggleSection("Menu")}
+                        className="relative mb-4 flex items-center justify-between cursor-pointer px-2 py-2 text-sm font-bold uppercase tracking-wider text-white/90 rounded-xl hover:bg-white/5 transition-all duration-300"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/70 to-primary/20 transition-all duration-300 group-hover:shadow-lg ${pathname.startsWith('/encaissement') || pathname.startsWith('/litige') || pathname.startsWith('/rapprochement') || pathname.startsWith('/etat') ? 'shadow-md shadow-primary/30' : ''}`}>
+                            <IconMinus className="h-4 w-4 text-white" />
+                            {(pathname.startsWith('/encaissement') || pathname.startsWith('/litige') || pathname.startsWith('/rapprochement') || pathname.startsWith('/etat')) && (
+                              <span className="absolute -inset-0.5 rounded-full bg-primary/20 animate-ping opacity-75"></span>
+                            )}
+                          </span>
+                          <span className="animate-slideRight">{t("Menu")}</span>
+                        </div>
+                        <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-black/40 hover:bg-primary/30 transition-all duration-300">
+                          {expandedSections.Menu ?
+                            <IconChevronUp className="h-4 w-4 text-white/80 transition-transform duration-300" /> :
+                            <IconChevronDown className="h-4 w-4 text-white/80 transition-transform duration-300" />
+                          }
+                          {expandedSections.Menu && (pathname.startsWith('/encaissement') || pathname.startsWith('/litige') || pathname.startsWith('/rapprochement') || pathname.startsWith('/etat')) && (
+                            <span className="absolute -inset-1 rounded-full bg-primary/20 animate-pulse opacity-75"></span>
+                          )}
+                        </div>
                       </h2>
-                      <ul className="space-y-2 px-2">{renderMenu("Menu")}</ul>
+                      <div
+                        className={`overflow-hidden transition-all duration-500 ease-in-out ${expandedSections.Menu ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                          }`}
+                      >
+                        <ul className="space-y-2 px-2 animate-fadeIn">
+                          {renderMenu("Menu")}
+                        </ul>
+                      </div>
                     </div>
                   )}
 
                   {/* Section Administration */}
                   {hasMenuInSection("Administration") && (
                     <div className="animate-fadeIn overflow-hidden rounded-2xl bg-black/20 p-4 backdrop-blur-sm transition-all duration-300 hover:bg-black/30 hover:shadow-lg hover:shadow-primary/10">
-                      <h2 className="mb-4 flex items-center gap-3 px-2 text-sm font-bold uppercase tracking-wider text-white/90">
-                        <IconMinus className="h-4 w-4 text-primary/80" />
-                        <span className="animate-slideRight">
-                          {t("Administration")}
-                        </span>
+                      <h2
+                        onClick={() => toggleSection("Administration")}
+                        className="relative mb-4 flex items-center justify-between cursor-pointer px-2 py-2 text-sm font-bold uppercase tracking-wider text-white/90 rounded-xl hover:bg-white/5 transition-all duration-300"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/70 to-primary/20 transition-all duration-300 group-hover:shadow-lg ${pathname.startsWith('/habilitation') || pathname.startsWith('/user') || pathname.startsWith('/historique') || pathname.startsWith('/parametres') ? 'shadow-md shadow-primary/30' : ''}`}>
+                            <IconMinus className="h-4 w-4 text-white" />
+                            {(pathname.startsWith('/habilitation') || pathname.startsWith('/user') || pathname.startsWith('/historique') || pathname.startsWith('/parametres')) && (
+                              <span className="absolute -inset-0.5 rounded-full bg-primary/20 animate-ping opacity-75"></span>
+                            )}
+                          </span>
+                          <span className="animate-slideRight">
+                            {t("Administration")}
+                          </span>
+                        </div>
+                        <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-black/40 hover:bg-primary/30 transition-all duration-300">
+                          {expandedSections.Administration ?
+                            <IconChevronUp className="h-4 w-4 text-white/80 transition-transform duration-300" /> :
+                            <IconChevronDown className="h-4 w-4 text-white/80 transition-transform duration-300" />
+                          }
+                          {expandedSections.Administration && (pathname.startsWith('/habilitation') || pathname.startsWith('/user') || pathname.startsWith('/historique') || pathname.startsWith('/parametres')) && (
+                            <span className="absolute -inset-1 rounded-full bg-primary/20 animate-pulse opacity-75"></span>
+                          )}
+                        </div>
                       </h2>
-                      <ul className="space-y-2 px-2">
-                        {renderMenu("Administration")}
-                      </ul>
+                      <div
+                        className={`overflow-hidden transition-all duration-500 ease-in-out ${expandedSections.Administration ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                          }`}
+                      >
+                        <ul className="space-y-2 px-2 animate-fadeIn">
+                          {renderMenu("Administration")}
+                        </ul>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -392,4 +492,80 @@ const Sidebar = () => {
     </div>
   );
 };
+
+// Ajout des styles pour les bulles
+const style = document.createElement('style');
+style.textContent = `
+  .bubble-1, .bubble-2, .bubble-3, .bubble-4 {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.01));
+    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(1px);
+  }
+  
+  .bubble-1 {
+    width: 150px;
+    height: 150px;
+    top: 10%;
+    left: -75px;
+    opacity: 0.2;
+  }
+  
+  .bubble-2 {
+    width: 80px;
+    height: 80px;
+    top: 30%;
+    right: -40px;
+    opacity: 0.15;
+  }
+  
+  .bubble-3 {
+    width: 200px;
+    height: 200px;
+    bottom: 20%;
+    left: -100px;
+    opacity: 0.1;
+  }
+  
+  .bubble-4 {
+    width: 120px;
+    height: 120px;
+    bottom: 10%;
+    right: -60px;
+    opacity: 0.2;
+  }
+  
+  @keyframes float1 {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.05); }
+  }
+  
+  @keyframes float2 {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(15px) scale(1.1); }
+  }
+  
+  @keyframes float3 {
+    0%, 100% { transform: translateY(0) scale(1); }
+    33% { transform: translateY(-15px) scale(1.08); }
+    66% { transform: translateY(10px) scale(0.95); }
+  }
+  
+  @keyframes float4 {
+    0%, 100% { transform: translateY(0) scale(1) rotate(0); }
+    50% { transform: translateY(20px) scale(1.05) rotate(5deg); }
+  }
+  
+  .animate-float1 { animation: float1 15s ease-in-out infinite; }
+  .animate-float2 { animation: float2 12s ease-in-out infinite; }
+  .animate-float3 { animation: float3 18s ease-in-out infinite; }
+  .animate-float4 { animation: float4 20s ease-in-out infinite; }
+`;
+
+// Ajout des styles au document uniquement côté client
+if (typeof document !== 'undefined') {
+  document.head.appendChild(style);
+}
+
 export default Sidebar;
