@@ -350,9 +350,14 @@ export default function GlobalFiltre({
           <div className="mb-2 flex items-center justify-between border-b border-gray-200 pb-2 dark:border-gray-700">
             <button
               type="button"
-              className="text-xs font-medium text-primary hover:text-primary/80"
+              className={`text-xs font-medium ${type === "secteurs" && selectedDRIds.length === 0
+                ? "cursor-not-allowed text-gray-400 dark:text-gray-500"
+                : "text-primary hover:text-primary/80"
+                }`}
               onClick={() =>
-                toggleAll(type, items, selected.length === items.length)
+                type === "secteurs" && selectedDRIds.length === 0
+                  ? null
+                  : toggleAll(type, items, selected.length === items.length)
               }
             >
               {selected.length === items.length
@@ -366,39 +371,45 @@ export default function GlobalFiltre({
 
           {/* Liste des éléments */}
           <div className="max-h-[250px] overflow-y-auto">
-            {items
-              .filter((item: any) => {
-                const val = item.libelle || item.name || "";
-                const searchValue =
-                  searchQueries[type as keyof typeof searchQueries];
-                return val.toLowerCase().includes(searchValue.toLowerCase());
-              })
-              .map((item: any, i: number) => (
-                <label
-                  key={i}
-                  className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <input
-                    type="checkbox"
-                    checked={
-                      type === "drs" || type === "secteurs"
-                        ? selected.includes(item.id)
-                        : selected.some(
-                          (sel: any) => sel.libelle === item.libelle
-                        )
-                    }
-                    onChange={() =>
-                      type === "drs" || type === "secteurs"
-                        ? onToggle(item.id)
-                        : onToggle(item.libelle)
-                    }
-                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-200">
-                    {item.libelle || item.name}
-                  </span>
-                </label>
-              ))}
+            {type === "secteurs" && selectedDRIds.length === 0 ? (
+              <div className="py-4 text-center text-sm text-amber-600 dark:text-amber-400">
+                Veuillez sélectionner au moins une Direction Régionale
+              </div>
+            ) : (
+              items
+                .filter((item: any) => {
+                  const val = item.libelle || item.name || "";
+                  const searchValue =
+                    searchQueries[type as keyof typeof searchQueries];
+                  return val.toLowerCase().includes(searchValue.toLowerCase());
+                })
+                .map((item: any, i: number) => (
+                  <label
+                    key={i}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={
+                        type === "drs" || type === "secteurs"
+                          ? selected.includes(item.id)
+                          : selected.some(
+                            (sel: any) => sel.libelle === item.libelle
+                          )
+                      }
+                      onChange={() =>
+                        type === "drs" || type === "secteurs"
+                          ? onToggle(item.id)
+                          : onToggle(item.libelle)
+                      }
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-200">
+                      {item.libelle || item.name}
+                    </span>
+                  </label>
+                ))
+            )}
           </div>
         </div>
       </Dropdown>
@@ -601,7 +612,7 @@ export default function GlobalFiltre({
                 {renderDropdown(
                   <>
                     <IconOffice className="h-4 w-4 text-gray-400" />
-                    <span>Exploitations</span>
+                    <span>{"Exploitations"}</span>
                   </>,
                   "secteurs",
                   secteurs.filter((secteur: any) =>
@@ -610,6 +621,7 @@ export default function GlobalFiltre({
                   selectedSecteurIds,
                   (id) => toggleSecteur(id as number)
                 )}
+
               </div>
             </div>
           </div>
