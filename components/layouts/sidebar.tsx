@@ -30,6 +30,77 @@ import IconHistory from "../icon/icon-history";
 import IconMenu2 from "../icon/icon-menu-2";
 import { IconReport, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 
+// Style pour les animations des bulles
+import { createGlobalStyle } from 'styled-components';
+
+const BubbleAnimations = createGlobalStyle`
+  .bubble-1, .bubble-2, .bubble-3, .bubble-4 {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.01));
+    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(1px);
+  }
+  
+  .bubble-1 {
+    width: 150px;
+    height: 150px;
+    top: 10%;
+    left: -75px;
+    opacity: 0.2;
+  }
+  
+  .bubble-2 {
+    width: 80px;
+    height: 80px;
+    top: 30%;
+    right: -40px;
+    opacity: 0.15;
+  }
+  
+  .bubble-3 {
+    width: 200px;
+    height: 200px;
+    bottom: 20%;
+    left: -100px;
+    opacity: 0.1;
+  }
+  
+  .bubble-4 {
+    width: 120px;
+    height: 120px;
+    bottom: 10%;
+    right: -60px;
+    opacity: 0.2;
+  }
+  
+  @keyframes float1 {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.05); }
+  }
+  
+  @keyframes float2 {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(15px) scale(1.1); }
+  }
+  
+  @keyframes float3 {
+    0%, 100% { transform: translateY(0) scale(1); }
+    33% { transform: translateY(-15px) scale(1.08); }
+    66% { transform: translateY(10px) scale(0.95); }
+  }
+  
+  @keyframes float4 {
+    0%, 100% { transform: translateY(0) scale(1) rotate(0); }
+    50% { transform: translateY(20px) scale(1.05) rotate(5deg); }
+  }
+  
+  .animate-float1 { animation: float1 15s ease-in-out infinite; }
+  .animate-float2 { animation: float2 12s ease-in-out infinite; }
+  .animate-float3 { animation: float3 18s ease-in-out infinite; }
+  .animate-float4 { animation: float4 20s ease-in-out infinite; }
+`;
+
 const Sidebar = () => {
   const dispatch = useDispatch();
   const { t } = getTranslation();
@@ -338,6 +409,7 @@ const Sidebar = () => {
       main-section relative font-nunito text-sm font-normal antialiased
     `}
     >
+      <BubbleAnimations />
       <div className="dark">
         <nav
           className={`sidebar fixed bottom-0 top-0 z-50 h-full min-h-screen w-[280px] animate-slideIn bg-gradient-to-br from-[#0E1726] via-[#162236] to-[#1a2941] text-white-dark shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] backdrop-blur-sm transition-all duration-500 ease-in-out overflow-hidden`}
@@ -492,80 +564,5 @@ const Sidebar = () => {
     </div>
   );
 };
-
-// Ajout des styles pour les bulles
-const style = document.createElement('style');
-style.textContent = `
-  .bubble-1, .bubble-2, .bubble-3, .bubble-4 {
-    position: absolute;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.01));
-    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(1px);
-  }
-  
-  .bubble-1 {
-    width: 150px;
-    height: 150px;
-    top: 10%;
-    left: -75px;
-    opacity: 0.2;
-  }
-  
-  .bubble-2 {
-    width: 80px;
-    height: 80px;
-    top: 30%;
-    right: -40px;
-    opacity: 0.15;
-  }
-  
-  .bubble-3 {
-    width: 200px;
-    height: 200px;
-    bottom: 20%;
-    left: -100px;
-    opacity: 0.1;
-  }
-  
-  .bubble-4 {
-    width: 120px;
-    height: 120px;
-    bottom: 10%;
-    right: -60px;
-    opacity: 0.2;
-  }
-  
-  @keyframes float1 {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-20px) scale(1.05); }
-  }
-  
-  @keyframes float2 {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(15px) scale(1.1); }
-  }
-  
-  @keyframes float3 {
-    0%, 100% { transform: translateY(0) scale(1); }
-    33% { transform: translateY(-15px) scale(1.08); }
-    66% { transform: translateY(10px) scale(0.95); }
-  }
-  
-  @keyframes float4 {
-    0%, 100% { transform: translateY(0) scale(1) rotate(0); }
-    50% { transform: translateY(20px) scale(1.05) rotate(5deg); }
-  }
-  
-  .animate-float1 { animation: float1 15s ease-in-out infinite; }
-  .animate-float2 { animation: float2 12s ease-in-out infinite; }
-  .animate-float3 { animation: float3 18s ease-in-out infinite; }
-  .animate-float4 { animation: float4 20s ease-in-out infinite; }
-`;
-
-// Ajout des styles au document uniquement côté client
-if (typeof document !== 'undefined') {
-  document.head.appendChild(style);
-}
 
 export default Sidebar;
