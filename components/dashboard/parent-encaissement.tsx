@@ -182,6 +182,8 @@ const ComponentsDashboardValider = () => {
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(5);
   const [ecartDataEncaissement, setEcartDataEncaissement] = useState<any>(null);
+  // Ajouter un état pour stocker les filtres courants
+  const [currentFilters, setCurrentFilters] = useState<Record<string, any>>({});
 
   const handlePageChange = (page: number) => {
     if (page > 0 && page <= paginate.totalPages) {
@@ -195,6 +197,14 @@ const ComponentsDashboardValider = () => {
   const fetchData = async (filters?: Record<string, any>) => {
     setLoading(true);
     try {
+      // Si des filtres sont fournis, les mettre à jour dans l'état
+      if (filters) {
+        setCurrentFilters(filters);
+      }
+
+      // Utiliser soit les nouveaux filtres passés, soit ceux stockés dans l'état
+      const filtersToUse = filters || currentFilters;
+
       const cleanArray = (arr?: string[]): string[] =>
         arr ? arr.map((item) => item.trim()) : [];
 
@@ -211,19 +221,19 @@ const ComponentsDashboardValider = () => {
       };
 
       const params: Record<string, any> = {
-        directionRegional: filters?.directionRegional
-          ? formatArray(filters.directionRegional)
+        directionRegional: filtersToUse?.directionRegional
+          ? formatArray(filtersToUse.directionRegional)
           : undefined,
-        codeExpl: filters?.codeExpl ? formatArray(filters.codeExpl) : undefined,
-        startDate: filters?.startDate
-          ? formatDate(filters.startDate)
+        codeExpl: filtersToUse?.codeExpl ? formatArray(filtersToUse.codeExpl) : undefined,
+        startDate: filtersToUse?.startDate
+          ? formatDate(filtersToUse.startDate)
           : undefined,
-        endDate: filters?.endDate ? formatDate(filters.endDate) : undefined,
-        banque: filters?.banque ? formatArray(filters.banque) : undefined,
-        caisse: filters?.caisse ? formatArray(filters.caisse) : undefined,
-        produit: filters?.produit ? formatArray(filters.produit) : undefined,
-        modeReglement: filters?.modeReglement
-          ? formatArray(filters.modeReglement)
+        endDate: filtersToUse?.endDate ? formatDate(filtersToUse.endDate) : undefined,
+        banque: filtersToUse?.banque ? formatArray(filtersToUse.banque) : undefined,
+        caisse: filtersToUse?.caisse ? formatArray(filtersToUse.caisse) : undefined,
+        produit: filtersToUse?.produit ? formatArray(filtersToUse.produit) : undefined,
+        modeReglement: filtersToUse?.modeReglement
+          ? formatArray(filtersToUse.modeReglement)
           : undefined,
       };
 
@@ -242,8 +252,6 @@ const ComponentsDashboardValider = () => {
 
       if (response?.data && !response.data.error) {
         setEcartDataEncaissement(response.data);
-
-        console.log(ecartDataEncaissement, "EcartDataEncaissement");
         console.log("✅ Données reçues pour activeTab:", activeTab);
       }
     } catch (error) {
@@ -263,15 +271,11 @@ const ComponentsDashboardValider = () => {
     setPage(1);
   };
 
+  // Mise à jour du useEffect pour utiliser les filtres actuels lors des changements de page/recherche/limite
   useEffect(() => {
     if (isMounted) {
       console.log("⭐ Déclenchement requête API avec activeTab:", activeTab, "page:", page, "search:", search, "limit:", limit);
-      fetchData({
-        id: activeTab.toString(),
-        page: page || 1,
-        search: search || "",
-        limit: limit || 5,
-      });
+      fetchData();
 
       // Mettre à jour le titre dans la page
       const activeTabInfo = filteredTabs.find(tab => tab.id === activeTab);
@@ -292,12 +296,7 @@ const ComponentsDashboardValider = () => {
 
           // Appeler fetchData avec un léger délai pour garantir le nettoyage préalable
           setTimeout(() => {
-            fetchData({
-              id: activeTab.toString(),
-              page: page || 1,
-              search: search || "",
-              limit: limit || 5,
-            });
+            fetchData();
           }, 100);
         };
       }
@@ -326,6 +325,14 @@ const ComponentsDashboardValider = () => {
       }
     }
   }, [activeTab, isMounted, filteredTabs]);
+
+  // Mise à jour de la méthode handleApplyFilters pour GlobalFiltre
+  const handleApplyFilters = (newFilters: any) => {
+    // Réinitialiser la page à 1 lors de l'application de nouveaux filtres
+    setPage(1);
+    // Appliquer les nouveaux filtres
+    fetchData(newFilters);
+  };
 
   const dataEncaissementReverse = ecartDataEncaissement?.result || [];
   const Totaldata = ecartDataEncaissement?.totals || [];
@@ -387,7 +394,7 @@ const ComponentsDashboardValider = () => {
               <GlobalFiltre
                 drData={drData}
                 statutValidation={activeTab}
-                onApplyFilters={fetchData}
+                onApplyFilters={handleApplyFilters}
               />
               <Tab.Panels>
                 {filteredTabs.map((tab) => (

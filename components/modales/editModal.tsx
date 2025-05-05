@@ -761,6 +761,7 @@ export default function EditModal({
                       className="form-input w-full rounded-lg border-gray-300 bg-white py-3 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                       value={dateMontantBanque}
                       onChange={(e) => setDateMontantBanque(e.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                 </div>
@@ -901,6 +902,7 @@ export default function EditModal({
                       className="form-input w-full rounded-lg border-gray-300 bg-white py-2 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                       value={dateMontantBanque}
                       onChange={(e) => setDateMontantBanque(e.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                   {!dateMontantBanque && (

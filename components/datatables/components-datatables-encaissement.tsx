@@ -382,7 +382,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             page: currentPage,
             limit: pageSize,
             search: search || "",
-            ...params
+            ...params // Inclure tous les paramètres/filtres actuels
           })
         ).unwrap();
 
@@ -1430,7 +1430,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         await new Promise(resolve => setTimeout(resolve, 100));
 
         // Utiliser la fonction refreshTableData pour rafraîchir les données
-        // Afficher le toast car c'est une action explicite de l'utilisateur
+        // avec les nouveaux paramètres
         await refreshTableData(true);
       } catch (error) {
         console.error("Erreur lors de l'application des filtres:", error);
