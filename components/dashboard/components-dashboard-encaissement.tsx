@@ -1083,7 +1083,10 @@ const ComponentsDashboardSales = () => {
   const [selectedCodeExpl, setSelectedCodeExpl] = useState<number[]>([]);
   const [selectedDR, setSelectedDR] = useState<any[]>([]);
   const [selectedSecteur, setSelectedSecteur] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState(1);
+  const [activeTab, setActiveTab] = useState(() => {
+    // Récupérer l'onglet actif depuis localStorage ou utiliser 1 par défaut
+    return parseInt(localStorage.getItem('activeTab') || '1');
+  });
   const [isTableView, setIsTableView] = useState(true);
   const [showAllRestitution, setShowAllRestitution] = useState(false);
   const [showAllBordereau, setShowAllBordereau] = useState(false);
@@ -1171,7 +1174,6 @@ const ComponentsDashboardSales = () => {
 
       if (response?.error === false) {
         setEcartData(response?.data);
-        console.log(response?.data, "ecartData");
       }
     } catch (error) {
       console.error("Erreur lors de la récupération des écarts:", error);
@@ -1303,6 +1305,11 @@ const ComponentsDashboardSales = () => {
       }
     });
   };
+
+  // Sauvegarder l'onglet actif dans localStorage chaque fois qu'il change
+  useEffect(() => {
+    localStorage.setItem('activeTab', activeTab.toString());
+  }, [activeTab]);
 
   return (
     <>

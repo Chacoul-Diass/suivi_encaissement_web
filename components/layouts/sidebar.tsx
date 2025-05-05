@@ -114,7 +114,7 @@ const Sidebar = () => {
   const [expandedSections, setExpandedSections] = useState({
     Analyse: true,
     Menu: true,
-    Administration: true
+    Administration: false
   });
 
   // Fonction pour basculer l'état d'une section
