@@ -36,6 +36,7 @@ export default function GlobalFiltre({
   statutValidation,
 }: GlobalFiltreProps) {
   const dispatch = useDispatch<TAppDispatch>();
+  const [isFilterExpanded, setIsFilterExpanded] = useState(true);
 
   // État pour la période, adapté pour utiliser des chaînes de caractères au lieu de dates
   const [dateRange, setDateRange] = useState<{ startDate: string, endDate: string }>({
@@ -404,28 +405,61 @@ export default function GlobalFiltre({
     </div>
   );
 
+  // Fonction pour obtenir le nombre total d'éléments sélectionnés
+  const getTotalSelectedCount = () => {
+    return (
+      selectedDRIds.length +
+      selectedSecteurIds.length +
+      selectedItems.banques.length +
+      selectedItems.caisses.length +
+      selectedItems.produit.length +
+      selectedItems.modes.length +
+      (dateRange.startDate && dateRange.endDate ? 1 : 0)
+    );
+  };
+
+  const totalSelectedFilters = getTotalSelectedCount();
+
   return (
-    <div className="mb-8 space-y-5 rounded-lg bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md dark:bg-gray-800">
-      <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
+    <div className="mb-8 rounded-lg bg-white shadow-sm transition-all duration-300 hover:shadow-md dark:bg-gray-800">
+      <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <IconFilter className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-            Filtres{" "}
+            Filtres {totalSelectedFilters > 0 && (
+              <span className="relative ml-2 inline-flex items-center justify-center">
+                <span className="animate-ping absolute h-full w-full rounded-full bg-primary/30 opacity-75"></span>
+                <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-white shadow-sm">
+                  {totalSelectedFilters}
+                </span>
+              </span>
+            )}
           </h2>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={resetFilters}
-            className="group flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            aria-label={isFilterExpanded ? "Réduire" : "Développer"}
           >
-            <IconRefresh className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
+            <IconCaretDown
+              className={`h-4 w-4 text-primary transition-transform duration-300 ${isFilterExpanded ? 'rotate-180' : ''}`}
+            />
+            <span>{isFilterExpanded ? "Réduire" : "Développer"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="group flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+          >
+            <IconRefresh className="h-4 w-4 text-primary transition-transform duration-200 group-hover:rotate-180" />
             Réinitialiser
           </button>
           <button
             type="button"
             onClick={applyFilters}
-            className="group flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-primary/90 hover:shadow-sm"
+            className="group flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white transition-all duration-200 hover:bg-primary/90 hover:shadow-sm"
           >
             <IconFilter className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
             Appliquer
@@ -433,144 +467,199 @@ export default function GlobalFiltre({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-start gap-4 lg:flex-nowrap lg:items-center">
-        {/* Sélecteur de dates personnalisé */}
-        <div className="relative w-full sm:w-auto" ref={datePickerRef}>
-          <div
-            className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-            onClick={() => setIsDateRangeVisible(!isDateRangeVisible)}
-          >
-            <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-              <IconCalendar className="h-4 w-4 text-gray-400" />
-              <span>
-                {dateRange.startDate && dateRange.endDate
-                  ? `${dayjs(dateRange.startDate).format("DD/MM/YYYY")} - ${dayjs(dateRange.endDate).format("DD/MM/YYYY")}`
-                  : "Sélectionner la période"}
+      {isFilterExpanded && (
+        <div className="space-y-4 p-4">
+          <div className="flex flex-wrap items-start gap-4 lg:flex-nowrap lg:items-center">
+            {/* Sélecteur de dates personnalisé */}
+            <div className="relative w-full sm:w-auto" ref={datePickerRef}>
+              <Dropdown
+                btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${dateRange.startDate && dateRange.endDate ? "ring-2 ring-primary/30" : ""
+                  }`}
+                button={
+                  <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                    <IconCalendar className={`h-4 w-4 ${dateRange.startDate && dateRange.endDate ? 'text-primary' : 'text-gray-400'}`} />
+                    <span>
+                      {dateRange.startDate && dateRange.endDate
+                        ? `${dayjs(dateRange.startDate).format("DD/MM/YYYY")} - ${dayjs(dateRange.endDate).format("DD/MM/YYYY")}`
+                        : "Sélectionner la période"}
+                    </span>
+                  </div>
+                }
+                customContent={true}
+                onClick={() => setIsDateRangeVisible(!isDateRangeVisible)}
+              >
+                {isDateRangeVisible && (
+                  <div
+                    className="absolute z-10 mt-2 w-full min-w-[300px] rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="mb-3 space-y-3">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date début</label>
+                        <input
+                          type="date"
+                          className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                          value={dateRange.startDate || ""}
+                          onChange={(e) => handleDateChange('startDate', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date fin</label>
+                        <input
+                          type="date"
+                          className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                          value={dateRange.endDate || ""}
+                          onChange={(e) => handleDateChange('endDate', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className="flex-1 rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                        onClick={() => {
+                          setDateRange({ startDate: "", endDate: "" });
+                          setIsDateRangeVisible(false);
+                        }}
+                      >
+                        Effacer
+                      </button>
+                      <button
+                        className="flex-1 rounded-lg bg-primary py-2 text-sm font-medium text-white transition-all hover:bg-primary/90"
+                        onClick={() => setIsDateRangeVisible(false)}
+                      >
+                        Appliquer
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </Dropdown>
+            </div>
+
+            {/* Dropdowns avec icônes */}
+            <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+              <div className="w-full">
+                {renderDropdown(
+                  <>
+                    <IconCash className="h-4 w-4 text-gray-400" />
+                    <span>Produits</span>
+                  </>,
+                  "produit",
+                  produit,
+                  selectedItems.produit,
+                  (libelle) => toggleSelection(libelle, "produit")
+                )}
+              </div>
+              <div className="w-full">
+                {renderDropdown(
+                  <>
+                    <IconCash className="h-4 w-4 text-gray-400" />
+                    <span>Caisses</span>
+                  </>,
+                  "caisses",
+                  caisses,
+                  selectedItems.caisses,
+                  (libelle) => toggleSelection(libelle, "caisses")
+                )}
+              </div>
+              <div className="w-full">
+                {renderDropdown(
+                  <>
+                    <IconCreditCard className="h-4 w-4 text-gray-400" />
+                    <span>Mode de règlement</span>
+                  </>,
+                  "modes",
+                  modes,
+                  selectedItems.modes,
+                  (libelle) => toggleSelection(libelle, "modes")
+                )}
+              </div>
+              <div className="w-full">
+                {renderDropdown(
+                  <>
+                    <IconBank className="h-4 w-4 text-gray-400" />
+                    <span>Banque</span>
+                  </>,
+                  "banques",
+                  banques,
+                  selectedItems.banques,
+                  (libelle) => toggleSelection(libelle, "banques")
+                )}
+              </div>
+              <div className="w-full">
+                {renderDropdown(
+                  <>
+                    <IconBuilding className="h-4 w-4 text-gray-400" />
+                    <span>Direction Régionale</span>
+                  </>,
+                  "drs",
+                  drData,
+                  selectedDRIds,
+                  (id) => toggleDR(id as number)
+                )}
+              </div>
+              <div className="w-full">
+                {renderDropdown(
+                  <>
+                    <IconOffice className="h-4 w-4 text-gray-400" />
+                    <span>Exploitations</span>
+                  </>,
+                  "secteurs",
+                  secteurs.filter((secteur: any) =>
+                    selectedDRIds.includes(secteur.directionRegionaleId)
+                  ),
+                  selectedSecteurIds,
+                  (id) => toggleSecteur(id as number)
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isFilterExpanded && totalSelectedFilters > 0 && (
+        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/30 rounded-b-lg">
+          <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <span className="font-medium">Filtres actifs:</span>
+            {dateRange.startDate && dateRange.endDate && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                <IconCalendar className="h-3 w-3 inline-block mr-1" />
+                {dayjs(dateRange.startDate).format("DD/MM/YYYY")} - {dayjs(dateRange.endDate).format("DD/MM/YYYY")}
               </span>
-            </div>
-          </div>
-
-          {isDateRangeVisible && (
-            <div className="absolute z-10 mt-2 w-full min-w-[300px] rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-              <div className="mb-3 space-y-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date début</label>
-                  <input
-                    type="date"
-                    className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
-                    value={dateRange.startDate || ""}
-                    onChange={(e) => handleDateChange('startDate', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date fin</label>
-                  <input
-                    type="date"
-                    className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
-                    value={dateRange.endDate || ""}
-                    onChange={(e) => handleDateChange('endDate', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  className="flex-1 rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                  onClick={() => {
-                    setDateRange({ startDate: "", endDate: "" });
-                    setIsDateRangeVisible(false);
-                  }}
-                >
-                  Effacer
-                </button>
-                <button
-                  className="flex-1 rounded-lg bg-primary py-2 text-sm font-medium text-white transition-all hover:bg-primary/90"
-                  onClick={() => setIsDateRangeVisible(false)}
-                >
-                  Appliquer
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Dropdowns avec icônes */}
-        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="w-full">
-            {renderDropdown(
-              <>
-                <IconCash className="h-4 w-4 text-gray-400" />
-                <span>Produits</span>
-              </>,
-              "produit",
-              produit,
-              selectedItems.produit,
-              (libelle) => toggleSelection(libelle, "produit")
             )}
-          </div>
-          <div className="w-full">
-            {renderDropdown(
-              <>
-                <IconCash className="h-4 w-4 text-gray-400" />
-                <span>Caisses</span>
-              </>,
-              "caisses",
-              caisses,
-              selectedItems.caisses,
-              (libelle) => toggleSelection(libelle, "caisses")
+            {selectedItems.produit.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                <IconCash className="h-3 w-3 inline-block mr-1" />
+                {selectedItems.produit.length} Produit(s)
+              </span>
             )}
-          </div>
-          <div className="w-full">
-            {renderDropdown(
-              <>
-                <IconCreditCard className="h-4 w-4 text-gray-400" />
-                <span>Mode de règlement</span>
-              </>,
-              "modes",
-              modes,
-              selectedItems.modes,
-              (libelle) => toggleSelection(libelle, "modes")
+            {selectedItems.caisses.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {selectedItems.caisses.length} Caisse(s)
+              </span>
             )}
-          </div>
-          <div className="w-full">
-            {renderDropdown(
-              <>
-                <IconBank className="h-4 w-4 text-gray-400" />
-                <span>Banque</span>
-              </>,
-              "banques",
-              banques,
-              selectedItems.banques,
-              (libelle) => toggleSelection(libelle, "banques")
+            {selectedItems.modes.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {selectedItems.modes.length} Mode(s)
+              </span>
             )}
-          </div>
-          <div className="w-full">
-            {renderDropdown(
-              <>
-                <IconBuilding className="h-4 w-4 text-gray-400" />
-                <span>Direction Régionale</span>
-              </>,
-              "drs",
-              drData,
-              selectedDRIds,
-              (id) => toggleDR(id as number)
+            {selectedItems.banques.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {selectedItems.banques.length} Banque(s)
+              </span>
             )}
-          </div>
-          <div className="w-full">
-            {renderDropdown(
-              <>
-                <IconOffice className="h-4 w-4 text-gray-400" />
-                <span>Exploitations</span>
-              </>,
-              "secteurs",
-              secteurs.filter((secteur: any) =>
-                selectedDRIds.includes(secteur.directionRegionaleId)
-              ),
-              selectedSecteurIds,
-              (id) => toggleSecteur(id as number)
+            {selectedDRIds.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {selectedDRIds.length} Direction(s)
+              </span>
+            )}
+            {selectedSecteurIds.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {selectedSecteurIds.length} Exploitation(s)
+              </span>
             )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

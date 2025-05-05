@@ -278,6 +278,29 @@ const ComponentsDashboardValider = () => {
       if (activeTabInfo) {
         document.title = `${activeTabInfo.label} - Suivi Encaissement`;
       }
+
+      // Rendre fetchData disponible globalement pour le modal
+      if (typeof window !== 'undefined') {
+        // Définir un type pour window pour éviter les erreurs TypeScript
+        (window as any).fetchData = () => {
+          console.log("❗Appel de window.fetchData global - Rafraîchissement complet");
+          // Forcer le nettoyage des données actuelles
+          setEcartDataEncaissement(null);
+
+          // Réinitialiser l'état pour forcer un rafraîchissement complet
+          setLoading(true);
+
+          // Appeler fetchData avec un léger délai pour garantir le nettoyage préalable
+          setTimeout(() => {
+            fetchData({
+              id: activeTab.toString(),
+              page: page || 1,
+              search: search || "",
+              limit: limit || 5,
+            });
+          }, 100);
+        };
+      }
     }
   }, [activeTab, isMounted, page, search, limit]);
 

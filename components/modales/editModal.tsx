@@ -55,6 +55,7 @@ interface EditModalProps {
   setImages2: (images: ImageListType) => void;
   onChange2: (imageList: ImageListType) => void;
   handleMontantChange: (value: any) => void;
+  fetchData?: () => void;
 }
 
 // Composant pour le cas validé
@@ -194,6 +195,7 @@ export default function EditModal({
   setImages2,
   onChange2,
   handleMontantChange,
+  fetchData,
 }: EditModalProps) {
   const maxNumber = 69;
   // États pour le cas où un montant est déjà remonté
@@ -419,6 +421,33 @@ export default function EditModal({
       // Fermer le modal
       setIsConfirmationModalOpen(false);
       setModalOpen(false);
+
+      // Attendre un peu pour laisser le temps à l'API de traiter la mise à jour,
+      // puis rafraîchir les données avec plusieurs méthodes pour garantir la mise à jour
+      setTimeout(() => {
+        console.log("Rafraîchissement des données après confirmation");
+
+        // Méthode 1: Utiliser le prop fetchData (refreshTableData)
+        if (fetchData) {
+          console.log("Méthode 1: Appel de fetchData via props");
+          fetchData();
+        }
+
+        // Méthode 2: Utiliser window.fetchData global
+        if (typeof window !== 'undefined' && (window as any).fetchData) {
+          console.log("Méthode 2: Appel de window.fetchData");
+          (window as any).fetchData();
+        }
+
+        // Méthode 3: Forcer un rafraîchissement de la page si rien d'autre ne fonctionne
+        // Cette méthode est plus drastique mais garantit la mise à jour
+        if (!fetchData && (typeof window === 'undefined' || !(window as any).fetchData)) {
+          console.log("Méthode 3: Forcer le rafraîchissement de la page");
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }
+      }, 800); // Augmenter le délai à 800ms pour laisser plus de temps à l'API
     } catch (error) {
       console.error("Erreur lors de la confirmation :", error);
       Toastify("error", "Une erreur est survenue lors de la validation");
