@@ -215,8 +215,6 @@ export default function GlobalFiltre({
 
   // Gestion du changement de date
   const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
-    console.log(`Date ${field} changée:`, value);
-
     setDateRange(prev => ({
       ...prev,
       [field]: value
@@ -239,8 +237,8 @@ export default function GlobalFiltre({
       caisse: selectedItems.caisses.map((caisse) => caisse.libelle.trim()),
       produit: selectedItems.produit.map((produit) => produit.libelle.trim()),
       modeReglement: selectedItems.modes.map((mode) => mode.libelle.trim()),
-      startDate: dateRange.startDate, // Utiliser directement la valeur de l'état
-      endDate: dateRange.endDate,     // Utiliser directement la valeur de l'état
+      startDate: dateRange.startDate || "",
+      endDate: dateRange.endDate || "",
     };
   };
 
@@ -484,6 +482,8 @@ export default function GlobalFiltre({
             {/* Sélecteur de dates personnalisé */}
             <div className="relative w-full sm:w-auto" ref={datePickerRef}>
               <Dropdown
+                placement="bottom-start"
+                offset={[0, 10]}
                 btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${dateRange.startDate && dateRange.endDate ? "ring-2 ring-primary/30" : ""
                   }`}
                 button={
@@ -496,17 +496,15 @@ export default function GlobalFiltre({
                     </span>
                   </div>
                 }
-                customContent={true}
-                onClick={() => setIsDateRangeVisible(!isDateRangeVisible)}
               >
-                {isDateRangeVisible && (
-                  <div
-                    className="absolute z-10 mt-2 w-full min-w-[300px] rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="mb-3 space-y-3">
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date début</label>
+                <div
+                  className="w-full min-w-[300px] rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="mb-3 space-y-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date début</label>
+                      <div className="relative">
                         <input
                           type="date"
                           className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
@@ -514,8 +512,10 @@ export default function GlobalFiltre({
                           onChange={(e) => handleDateChange('startDate', e.target.value)}
                         />
                       </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date fin</label>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date fin</label>
+                      <div className="relative">
                         <input
                           type="date"
                           className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
@@ -524,25 +524,9 @@ export default function GlobalFiltre({
                         />
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        className="flex-1 rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                        onClick={() => {
-                          setDateRange({ startDate: "", endDate: "" });
-                          setIsDateRangeVisible(false);
-                        }}
-                      >
-                        Effacer
-                      </button>
-                      <button
-                        className="flex-1 rounded-lg bg-primary py-2 text-sm font-medium text-white transition-all hover:bg-primary/90"
-                        onClick={() => setIsDateRangeVisible(false)}
-                      >
-                        Appliquer
-                      </button>
-                    </div>
                   </div>
-                )}
+
+                </div>
               </Dropdown>
             </div>
 
