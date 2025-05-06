@@ -531,27 +531,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                 </div>
               )}
 
-              {/* Sélecteur d'affichage par page - seulement si des données paginées sont présentes */}
-              {/* {pagination && pagination.totalCount > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Afficher</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value));
-                      onPageChange(1);
-                    }}
-                    className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700 shadow-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  >
-                    {PAGE_SIZES.map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">par page</span>
-                </div>
-              )} */}
+
             </div>
           </div>
 
@@ -834,9 +814,16 @@ const ComponentsDashboardSales = () => {
       return cleaned.length ? JSON.stringify(cleaned) : undefined;
     };
 
+    console.log(filters, "filters");
+
     const params: Record<string, any> = {};
 
-    if (filters?.selectedDRIds?.length) {
+    if (filters?.selectedDRLabel?.length) {
+      params["directionRegional"] = formatArray(
+        filters.selectedDRLabel.map(String)
+      );
+    } else if (filters?.selectedDRIds?.length) {
+      // Si on n'a pas les labels, on essaie avec les IDs
       params["directionRegional"] = formatArray(
         filters.selectedDRIds.map(String)
       );
@@ -861,6 +848,7 @@ const ComponentsDashboardSales = () => {
       }
     });
 
+    console.log(params, "params");
     try {
       setLoading(true);
       const response: any = await axiosInstance.get(
@@ -1095,7 +1083,10 @@ const ComponentsDashboardSales = () => {
   const [selectedCodeExpl, setSelectedCodeExpl] = useState<number[]>([]);
   const [selectedDR, setSelectedDR] = useState<any[]>([]);
   const [selectedSecteur, setSelectedSecteur] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState(1);
+  const [activeTab, setActiveTab] = useState(() => {
+    // Récupérer l'onglet actif depuis localStorage ou utiliser 1 par défaut
+    return parseInt(localStorage.getItem('activeTab') || '1');
+  });
   const [isTableView, setIsTableView] = useState(true);
   const [showAllRestitution, setShowAllRestitution] = useState(false);
   const [showAllBordereau, setShowAllBordereau] = useState(false);
@@ -1131,30 +1122,58 @@ const ComponentsDashboardSales = () => {
   }, [secteurs, selectedDRIds]);
 
   const fetchEcartData = async (filters?: any) => {
-    const config = {
-      method: "get",
-      maxBodyLength: Infinity,
-      url: `${API_AUTH_SUIVI}/dashboard/get-ecart-data`,
-      params: {
-        ...(filters?.selectedDRIds?.length && {
-          directionRegional: filters.selectedDRIds.map(String),
-        }),
-        ...(filters?.selectedSecteurIds?.length && {
-          codeExpl: filters.selectedSecteurIds.map(String),
-        }),
-        ...(filters?.startDate && { startDate: filters.startDate }),
-        ...(filters?.endDate && { endDate: filters.endDate }),
-      },
+    const cleanArray = (arr: string[] | undefined) =>
+      arr?.map((item) => item.trim()).filter(Boolean) || [];
+
+    const formatArray = (arr: string[] | undefined) => {
+      const cleaned = cleanArray(arr);
+      return cleaned.length ? JSON.stringify(cleaned) : undefined;
     };
 
+    console.log(filters, "filters ecartData");
+
+    const params: Record<string, any> = {};
+
+    if (filters?.selectedDRLabel?.length) {
+      params["directionRegional"] = formatArray(
+        filters.selectedDRLabel.map(String)
+      );
+    } else if (filters?.selectedDRIds?.length) {
+      // Si on n'a pas les labels, on essaie avec les IDs
+      params["directionRegional"] = formatArray(
+        filters.selectedDRIds.map(String)
+      );
+    }
+
+    if (filters?.selectedSecteurIds?.length) {
+      params["codeExpl"] = formatArray(filters.selectedSecteurIds.map(String));
+    }
+
+    if (filters?.startDate) {
+      params["startDate"] = filters.startDate;
+    }
+
+    if (filters?.endDate) {
+      params["endDate"] = filters.endDate;
+    }
+
+    // Supprimer les paramètres undefined
+    Object.keys(params).forEach((key) => {
+      if (params[key] === undefined) {
+        delete params[key];
+      }
+    });
+
+    console.log(params, "params ecartData");
     try {
       setLoading(true);
-      const response: any = await axiosInstance.request(config);
+      const response: any = await axiosInstance.get(
+        `${API_AUTH_SUIVI}/dashboard/get-ecart-data`,
+        { params }
+      );
 
       if (response?.error === false) {
         setEcartData(response?.data);
-
-        console.log(response?.data, "ecartData");
       }
     } catch (error) {
       console.error("Erreur lors de la récupération des écarts:", error);
@@ -1165,20 +1184,16 @@ const ComponentsDashboardSales = () => {
 
   const handleRefresh = () => {
     if (selectedDR.length === 0) {
-      dispatch(fetchDashboardData({}));
+      fetchDashboardData({});
       fetchEcartData({});
     } else {
       const filters = {
         selectedDRIds: selectedDRIds,
+        selectedDRLabel: selectedDRLabel,
         selectedSecteurIds: selectedCodeExpl,
       };
 
-      const dashboardFilters = {
-        directionRegional: selectedDRIds.map(String),
-        codeExpl: selectedCodeExpl.map(String),
-      };
-
-      fetchDashboardData(dashboardFilters);
+      fetchDashboardData(filters);
       fetchEcartData(filters);
     }
   };
@@ -1205,6 +1220,7 @@ const ComponentsDashboardSales = () => {
     // Mettre à jour le dashboard avec les filtres
     const filters = {
       selectedDRIds: ids,
+      selectedDRLabel: selectedDRLabel,
       selectedSecteurIds: selectedCodeExpl,
     };
 
@@ -1220,6 +1236,7 @@ const ComponentsDashboardSales = () => {
     // Mettre à jour le dashboard avec les filtres
     const filters = {
       selectedDRIds: selectedDRIds,
+      selectedDRLabel: selectedDRLabel,
       selectedSecteurIds: ids,
     };
 
@@ -1230,26 +1247,11 @@ const ComponentsDashboardSales = () => {
   const handleApplyFilters = () => {
     const filters = {
       selectedDRIds: selectedDRIds,
+      selectedDRLabel: selectedDRLabel,
       selectedSecteurIds: selectedCodeExpl,
     };
-    dispatch(
-      fetchDashboardData({
-        directionRegional: selectedDRLabel?.length
-          ? selectedDRLabel?.map(String)
-          : undefined,
-        codeExpl: selectedCodeExpl?.length
-          ? selectedCodeExpl?.map(String)
-          : undefined,
-      })
-    );
-    fetchEcartData({
-      directionRegional: selectedDRLabel?.length
-        ? selectedDRLabel?.map(String)
-        : undefined,
-      codeExpl: selectedCodeExpl?.length
-        ? selectedCodeExpl?.map(String)
-        : undefined,
-    });
+    fetchDashboardData(filters);
+    fetchEcartData(filters);
   };
 
   const handleResetFilters = () => {
@@ -1259,7 +1261,7 @@ const ComponentsDashboardSales = () => {
     setSelectedCodeExpl([]);
     setSecteurOptions([]);
     setSelectedDRLabel([]);
-    dispatch(fetchDashboardData({}));
+    fetchDashboardData({});
     fetchEcartData({});
   };
 
@@ -1303,6 +1305,11 @@ const ComponentsDashboardSales = () => {
       }
     });
   };
+
+  // Sauvegarder l'onglet actif dans localStorage chaque fois qu'il change
+  useEffect(() => {
+    localStorage.setItem('activeTab', activeTab.toString());
+  }, [activeTab]);
 
   return (
     <>
@@ -2239,7 +2246,7 @@ const ComponentsDashboardSales = () => {
           </div>
         )}
 
-        {isFirstLogin === 1 && <DashboardTutorial />}
+        {/* {isFirstLogin === 1 && <DashboardTutorial />} */}
       </div>
     </>
   );

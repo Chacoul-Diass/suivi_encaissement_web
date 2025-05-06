@@ -75,16 +75,24 @@ export default function ResetPasswordModal({
       return;
     }
 
-    const result = await dispatch(
-      OTPresetPassword({ otpCode, password, confirmPassword })
-    );
+    try {
+      const result = await dispatch(
+        OTPresetPassword({ otpCode, password, confirmPassword })
+      );
 
-    if (OTPresetPassword.fulfilled.match(result)) {
-      Toastify("success", result.payload.message || "Mot de passe modifié !");
-      closeModal();
-      router.push("/login");
-    } else {
-      Toastify("error", error || "Une erreur est survenue !");
+      if (OTPresetPassword.fulfilled.match(result)) {
+        Toastify("success", result.payload.message || "Mot de passe modifié !");
+        closeModal();
+
+        // Utilisation d'un délai court pour permettre à la modale de se fermer avant la redirection
+        setTimeout(() => {
+          router.push("/login");
+        }, 100);
+      } else {
+        Toastify("error", error || "Une erreur est survenue !");
+      }
+    } catch (error) {
+      Toastify("error", "Une erreur est survenue lors de la réinitialisation du mot de passe");
     }
   };
 
@@ -119,7 +127,7 @@ export default function ResetPasswordModal({
                 id="otpCode"
                 type="text"
                 placeholder="Entrez votre code OTP"
-                className="w-full rounded-md border border-gray-300 px-4 py-2.5 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                className="w-full text-black rounded-md border border-gray-300 px-4 py-2.5 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
                 required

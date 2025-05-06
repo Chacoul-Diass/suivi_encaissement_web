@@ -104,7 +104,7 @@ const formatNumber = (num: number | undefined): string => {
 interface EncaissementComptableProps {
   statutValidation: number;
   data: any[];
-  loading: boolean;
+  fetchLoading: boolean;
   paginate: Paginations;
   habilitation: any[];
   handlePageChange?: (page: number) => void;
@@ -117,7 +117,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
 > = ({
   statutValidation,
   data,
-  loading,
+  fetchLoading,
   paginate,
   habilitation,
   handlePageChange,
@@ -132,7 +132,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const [emailModalOpen, setEmailModalOpen] = useState(false);
     const [preuvePhotoModal, setPreuvePhotoModal] = useState(false);
     const [photoDocuments, setPhotoDocuments] = useState<DocumentType[]>([]);
-    const [rowToView, setRowToView] = useState<DataReverse | null>(null);
     const formatDateData = (dateString: string | null | undefined): string => {
       if (!dateString) return "N/A";
 
@@ -168,10 +167,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
         return "N/A";
       }
     };
-
-    const user = getUserPermission();
-
-    const isFirstLogin = user?.isFirstLogin;
 
     const filterAndMapData = useCallback(
       (data: any[], statutValidation: number): any[] => {
@@ -353,43 +348,94 @@ const ComponentsDatatablesColumnChooser: React.FC<
           return isPlural ? "validés" : "validé";
         case EStatutEncaissement.CLOTURE:
           return isPlural ? "cloturés" : "cloturé";
+        case EStatutEncaissement.RECLAMATION_TRAITES:
+          return isPlural ? "traités" : "traité";
+        case EStatutEncaissement.RECLAMATION_REVERSES:
+          return isPlural ? "chargés" : "chargé";
         default:
           return isPlural ? "inconnus" : "inconnu";
       }
     };
 
-    console.log(data, "data");
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
-    console.log(loading, "loadingdata");
+    const refreshTableData = async (showToast = true) => {
+      // Si déjà en cours de rafraîchissement, ne pas lancer une nouvelle requête
+      if (isRefreshing) {
+        console.log("⚠️ Rafraîchissement déjà en cours, demande ignorée");
+        return;
+      }
 
-    const refreshTableData = async () => {
-      // Réinitialiser les données
+      console.log("🔄 Début du rafraîchissement des données...");
+
+      // Réinitialiser les données et montrer l'état de chargement
       setRecordsData([]);
+      setIsRefreshing(true);
 
       try {
+        console.log("🔍 Chargement des nouvelles données...");
+
+        // Utiliser les paramètres actuels pour le rafraîchissement
         const result = await dispatch(
           fetchDataReleve({
             id: statutValidation,
             page: currentPage,
             limit: pageSize,
             search: search || "",
-            ...params,
+            ...params // Inclure tous les paramètres/filtres actuels
           })
         ).unwrap();
 
         // Forcer un remontage complet
         setForceRender((prev) => prev + 1);
 
-        // Mettre à jour la liste manuellement
+        // Mettre à jour la liste manuellement avec les nouvelles données
         if (result && result.result) {
           const newData = filterAndMapData(result.result, statutValidation);
+          console.log(`📊 ${newData.length} enregistrements chargés avec succès`);
           setRecordsData(newData);
+        }
+
+        console.log("✅ Rafraîchissement des données terminé");
+
+        // Afficher le toast seulement si showToast est true
+        if (showToast) {
+          toast.success("Données actualisées avec succès");
         }
 
         return result;
       } catch (error) {
-        console.error("Erreur lors du rafraîchissement des données:", error);
+        console.error("❌ Erreur lors du rafraîchissement des données:", error);
+
+        // Afficher le toast d'erreur seulement si showToast est true
+        if (showToast) {
+          toast.error("Erreur lors du rafraîchissement des données");
+        }
+
         throw error;
+      } finally {
+        // S'assurer que l'état de chargement est désactivé, même en cas d'erreur
+        setTimeout(() => {
+          setIsRefreshing(false);
+        }, 500); // Petit délai pour éviter un flashage du bouton
+      }
+    };
+
+    const handleRefresh = async () => {
+      // Éviter les doubles clics
+      if (isRefreshing) return;
+
+      setIsRefreshing(true);
+      try {
+        // Toujours afficher le toast lors d'un refresh explicite
+        await refreshTableData(true);
+      } catch (error) {
+        console.error("Erreur lors de l'actualisation :", error);
+      } finally {
+        // S'assurer que l'état de chargement est désactivé, même en cas d'erreur
+        setTimeout(() => {
+          setIsRefreshing(false);
+        }, 500); // Petit délai pour éviter un flashage du bouton
       }
     };
 
@@ -432,8 +478,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
-                // Utiliser la nouvelle fonction de rafraîchissement
-                await refreshTableData();
+                // Utiliser la nouvelle fonction de rafraîchissement sans afficher le toast
+                await refreshTableData(false);
 
                 setModalOpen(false);
               })
@@ -490,7 +536,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 );
 
                 // Utiliser la nouvelle fonction de rafraîchissement
-                await refreshTableData();
+                await refreshTableData(false);
 
                 setModalOpen(false);
               })
@@ -606,7 +652,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 );
 
                 // Utiliser la nouvelle fonction de rafraîchissement
-                await refreshTableData();
+                await refreshTableData(false);
 
                 setModalOpen(false);
               })
@@ -661,7 +707,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
-                await refreshTableData();
+                await refreshTableData(false);
                 setModalOpen(false);
               })
               .catch((error) => {
@@ -721,7 +767,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 );
 
                 // Utiliser la nouvelle fonction de rafraîchissement
-                await refreshTableData();
+                await refreshTableData(false);
 
                 setModalOpen(false);
               })
@@ -782,7 +828,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 );
 
                 // Utiliser la nouvelle fonction de rafraîchissement
-                await refreshTableData();
+                await refreshTableData(false);
 
                 setModalOpen(false);
               })
@@ -830,8 +876,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
         setEmailSubject(`Retard sur le bordereau N°${numeroBordereau || ""}`);
       }
     }, [emailSubject, numeroBordereau]);
-
-    console.log(emailSubject, "emailSubject");
 
     const [uploadedFiles, setUploadedFiles] = useState<
       { file: File; preview: string }[]
@@ -1291,6 +1335,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
         return;
       }
 
+      // Indiquer que le traitement est en cours
+      setIsRefreshing(true);
+
       // ✅ Construction du payload avec les valeurs mises à jour
       const payload: any = {
         encaissementId: selectedRow.id,
@@ -1322,46 +1369,28 @@ const ComponentsDatatablesColumnChooser: React.FC<
       // ✅ Envoi de la requête
       dispatch(submitEncaissementValidation(payload))
         .unwrap()
-        .then(() => {
+        .then(async () => {
           // Afficher un toast de succès
           toast.success("Les modifications ont été enregistrées avec succès.");
 
-          // Réinitialiser les données avant de rafraîchir
-          setRecordsData([]);
+          // Fermer le modal
+          setModalOpen(false);
 
-          // Rafraîchir les données
-          dispatch(
-            fetchDataReleve({
-              id: statutValidation,
-              page: currentPage,
-              limit: pageSize,
-              search: search || "",
-              ...params,
-            })
-          )
-            .unwrap()
-            .then((result) => {
-              // Forcer un remontage complet
-              setForceRender((prev) => prev + 1);
+          // Réinitialiser les états
+          setObservationCaisse("");
+          setObservationBanque("");
+          setObservationReclamation("");
+          setRasChecked1(false);
+          setRasChecked2(false);
+          setImages2([]);
 
-              // Mettre à jour la liste manuellement
-              if (result && result.result) {
-                const newData = filterAndMapData(result.result, statutValidation);
-                setRecordsData(newData);
-              }
-            })
-            .catch((error) => {
-              console.error(
-                "Erreur lors du rafraîchissement des données:",
-                error
-              );
-            });
-
-          // Le modal sera fermé par le composant EditModal
+          // Rafraîchir les données sans afficher de toast
+          await refreshTableData(false);
         })
         .catch((error) => {
           const errorMessage = handleApiError(error);
           toast.error(errorMessage);
+          setIsRefreshing(false); // Réinitialiser l'état de chargement en cas d'erreur
         });
     };
 
@@ -1381,39 +1410,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
       setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     };
 
-    const [isRefreshing, setIsRefreshing] = useState(false);
-
-    const handleRefresh = async () => {
-      setIsRefreshing(true);
-      // Réinitialiser le tableau avant de recharger les données
-      setRecordsData([]);
-      try {
-        const result = await dispatch(
-          fetchDataReleve({
-            id: statutValidation,
-            page: currentPage,
-            limit: pageSize,
-            search: search || "",
-            ...params,
-          })
-        ).unwrap();
-
-        // Forcer un remontage complet du composant
-        setForceRender((prev) => prev + 1);
-
-        // Mettre à jour la liste manuellement pour s'assurer qu'elle est à jour
-        if (result && result.result) {
-          const newData = filterAndMapData(result.result, statutValidation);
-          setRecordsData(newData);
-        }
-      } catch (error) {
-        console.error("Erreur lors de l'actualisation :", error);
-        toast.error("Erreur lors de l'actualisation des données");
-      } finally {
-        setIsRefreshing(false);
-      }
-    };
-
     const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
 
     const confirmClose = () => {
@@ -1425,19 +1421,21 @@ const ComponentsDatatablesColumnChooser: React.FC<
       setConfirmationModalOpen(true);
     };
 
-    const handleApplyFilters = (params: any) => {
-      dispatch(
-        fetchDataReleve({
-          id: statutValidation,
-          page: currentPage || 1,
-          limit: pageSize,
-          search: search || "",
-          ...params,
-        })
-      ).then(() => {
-        // Forcer la mise à jour du tableau
-        setForceRender((prev) => prev + 1);
-      });
+    const handleApplyFilters = async (newParams: any) => {
+      try {
+        // Mettre à jour les paramètres
+        setParams((prevParams: any) => ({ ...prevParams, ...newParams }));
+
+        // Attendre un moment pour que les états soient mis à jour
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Utiliser la fonction refreshTableData pour rafraîchir les données
+        // avec les nouveaux paramètres
+        await refreshTableData(true);
+      } catch (error) {
+        console.error("Erreur lors de l'application des filtres:", error);
+        toast.error("Erreur lors de l'application des filtres");
+      }
     };
 
     const [montantBanque, setMontantBanque] = useState("");
@@ -1447,8 +1445,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
       const formattedValue = new Intl.NumberFormat().format(value);
       setMontantBanque(formattedValue);
     };
-
-
 
     // Ajouter un état pour forcer le remontage du composant
     const [forceRender, setForceRender] = useState(0);
@@ -1465,11 +1461,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
               {getStatutLibelle(statutValidation, totalUnvalidatedRecords)}
             </h5>
           </div>
-          <GlobalFiltre
-            drData={drData}
-            onApplyFilters={handleApplyFilters}
-            statutValidation={statutValidation}
-          />
+
 
           <div className="panel datatables">
             <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -1588,7 +1580,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   }
                   className="table-hover whitespace-nowrap"
                   records={
-                    !loading && filteredData?.length > 0 ? filteredData : []
+                    !fetchLoading && filteredData?.length > 0 ? filteredData : []
                   }
                   columns={[
                     ...cols
@@ -1673,7 +1665,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     },
                   ]}
                   highlightOnHover
-                  totalRecords={!loading ? paginate.totalCount : 0}
+                  totalRecords={!fetchLoading ? paginate.totalCount : 0}
                   recordsPerPage={pageSize}
                   page={currentPage}
                   onPageChange={(page) => {
@@ -1693,7 +1685,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     `Affichage de ${from} à ${to} sur ${totalRecords} entrées`
                   }
                   noRecordsText={
-                    loading
+                    fetchLoading
                       ? ((
                         <>
                           <span className="delay-800 mt-2 animate-pulse text-black">
@@ -1751,6 +1743,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     setImages2={setImages2}
                     images2={images2}
                     onChange2={onChange2}
+                    fetchData={refreshTableData}
                   />
                 ) : (
                   <ViewModal
@@ -1839,7 +1832,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
           </div>
         </div>
 
-        {isFirstLogin === 1 && <EncaissementTutorial />}
+        {/* {isFirstLogin === 1 && <EncaissementTutorial />} */}
       </>
     );
   };

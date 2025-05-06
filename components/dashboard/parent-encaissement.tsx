@@ -20,6 +20,7 @@ import { fetchDataReleve } from "@/store/reducers/encaissements/releve.slice";
 import axiosInstance from "@/utils/axios";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import { active } from "sortablejs";
+import GlobalFiltre from "@/components/filtre/globalFiltre";
 
 const ComponentsDashboardValider = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -79,13 +80,24 @@ const ComponentsDashboardValider = () => {
     setIsMounted(true);
   }, []);
 
-  const dataReverse: any = useSelector(
-    (state: TRootState) => state?.encaissementReleve?.data
-  );
+  // Données des directions régionales pour le filtre
+  const [drData, setDrData] = useState([]);
 
-  const dataReverseloading: any = useSelector(
-    (state: any) => state?.encaissementReleve?.loading
-  );
+  // Charger les données des DR au chargement du composant
+  useEffect(() => {
+    const fetchDrData = async () => {
+      try {
+        const response = await axiosInstance.get(`${API_AUTH_SUIVI}/direction-regionale`);
+        if (response?.data && !response.data.error) {
+          setDrData(response.data || []);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des directions régionales:", error);
+      }
+    };
+
+    fetchDrData();
+  }, []);
 
   // Déterminer le statut initial en fonction de l'URL et des habilitations
   const getInitialTab = () => {
@@ -170,6 +182,8 @@ const ComponentsDashboardValider = () => {
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(5);
   const [ecartDataEncaissement, setEcartDataEncaissement] = useState<any>(null);
+  // Ajouter un état pour stocker les filtres courants
+  const [currentFilters, setCurrentFilters] = useState<Record<string, any>>({});
 
   const handlePageChange = (page: number) => {
     if (page > 0 && page <= paginate.totalPages) {
@@ -177,9 +191,19 @@ const ComponentsDashboardValider = () => {
     }
   };
 
+  const [loading, setLoading] = useState(false);
+
+
   const fetchData = async (filters?: Record<string, any>) => {
+    setLoading(true);
     try {
-      console.log("📞 Appel API avec ID:", activeTab, "Valeur convertie:", activeTab.toString());
+      // Si des filtres sont fournis, les mettre à jour dans l'état
+      if (filters) {
+        setCurrentFilters(filters);
+      }
+
+      // Utiliser soit les nouveaux filtres passés, soit ceux stockés dans l'état
+      const filtersToUse = filters || currentFilters;
 
       const cleanArray = (arr?: string[]): string[] =>
         arr ? arr.map((item) => item.trim()) : [];
@@ -197,19 +221,19 @@ const ComponentsDashboardValider = () => {
       };
 
       const params: Record<string, any> = {
-        directionRegional: filters?.directionRegional
-          ? formatArray(filters.directionRegional)
+        directionRegional: filtersToUse?.directionRegional
+          ? formatArray(filtersToUse.directionRegional)
           : undefined,
-        codeExpl: filters?.codeExpl ? formatArray(filters.codeExpl) : undefined,
-        startDate: filters?.startDate
-          ? formatDate(filters.startDate)
+        codeExpl: filtersToUse?.codeExpl ? formatArray(filtersToUse.codeExpl) : undefined,
+        startDate: filtersToUse?.startDate
+          ? formatDate(filtersToUse.startDate)
           : undefined,
-        endDate: filters?.endDate ? formatDate(filters.endDate) : undefined,
-        banque: filters?.banque ? formatArray(filters.banque) : undefined,
-        caisse: filters?.caisse ? formatArray(filters.caisse) : undefined,
-        produit: filters?.produit ? formatArray(filters.produit) : undefined,
-        modeReglement: filters?.modeReglement
-          ? formatArray(filters.modeReglement)
+        endDate: filtersToUse?.endDate ? formatDate(filtersToUse.endDate) : undefined,
+        banque: filtersToUse?.banque ? formatArray(filtersToUse.banque) : undefined,
+        caisse: filtersToUse?.caisse ? formatArray(filtersToUse.caisse) : undefined,
+        produit: filtersToUse?.produit ? formatArray(filtersToUse.produit) : undefined,
+        modeReglement: filtersToUse?.modeReglement
+          ? formatArray(filtersToUse.modeReglement)
           : undefined,
       };
 
@@ -219,19 +243,21 @@ const ComponentsDashboardValider = () => {
 
       // Utiliser directement activeTab au lieu de filters?.id
       const apiUrl = `${API_AUTH_SUIVI}/encaissements/${activeTab}?page=${page}&search=${search}&limit=${limit}`;
-      console.log("🔗 URL API:", apiUrl);
+
 
       const response: any = await axiosInstance.get(
         apiUrl,
         { params }
       );
 
-      if (response?.error === false) {
+      if (response?.data && !response.data.error) {
         setEcartDataEncaissement(response.data);
         console.log("✅ Données reçues pour activeTab:", activeTab);
       }
     } catch (error) {
       console.error("❌ Erreur lors de la récupération :", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -245,20 +271,34 @@ const ComponentsDashboardValider = () => {
     setPage(1);
   };
 
+  // Mise à jour du useEffect pour utiliser les filtres actuels lors des changements de page/recherche/limite
   useEffect(() => {
     if (isMounted) {
       console.log("⭐ Déclenchement requête API avec activeTab:", activeTab, "page:", page, "search:", search, "limit:", limit);
-      fetchData({
-        id: activeTab.toString(),
-        page: page || 1,
-        search: search || "",
-        limit: limit || 5,
-      });
+      fetchData();
 
       // Mettre à jour le titre dans la page
       const activeTabInfo = filteredTabs.find(tab => tab.id === activeTab);
       if (activeTabInfo) {
         document.title = `${activeTabInfo.label} - Suivi Encaissement`;
+      }
+
+      // Rendre fetchData disponible globalement pour le modal
+      if (typeof window !== 'undefined') {
+        // Définir un type pour window pour éviter les erreurs TypeScript
+        (window as any).fetchData = () => {
+          console.log("❗Appel de window.fetchData global - Rafraîchissement complet");
+          // Forcer le nettoyage des données actuelles
+          setEcartDataEncaissement(null);
+
+          // Réinitialiser l'état pour forcer un rafraîchissement complet
+          setLoading(true);
+
+          // Appeler fetchData avec un léger délai pour garantir le nettoyage préalable
+          setTimeout(() => {
+            fetchData();
+          }, 100);
+        };
       }
     }
   }, [activeTab, isMounted, page, search, limit]);
@@ -285,6 +325,14 @@ const ComponentsDashboardValider = () => {
       }
     }
   }, [activeTab, isMounted, filteredTabs]);
+
+  // Mise à jour de la méthode handleApplyFilters pour GlobalFiltre
+  const handleApplyFilters = (newFilters: any) => {
+    // Réinitialiser la page à 1 lors de l'application de nouveaux filtres
+    setPage(1);
+    // Appliquer les nouveaux filtres
+    fetchData(newFilters);
+  };
 
   const dataEncaissementReverse = ecartDataEncaissement?.result || [];
   const Totaldata = ecartDataEncaissement?.totals || [];
@@ -313,6 +361,9 @@ const ComponentsDashboardValider = () => {
       </div>
 
       <div className="panel mb-5">
+
+
+
         {isMounted && (
           <>
             {console.log("⚡ Rendu du Tab.Group avec activeTab =", activeTab)}
@@ -339,21 +390,22 @@ const ComponentsDashboardValider = () => {
                   </Tab>
                 ))}
               </Tab.List>
+
+              <GlobalFiltre
+                drData={drData}
+                statutValidation={activeTab}
+                onApplyFilters={handleApplyFilters}
+              />
               <Tab.Panels>
                 {filteredTabs.map((tab) => (
                   <Tab.Panel key={tab.id}>
                     {/* Log pour le débogage - tab.id vs activeTab */}
-
                     <EncaissementComptable
                       statutValidation={activeTab}
                       data={dataEncaissementReverse || []}
                       total={Totaldata}
                       paginate={paginate}
-                      loading={
-                        dataReverseloading !== undefined
-                          ? dataReverseloading
-                          : false
-                      }
+                      fetchLoading={loading}
                       habilitation={habilitation}
                       handlePageChange={handlePageChange}
                       handleSearchChange={handleSearchChange}
@@ -366,6 +418,7 @@ const ComponentsDashboardValider = () => {
           </>
         )}
       </div>
+
     </div>
   );
 };

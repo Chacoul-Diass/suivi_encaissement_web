@@ -12,7 +12,7 @@ const SessionHandler: React.FC = () => {
 
   // Fonction pour gérer la déconnexion
   const handleLogout = async () => {
-    const refresh_token = localStorage.getItem("refresh_token");
+    const refresh_token = localStorage.getItem("refreshToken");
     const payload = { refreshToken: refresh_token };
 
     try {
@@ -23,7 +23,9 @@ const SessionHandler: React.FC = () => {
 
       if (response.status === 201) {
         localStorage.removeItem("persist:suivi-encaissement");
-        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("hasCheckedAlerts");
         router.push("/login"); // Redirige vers la page de connexion
       }
     } catch (error) {

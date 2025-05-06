@@ -55,7 +55,126 @@ interface EditModalProps {
   setImages2: (images: ImageListType) => void;
   onChange2: (imageList: ImageListType) => void;
   handleMontantChange: (value: any) => void;
+  fetchData?: () => void;
 }
+
+// Composant pour le cas validé
+const ValidatedAmount: React.FC<{
+  montantReleve: number;
+  formatNumber: (num: number) => string;
+}> = ({ montantReleve, formatNumber }) => (
+  <div className="relative">
+    <div className="flex">
+      <input
+        type="text"
+        className="form-input w-full cursor-not-allowed rounded-lg border-gray-300 bg-gray-100 py-3 pl-10 pr-4 text-gray-600 opacity-80 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
+        placeholder="Montant en F CFA"
+        value={formatNumber(montantReleve)}
+        disabled={true}
+      />
+      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+        <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+      </div>
+      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+        <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
+          <svg
+            className="mr-1.5 h-2 w-2 text-green-400"
+            fill="currentColor"
+            viewBox="0 0 8 8"
+          >
+            <circle cx="4" cy="4" r="3" />
+          </svg>
+          Montant validé
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+// Composant pour le cas non validé
+const UnvalidatedAmount: React.FC<{
+  montantAuto: number;
+  formatNumber: (num: number) => string;
+  montantSaisi: string;
+  onMontantSaisiChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onValidateClick: () => void;
+}> = ({
+  montantAuto,
+  formatNumber,
+  montantSaisi,
+  onMontantSaisiChange,
+  onValidateClick,
+}) => (
+    <div className="space-y-2">
+      <div className="relative">
+        <input
+          type="text"
+          className="form-input w-full cursor-not-allowed rounded-lg border-gray-300 bg-gray-100 py-3 pl-10 pr-4 text-gray-600 opacity-80 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
+          placeholder="Montant automatique remonté"
+          value={formatNumber(montantAuto)}
+          disabled={true}
+        />
+        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+          <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={onValidateClick}
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      >
+        Valider ce montant
+      </button>
+      <div className="relative">
+        <input
+          type="text"
+          className="form-input w-full rounded-lg border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          placeholder="Modifier le montant banque"
+          value={montantSaisi}
+          onChange={onMontantSaisiChange}
+        />
+        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+          <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+        </div>
+      </div>
+
+    </div>
+  );
+
+// Composant pour le cas sans montant
+const NoAmount: React.FC<{
+  montantSaisi: string;
+  onMontantSaisiChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  formatNumber: (num: number) => string;
+}> = ({ montantSaisi, onMontantSaisiChange, formatNumber }) => (
+  <div className="space-y-2">
+    {/* <div className="relative">
+      <input
+        type="text"
+        className="form-input w-full cursor-not-allowed rounded-lg border-gray-300 bg-gray-100 py-3 pl-10 pr-4 text-gray-600 opacity-80 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
+        placeholder="Montant automatique remonté"
+        value={formatNumber(0)}
+        disabled={true}
+      />
+      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+        <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+      </div>
+    </div> */}
+    <div className="relative">
+      <input
+        type="text"
+        className="form-input w-full rounded-lg border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+        placeholder="Modifier le montant banque"
+        value={montantSaisi}
+        onChange={onMontantSaisiChange}
+      />
+      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+        <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+      </div>
+    </div>
+  </div>
+);
 
 export default function EditModal({
   modalOpen,
@@ -76,14 +195,16 @@ export default function EditModal({
   setImages2,
   onChange2,
   handleMontantChange,
+  fetchData,
 }: EditModalProps) {
   const maxNumber = 69;
   // États pour le cas où un montant est déjà remonté
   const [montantAutomatique, setMontantAutomatique] = useState<string>("");
-  const [montantAutomatiqueAffiche, setMontantAutomatiqueAffiche] = useState<string>("");
+  const [montantAutomatiqueAffiche, setMontantAutomatiqueAffiche] =
+    useState<string>("");
   // États pour le cas où aucun montant n'est remonté
   const [montantManuel, setMontantManuel] = useState<string>("");
-  const [montantManuelAffiche, setMontantManuelAffiche] = useState<string>("");
+  const [montantModifie, setMontantModifie] = useState<number | null>(null);
 
   const montantInputRef = useRef<HTMLInputElement>(null);
   const [dateMontantBanque, setDateMontantBanque] = useState<string>("");
@@ -96,27 +217,42 @@ export default function EditModal({
   const [isValidating, setIsValidating] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // State et handler dédiés au deuxième input du cas NoAmount
+  const [montantNoAuto, setMontantNoAuto] = useState("");
+  const handleNoAutoInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value.replace(/\D/g, "");
+    setMontantNoAuto(inputValue);
+  };
+
   useEffect(() => {
     if (modalOpen) {
       const montantInitial = selectedRow.montantReleve || 0;
-      console.log("Montant initial:", montantInitial, typeof montantInitial, selectedRow.montantReleve);
+      console.log(
+        "Montant initial:",
+        montantInitial,
+        typeof montantInitial,
+        selectedRow.montantReleve
+      );
 
       if (montantInitial > 0) {
         // Initialisation pour le cas automatique
         setMontantAutomatique(montantInitial.toString());
         setMontantAutomatiqueAffiche(formatNumber(montantInitial));
+        setMontantModifie(montantInitial);
       } else {
         // Réinitialisation de tous les états
         setMontantAutomatique("");
         setMontantAutomatiqueAffiche("");
         setMontantManuel("");
-        setMontantManuelAffiche("");
+        setMontantModifie(null);
       }
     }
   }, [modalOpen, selectedRow]);
 
   const handleCloseModal = () => {
     setModalOpen(false);
+    // Vider le contenu de images2 lorsque la modale est fermée
+    setImages2([]);
   };
 
   // Fonction pour le cas automatique - modification via modal
@@ -136,23 +272,13 @@ export default function EditModal({
     setNewMontantError("");
   };
 
-  // Fonction pour le cas manuel - saisie directe
-  const handleMontantManuelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    const cleanedValue = inputValue.replace(/\D/g, "");
-
-    if (cleanedValue === "") {
-      setMontantManuel("");
-      setMontantManuelAffiche("");
-      handleMontantChange(0);
-      return;
-    }
-
-    setMontantManuel(cleanedValue);
-    const numericValue = parseInt(cleanedValue);
-    setMontantManuelAffiche(formatNumber(numericValue));
-    setFormError("");
-    handleMontantChange(numericValue);
+  // Fonction dédiée à l'input de modification du montant banque pour le cas NoAmount
+  const handleMontantManuelChangeNoAuto = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const inputValue = e.target.value.replace(/\D/g, ""); // Garde uniquement les chiffres
+    setMontantManuel(inputValue); // Toujours la valeur brute
+    handleMontantChange(Number(inputValue) || 0);
   };
 
   const handleConfirmNewMontant = () => {
@@ -163,26 +289,34 @@ export default function EditModal({
       return;
     }
 
+    const nouveauMontant = parseFloat(newMontantSaisi);
     setValidationModalOpen(false);
     setMontantAutomatique(newMontantSaisi);
     setMontantAutomatiqueAffiche(newMontantAffiche);
+    setMontantModifie(nouveauMontant);
     // Mise à jour du montant dans selectedRow pour l'affichage immédiat
-    selectedRow.montantReleve = parseFloat(newMontantSaisi);
+    selectedRow.montantReleve = nouveauMontant;
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Vérification différente selon le cas
-    if (selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0) {
+    if (
+      selectedRow.montantReleve !== undefined &&
+      selectedRow.montantReleve > 0
+    ) {
       // Cas automatique - pas besoin de vérifier car le montant existe déjà
       if (!dateMontantBanque) {
         setFormError("La date du relevé est obligatoire");
         return;
       }
     } else {
-      // Cas manuel - on vérifie que le montant a été saisi
-      if (!montantManuel || parseFloat(montantManuel) <= 0) {
+      // Cas manuel ou cas sans montant automatique
+      const montantSaisi = selectedRow.montantReleve
+        ? montantManuel
+        : montantNoAuto;
+      if (!montantSaisi || parseFloat(montantSaisi) <= 0) {
         setFormError(
           "Le montant banque est obligatoire et doit être supérieur à 0"
         );
@@ -214,27 +348,25 @@ export default function EditModal({
         `${API_AUTH_SUIVI}/encaissements/validate-amount/${selectedRow.id}`
       );
 
-      const montantReleve = selectedRow.montantReleve || 0;
-      const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
+      // S'assurer que selectedRow.montantReleve a une valeur valide
+      if (!selectedRow.montantReleve || selectedRow.montantReleve <= 0) {
+        // Si montantReleve n'est pas défini ou est 0, utiliser le montant de la réponse API
+        if (response && response.data && response.data.montantReleve) {
+          selectedRow.montantReleve = response.data.montantReleve;
+        } else {
+          // Fallback: utiliser le montant automatique si disponible
+          const montantAuto = selectedRow.montantReleve ?? 0;
+          if (montantAuto > 0) {
+            selectedRow.montantReleve = montantAuto;
+          }
+        }
+      }
 
-      // const updatedRow = {
-      //   ...selectedRow,
-      //   observationBanque,
-      //   rasChecked1,
-      //   rasChecked2,
-      //   images2,
-      //   montantReleve: montantReleve,
-      //   dateMontantBanque,
-      //   ecartReleve: montantBordereau - montantReleve,
-      //   statutValidation: 2,
-      //   isCorrect: 1
-      // };
+      const montantReleve = selectedRow.montantReleve ?? 0;
+      const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
 
       // On met à jour localement le selectedRow pour mettre à jour l'UI immédiatement
       selectedRow.isCorrect = 1;
-
-      // On soumet immédiatement les données mises à jour au composant parent
-      // handleSubmit(updatedRow);
 
       // Fermer la modale de validation après un court délai
       setTimeout(() => {
@@ -249,22 +381,22 @@ export default function EditModal({
     }
   };
 
+  // Déterminer le montant saisi à afficher selon le cas (cas 2 ou cas 3)
+  const montantSaisiAffichage = (selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0)
+    ? montantManuel
+    : montantNoAuto;
+
   const handleConfirmSubmit = () => {
     setLoading(true);
     try {
       // Déterminer quel montant utiliser selon le cas
       let montantVal = 0;
-
-      if (selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0) {
-        // Cas 1: Montant automatique - on utilise la valeur existante
-        montantVal = selectedRow.montantReleve;
+      if (selectedRow.isCorrect === 1) {
+        montantVal = selectedRow.montantReleve ?? 0;
       } else {
-        // Cas 2: Montant manuel - on utilise la valeur saisie
-        montantVal = montantManuel ? parseFloat(montantManuel) : 0;
+        montantVal = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
       }
-
       const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
-
       // Création de l'objet à soumettre
       const updatedRow = {
         ...selectedRow,
@@ -277,7 +409,6 @@ export default function EditModal({
         ecartReleve: montantBordereau - montantVal,
         statutValidation: 2,
       };
-
       // Préparer les fichiers si disponibles
       const files =
         images2 && images2.length > 0
@@ -285,18 +416,60 @@ export default function EditModal({
             .map((image) => image.file)
             .filter((file): file is File => file !== undefined)
           : [];
-
       // Soumettre les données
       handleSubmit(updatedRow);
-
       // Fermer le modal
       setIsConfirmationModalOpen(false);
       setModalOpen(false);
+
+      // Attendre un peu pour laisser le temps à l'API de traiter la mise à jour,
+      // puis rafraîchir les données avec plusieurs méthodes pour garantir la mise à jour
+      setTimeout(() => {
+        console.log("Rafraîchissement des données après confirmation");
+
+        // Méthode 1: Utiliser le prop fetchData (refreshTableData)
+        if (fetchData) {
+          console.log("Méthode 1: Appel de fetchData via props");
+          fetchData();
+        }
+
+        // Méthode 2: Utiliser window.fetchData global
+        if (typeof window !== 'undefined' && (window as any).fetchData) {
+          console.log("Méthode 2: Appel de window.fetchData");
+          (window as any).fetchData();
+        }
+
+        // Méthode 3: Forcer un rafraîchissement de la page si rien d'autre ne fonctionne
+        // Cette méthode est plus drastique mais garantit la mise à jour
+        if (!fetchData && (typeof window === 'undefined' || !(window as any).fetchData)) {
+          console.log("Méthode 3: Forcer le rafraîchissement de la page");
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }
+      }, 800); // Augmenter le délai à 800ms pour laisser plus de temps à l'API
     } catch (error) {
       console.error("Erreur lors de la confirmation :", error);
       Toastify("error", "Une erreur est survenue lors de la validation");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fonction pour gérer le changement d'images
+  const handleImageChange = (imageList: ImageListType) => {
+    // Préserver l'état actuel du montant modifié
+    const currentMontant =
+      montantModifie !== null ? montantModifie : selectedRow.montantReleve ?? 0;
+
+    // Mettre à jour les images
+    onChange2(imageList);
+
+    // Restaurer l'état du montant
+    if (currentMontant > 0) {
+      setMontantModifie(currentMontant);
+      setMontantAutomatique(currentMontant.toString());
+      setMontantAutomatiqueAffiche(formatNumber(currentMontant));
     }
   };
 
@@ -454,119 +627,6 @@ export default function EditModal({
               />
             </div>
 
-            {/* Montant Banque */}
-            <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                      Montant Banque
-                    </h3>
-                    <p className="mt-1 text-xs text-gray-500">
-                      {selectedRow.montantReleve !== undefined &&
-                        selectedRow.montantReleve > 0
-                        ? "Un montant est déjà saisi, vous pouvez le valider ou le modifier"
-                        : "Veuillez saisir le montant du relevé bancaire"}
-                    </p>
-                  </div>
-
-                  {/* Bouton de validation disponible uniquement pour le cas automatique non validé */}
-                  {selectedRow.montantReleve !== undefined &&
-                    selectedRow.montantReleve > 0 &&
-                    selectedRow.isCorrect === 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setValidationModalOpen(true)}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                      >
-                        Valider ce montant
-                      </button>
-                    )}
-
-                  {/* Badge de validation pour le cas automatique validé */}
-                  {selectedRow.montantReleve !== undefined &&
-                    selectedRow.montantReleve > 0 &&
-                    selectedRow.isCorrect === 1 && (
-                      <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-                        <svg
-                          className="mr-1.5 h-2 w-2 text-green-400"
-                          fill="currentColor"
-                          viewBox="0 0 8 8"
-                        >
-                          <circle cx="4" cy="4" r="3" />
-                        </svg>
-                        Montant validé
-                      </span>
-                    )}
-                </div>
-
-                {/* CAS 1: Montant automatique déjà remonté */}
-                {selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0 && (
-                  <div className="relative">
-                    <div className="flex">
-                      <input
-                        type="text"
-                        ref={montantInputRef}
-                        className="form-input w-full rounded-lg border-gray-300 py-3 pl-10 pr-4 cursor-not-allowed bg-gray-100 text-gray-600 opacity-80 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
-                        placeholder="Montant en F CFA"
-                        value={formatNumber(selectedRow.montantReleve)}
-                        disabled={true}
-                      />
-                      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                        <IconCashBanknotes className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-                        <span className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-500 dark:bg-gray-600 dark:text-gray-300">
-                          {selectedRow.isCorrect === 1 ? "Validé" : "Modifiable via le bouton"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* CAS 2: Aucun montant remonté - saisie directe */}
-                {(selectedRow.montantReleve === undefined || selectedRow.montantReleve === 0 || selectedRow.montantReleve <= 0) && (
-                  <div className="relative">
-                    <div className="flex">
-                      <input
-                        type="text"
-                        className="form-input w-full rounded-lg border-gray-300 py-3 pl-10 pr-4 bg-white text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                        placeholder="Saisir le montant en F CFA"
-                        value={montantManuelAffiche}
-                        onChange={handleMontantManuelChange}
-                      />
-                      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                        <IconCashBanknotes className="h-5 w-5 text-gray-400" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Date du montant banque - commun aux deux cas */}
-                <div className="mt-3">
-                  <label
-                    htmlFor="dateMontantBanque"
-                    className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Date du relevé
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="dateMontantBanque"
-                      type="date"
-                      className="form-input w-full rounded-lg border-gray-300 bg-white py-3 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                      value={dateMontantBanque}
-                      onChange={(e) => setDateMontantBanque(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {formError && (
-                  <p className="text-sm text-red-500">{formError}</p>
-                )}
-              </div>
-            </div>
-
             {/* Image Upload */}
             <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <div className="flex items-center justify-between">
@@ -592,7 +652,7 @@ export default function EditModal({
               <ImageUploading
                 multiple
                 value={images2}
-                onChange={onChange2}
+                onChange={handleImageChange}
                 maxNumber={maxNumber}
               >
                 {({
@@ -644,6 +704,74 @@ export default function EditModal({
               </ImageUploading>
             </div>
 
+            {/* Montant Banque */}
+            <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                      Montant Banque
+                    </h3>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {selectedRow.montantReleve !== undefined &&
+                        selectedRow.montantReleve > 0
+                        ? "Un montant est déjà saisi, vous pouvez le valider ou le modifier"
+                        : "Veuillez saisir le montant du relevé bancaire"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Affichage conditionnel selon le cas */}
+                {selectedRow.montantReleve !== undefined &&
+                  selectedRow.montantReleve > 0 ? (
+                  selectedRow.isCorrect === 0 ? (
+                    <UnvalidatedAmount
+                      montantAuto={selectedRow.montantReleve}
+                      formatNumber={formatNumber}
+                      montantSaisi={montantManuel}
+                      onMontantSaisiChange={handleMontantManuelChangeNoAuto}
+                      onValidateClick={() => setValidationModalOpen(true)}
+                    />
+                  ) : (
+                    <ValidatedAmount
+                      montantReleve={selectedRow.montantReleve}
+                      formatNumber={formatNumber}
+                    />
+                  )
+                ) : (
+                  <NoAmount
+                    montantSaisi={montantNoAuto}
+                    onMontantSaisiChange={handleNoAutoInputChange}
+                    formatNumber={formatNumber}
+                  />
+                )}
+
+                {/* Date du montant banque - commun aux deux cas */}
+                <div className="mt-3">
+                  <label
+                    htmlFor="dateMontantBanque"
+                    className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Date du relevé
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="dateMontantBanque"
+                      type="date"
+                      className="form-input w-full rounded-lg border-gray-300 bg-white py-3 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      value={dateMontantBanque}
+                      onChange={(e) => setDateMontantBanque(e.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                </div>
+
+                {formError && (
+                  <p className="text-sm text-red-500">{formError}</p>
+                )}
+              </div>
+            </div>
+
             {/* Détails Bancaires */}
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
               <div className="mb-4">
@@ -666,43 +794,35 @@ export default function EditModal({
                 </div>
                 <div>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {(() => {
-                      if (selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0) {
-                        // Cas automatique
-                        return `${formatNumber(selectedRow.montantReleve)} F CFA`;
-                      } else {
-                        // Cas manuel
-                        return montantManuel ? `${formatNumber(parseFloat(montantManuel))} F CFA` : "Non saisi";
-                      }
-                    })()}
+                    {selectedRow.isCorrect === 1
+                      ? `${formatNumber(selectedRow.montantReleve ?? 0)} F CFA`
+                      : montantSaisiAffichage ? `${formatNumber(parseFloat(montantSaisiAffichage))} F CFA` : "Non saisi"}
                   </p>
                   <p className="text-sm text-gray-500">Montant Banque</p>
                 </div>
                 <div className="">
                   <p
                     className={`text-lg font-semibold ${(() => {
-                      // Calculer le montant bancaire actuel
-                      const montantBancaire = selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0
-                        ? selectedRow.montantReleve
-                        : (montantManuel ? parseFloat(montantManuel) : 0);
-
-                      // Calculer l'écart
+                      // Calculer le montant bancaire actuel pour confirmation
+                      let montantBancaire = 0;
+                      if (selectedRow.isCorrect === 1) {
+                        montantBancaire = selectedRow.montantReleve ?? 0;
+                      } else {
+                        montantBancaire = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
+                      }
                       const ecart = selectedRow["Montant bordereau (B)"] - montantBancaire;
-
-                      // Retourner la classe CSS appropriée
                       if (ecart < 0) return "text-red-500";
                       if (ecart > 0) return "text-green-500";
-                      return "text-gray-900 dark:text-white";
-                    })()
-                      }`}
+                      return "text-gray-900";
+                    })()}`}
                   >
                     {(() => {
-                      // Calculer le montant bancaire actuel
-                      const montantBancaire = selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0
-                        ? selectedRow.montantReleve
-                        : (montantManuel ? parseFloat(montantManuel) : 0);
-
-                      // Calculer et formater l'écart
+                      let montantBancaire = 0;
+                      if (selectedRow.isCorrect === 1) {
+                        montantBancaire = selectedRow.montantReleve ?? 0;
+                      } else {
+                        montantBancaire = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
+                      }
                       return formatNumber(selectedRow["Montant bordereau (B)"] - montantBancaire);
                     })()} F CFA
                   </p>
@@ -755,20 +875,14 @@ export default function EditModal({
               </h3>
               <div className="mt-4">
                 <p className="text-sm text-gray-500">
-                  {selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0
-                    ? "Montant du relevé bancaire :"
+                  {selectedRow.isCorrect === 1
+                    ? "Montant du relevé bancaire validé :"
                     : "Vous avez saisi le montant suivant :"}
                 </p>
                 <p className="mt-2 text-2xl font-bold text-primary">
-                  {(() => {
-                    if (selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0) {
-                      // Cas automatique
-                      return formatNumber(selectedRow.montantReleve);
-                    } else {
-                      // Cas manuel
-                      return montantManuel ? formatNumber(parseFloat(montantManuel)) : "0";
-                    }
-                  })()} F CFA
+                  {selectedRow.isCorrect === 1
+                    ? `${formatNumber(selectedRow.montantReleve ?? 0)} F CFA`
+                    : montantSaisiAffichage ? `${formatNumber(parseFloat(montantSaisiAffichage))} F CFA` : "0"}
                 </p>
 
                 <div className="mt-3">
@@ -788,6 +902,7 @@ export default function EditModal({
                       className="form-input w-full rounded-lg border-gray-300 bg-white py-2 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                       value={dateMontantBanque}
                       onChange={(e) => setDateMontantBanque(e.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                   {!dateMontantBanque && (
@@ -802,38 +917,52 @@ export default function EditModal({
                     Date du relevé : {dateMontantBanque}
                   </p>
                 )}
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm text-gray-500">
-                    Écart 2 (Bordereau - Relevé) :
-                  </p>
-                  <p
-                    className={`text-lg font-semibold ${(() => {
-                      // Calculer le montant bancaire actuel
-                      const montantBancaire = selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0
-                        ? selectedRow.montantReleve
-                        : (montantManuel ? parseFloat(montantManuel) : 0);
-
-                      // Calculer l'écart
-                      const ecart = selectedRow["Montant bordereau (B)"] - montantBancaire;
-
-                      // Retourner la classe CSS appropriée
-                      if (ecart < 0) return "text-red-500";
-                      if (ecart > 0) return "text-green-500";
-                      return "text-gray-900";
-                    })()
-                      }`}
-                  >
-                    {(() => {
-                      // Calculer le montant bancaire actuel
-                      const montantBancaire = selectedRow.montantReleve !== undefined && selectedRow.montantReleve > 0
-                        ? selectedRow.montantReleve
-                        : (montantManuel ? parseFloat(montantManuel) : 0);
-
-                      // Calculer et formater l'écart
-                      return formatNumber(selectedRow["Montant bordereau (B)"] - montantBancaire);
-                    })()} F CFA
-                  </p>
-                </div>
+                {/* Affichage de l'écart spécifique confirmation */}
+                {selectedRow.isCorrect !== 1 ? (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm text-gray-500">
+                      Écart (Bordereau - Saisi) :
+                    </p>
+                    <p
+                      className={`text-lg font-semibold ${(() => {
+                        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
+                        const montantSaisi = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
+                        const ecart = montantBordereau - montantSaisi;
+                        if (ecart < 0) return "text-red-500";
+                        if (ecart > 0) return "text-green-500";
+                        return "text-gray-900";
+                      })()}`}
+                    >
+                      {(() => {
+                        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
+                        const montantSaisi = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
+                        return formatNumber(montantBordereau - montantSaisi);
+                      })()} F CFA
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm text-gray-500">
+                      Écart (Bordereau - Banque) :
+                    </p>
+                    <p
+                      className={`text-lg font-semibold ${(() => {
+                        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
+                        const montantReleve = selectedRow.montantReleve ?? 0;
+                        const ecart = montantBordereau - montantReleve;
+                        if (ecart < 0) return "text-red-500";
+                        if (ecart > 0) return "text-green-500";
+                        return "text-gray-900";
+                      })()}`}
+                    >
+                      {(() => {
+                        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
+                        const montantReleve = selectedRow.montantReleve ?? 0;
+                        return formatNumber(montantBordereau - montantReleve);
+                      })()} F CFA
+                    </p>
+                  </div>
+                )}
                 <p className="mt-4 text-sm text-gray-500">
                   Veuillez vérifier que ces informations sont correctes avant de
                   confirmer.
@@ -899,11 +1028,10 @@ export default function EditModal({
                   Un montant est déjà enregistré pour cet encaissement :
                 </p>
                 <p className="mt-2 text-2xl font-bold text-primary">
-                  {formatNumber(selectedRow.montantReleve || 0)} F CFA
+                  {formatNumber(selectedRow.montantReleve ?? 0)} F CFA
                 </p>
 
                 <div className="mt-6 flex flex-col gap-4">
-                  {/* Option 1: Valider le montant existant */}
                   <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                     <h4 className="font-medium text-gray-900 dark:text-white">
                       Valider le montant existant
@@ -941,67 +1069,6 @@ export default function EditModal({
                         "Valider ce montant"
                       )}
                     </button>
-                  </div>
-
-                  {/* Option 2: Saisir un nouveau montant */}
-                  <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      Saisir un nouveau montant
-                    </h4>
-                    <div className="relative mt-3">
-                      <div className="flex">
-                        <input
-                          type="text"
-                          className="form-input w-full rounded-lg border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                          placeholder="Montant en F CFA"
-                          value={newMontantAffiche}
-                          onChange={handleNewMontantInputChange}
-                          autoFocus
-                        />
-                        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                          <IconCashBanknotes className="h-5 w-5 text-gray-400" />
-                        </div>
-                      </div>
-                      {newMontantError && (
-                        <p className="mt-2 text-sm text-red-500">
-                          {newMontantError}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      className="mt-3 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:bg-gray-400"
-                      onClick={handleConfirmNewMontant}
-                      disabled={
-                        !newMontantAffiche ||
-                        newMontantError !== "" ||
-                        parseFloat(
-                          newMontantAffiche.replace(/\s/g, "").replace(",", ".")
-                        ) <= 0 ||
-                        parseFloat(
-                          newMontantAffiche.replace(/\s/g, "").replace(",", ".")
-                        ) === selectedRow.montantReleve
-                      }
-                    >
-                      Confirmer ce nouveau montant
-                    </button>
-                    {newMontantAffiche &&
-                      parseFloat(
-                        newMontantAffiche.replace(/\s/g, "").replace(",", ".")
-                      ) === selectedRow.montantReleve && (
-                        <p className="mt-2 text-sm text-red-500">
-                          Le nouveau montant ne peut pas être identique à
-                          l'ancien
-                        </p>
-                      )}
-                    {newMontantAffiche &&
-                      parseFloat(
-                        newMontantAffiche.replace(/\s/g, "").replace(",", ".")
-                      ) <= 0 && (
-                        <p className="mt-2 text-sm text-red-500">
-                          Le montant doit être supérieur à 0
-                        </p>
-                      )}
                   </div>
                 </div>
 

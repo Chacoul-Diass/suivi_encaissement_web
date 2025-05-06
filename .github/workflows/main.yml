@@ -50,4 +50,7 @@ jobs:
             echo "🚀 Starting updated containers..."
             docker-compose up -d --remove-orphans
 
+            echo "🚮 Deleting unuse images"
+            docker rmi -f $(docker images "${{ secrets.DOCKERHUB_USERNAME }}/suivi_encaissement_web")
+
             echo "✅ Deployment complete!"
