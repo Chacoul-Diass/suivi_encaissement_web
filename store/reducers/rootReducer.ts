@@ -38,7 +38,7 @@ import etatEncaissementReducer from "./etat/etat.slice";
 //Rapprochement
 import dataRapprochementReducer from "./rapprochement/rapprochement.slice";
 import dataRapprochementJadeReducer from "./rapprochement/rapprochementJade.slice";
-
+import dataRapprochementSmartReducer from "./rapprochement/rapprochementSmart";
 //dashboard
 import dashboardReducer from "./dashboard/dashbord.slice";
 
@@ -94,6 +94,7 @@ const topReducer = combineReducers({
   //Rapprochement
   rapprochement: dataRapprochementReducer,
   rapprochementJade: dataRapprochementJadeReducer,
+  rapprochementSmart: dataRapprochementSmartReducer,
 
   //dashboard
   dashboard: dashboardReducer,

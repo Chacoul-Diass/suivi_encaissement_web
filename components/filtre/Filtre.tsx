@@ -18,6 +18,7 @@ import IconRefresh from "../icon/icon-refresh";
 import IconFilter from "../icon/icon-filter";
 import IconBuilding from "../icon/icon-building";
 import IconOffice from "../icon/icon-office";
+import { fetchDataRapprochementSmart } from "@/store/reducers/rapprochement/rapprochementSmart";
 
 const Filtre = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -120,6 +121,13 @@ const Filtre = () => {
         years: undefined,
       })
     );
+    dispatch(
+      fetchDataRapprochementSmart({
+        directionRegional: undefined,
+        codeExploitation: undefined,
+        years: undefined,
+      })
+    );
   };
 
   const applyFilters = () => {
@@ -140,6 +148,7 @@ const Filtre = () => {
 
     dispatch(fetchDataRapprochementjade(params));
     dispatch(fetchDataRapprochement(params));
+    dispatch(fetchDataRapprochementSmart(params));
   };
 
   const handleDRSelection = (id: number) => {
@@ -243,9 +252,8 @@ const Filtre = () => {
             )}
 
             <Dropdown
-              btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${
-                selectedDRIds.length > 0 ? "ring-2 ring-primary/30" : ""
-              }`}
+              btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${selectedDRIds.length > 0 ? "ring-2 ring-primary/30" : ""
+                }`}
               button={
                 <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
                   <IconBuilding className="h-4 w-4 text-gray-400" />
@@ -326,13 +334,11 @@ const Filtre = () => {
             )}
 
             <Dropdown
-              btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${
-                selectedSecteurIds.length > 0 ? "ring-2 ring-primary/30" : ""
-              } ${
-                selectedDRIds.length === 0
+              btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${selectedSecteurIds.length > 0 ? "ring-2 ring-primary/30" : ""
+                } ${selectedDRIds.length === 0
                   ? "opacity-50 cursor-not-allowed"
                   : ""
-              }`}
+                }`}
               button={
                 <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
                   <IconOffice className="h-4 w-4 text-gray-400" />
@@ -357,9 +363,9 @@ const Filtre = () => {
                     }}
                   >
                     {selectedSecteurIds.length ===
-                    secteurData.filter((s: any) =>
-                      selectedDRIds.includes(s.directionRegionaleId)
-                    ).length
+                      secteurData.filter((s: any) =>
+                        selectedDRIds.includes(s.directionRegionaleId)
+                      ).length
                       ? "Tout désélectionner"
                       : "Tout sélectionner"}
                   </button>

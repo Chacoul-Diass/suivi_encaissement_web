@@ -12,7 +12,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { fetchDataRapprochementjade } from "@/store/reducers/rapprochement/rapprochementJade.slice";
-
+import { fetchDataRapprochementSmart } from "@/store/reducers/rapprochement/rapprochementSmart";
 interface MontantData {
   Libelle: string;
   Janvier: string;
@@ -36,23 +36,31 @@ const Table = () => {
   const dataRapprochment: any = useSelector(
     (state: TRootState) => state.rapprochementJade.data
   );
+
+  const dataRapprochmentSmart: any = useSelector(
+    (state: TRootState) => state.rapprochementSmart.data
+  );
+
   const loading: boolean = useSelector(
     (state: TRootState) => state.rapprochementJade.loading
   );
 
-  // Vous pouvez conserver ce useEffect si vous voulez un chargement par défaut
-  // au montage du composant (sans filtres).
-  // Sinon, commentez-le si vous ne voulez charger que via le bouton "Valider" du filtre.
+  const loadingSmart: boolean = useSelector(
+    (state: TRootState) => state.rapprochementSmart.loading
+  );
+
   useEffect(() => {
     dispatch(fetchDataRapprochementjade({}));
+    dispatch(fetchDataRapprochementSmart({}));
   }, [dispatch]);
 
   const CHQ = dataRapprochment?.Chèque || [];
   const ESP = dataRapprochment?.Espèce || [];
-
+  const ESP_SMART = dataRapprochmentSmart?.Espèce || [];
 
   const [tableDataCHQ, setTableDataCHQ] = useState<MontantData[]>([]);
   const [tableDataESP, setTableDataESP] = useState<MontantData[]>([]);
+  const [tableDataESPSmart, setTableDataESPSmart] = useState<MontantData[]>([]);
 
   // Format des nombres
   const formatNumber = (value: number | string) => {
@@ -129,7 +137,8 @@ const Table = () => {
   useEffect(() => {
     if (CHQ.length > 0) setTableDataCHQ(transformData(CHQ));
     if (ESP.length > 0) setTableDataESP(transformData(ESP));
-  }, [CHQ, ESP]);
+    if (ESP_SMART.length > 0) setTableDataESPSmart(transformData(ESP_SMART));
+  }, [CHQ, ESP, ESP_SMART]);
 
   // -- Fonctions d'export (Excel, CSV, PDF) -- //
 
@@ -289,7 +298,7 @@ const Table = () => {
         </div>
       </div>
       <div className="datatables mt-3">
-        {loading ? (
+        {loading || loadingSmart ? (
           <div className="min-h-[400px] flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <div className="animate-spin">
@@ -330,6 +339,7 @@ const Table = () => {
     <div className="space-y-6">
       {renderTable(tableDataCHQ, "Montants Chèques")}
       {renderTable(tableDataESP, "Montants Espèces")}
+      {renderTable(tableDataESPSmart, "Montants Saphir Smart (Espèces)")}
       {/* Vous pouvez avoir d'autres données similaires (Prépayé, etc.) */}
     </div>
   );
