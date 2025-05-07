@@ -339,7 +339,7 @@ const Table = () => {
     <div className="space-y-6">
       {renderTable(tableDataCHQ, "Montants Chèques")}
       {renderTable(tableDataESP, "Montants Espèces")}
-      {renderTable(tableDataESPSmart, "Montants Saphir Smart (Espèces)")}
+      {renderTable(tableDataESPSmart, "Montants Jade Smart (Espèces)")}
       {/* Vous pouvez avoir d'autres données similaires (Prépayé, etc.) */}
     </div>
   );
