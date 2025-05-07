@@ -230,7 +230,8 @@ const ComponentsDashboardValider = () => {
           : undefined,
         endDate: filtersToUse?.endDate ? formatDate(filtersToUse.endDate) : undefined,
         banque: filtersToUse?.banque ? formatArray(filtersToUse.banque) : undefined,
-        caisse: filtersToUse?.caisse ? formatArray(filtersToUse.caisse) : undefined,
+        noCaisse: filtersToUse?.caisse ? formatArray(filtersToUse.caisse) : undefined,
+        dailyCaisse: filtersToUse?.dailyCaisse ? formatArray(filtersToUse.dailyCaisse) : undefined,
         produit: filtersToUse?.produit ? formatArray(filtersToUse.produit) : undefined,
         modeReglement: filtersToUse?.modeReglement
           ? formatArray(filtersToUse.modeReglement)

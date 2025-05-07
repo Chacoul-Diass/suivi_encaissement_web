@@ -71,38 +71,39 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
 
   return (
     <div>
-      <div className="grid pt-5">
-        <div className="flex flex-col md:flex-row md:gap-6">
-          <div className="panel w-full md:w-1/2 flex-1 min-w-0 mb-4 md:mb-0 md:mr-4" id="completion">
-            <div className="-m-5 mb-5 flex items-center justify-between border-b border-white-light p-5 dark:border-[#1b2e4b]">
+      <div className="grid pt-3 md:pt-5">
+        <div className="flex flex-col gap-3 md:gap-4 sm:flex-row flex-wrap lg:gap-5 xl:gap-6 xl:flex-nowrap">
+          <div className="panel h-full w-full flex-1 min-w-0 p-3 md:p-5" id="completion">
+            <div className="-m-3 md:-m-5 mb-3 md:mb-5 flex items-center justify-between border-b border-white-light p-3 md:p-5 dark:border-[#1b2e4b]">
               <button type="button" className="flex items-center font-semibold">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-white ltr:mr-4 rtl:ml-4">
+                <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-md bg-primary text-white ltr:mr-2 md:ltr:mr-4 rtl:ml-2 md:rtl:ml-4">
                   <span>TC</span>
                 </div>
                 <div style={{ textAlign: "left" }}>
-                  <h6 className="text-base md:text-lg">Taux de complétion</h6>
-                  <p className="mt-1 text-xs md:text-sm text-primary">
+                  <h6 className="text-sm md:text-base">Taux de complétion</h6>
+                  <p className="mt-1 text-xs text-primary">
                     {`${total.dossiersClotures}/${total.totalDossiers} lignes`}
                   </p>
                 </div>
               </button>
             </div>
             <div className="group">
-              <div className="mb-5 text-sm md:text-base text-white-dark">
+              <div className="mb-3 md:mb-5 text-xs md:text-sm text-white-dark">
                 Vous indique combien de fiches ont été éditées
               </div>
             </div>
-            <div className="space-y-9">
+
+            <div className="space-y-4 md:space-y-6 lg:space-y-9">
               <div className="flex h-5 items-center">
-                <div className="h-9 w-9 ltr:mr-3 rtl:ml-3">
-                  <div className="grid h-9 w-9 place-content-center rounded-full bg-warning-light text-warning dark:bg-warning dark:text-warning-light">
+                <div className="h-7 w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 ltr:mr-2 md:ltr:mr-3 rtl:ml-2 md:rtl:ml-3">
+                  <div className="grid h-7 w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 place-content-center rounded-full bg-warning-light text-warning dark:bg-warning dark:text-warning-light">
                     <IconZipFile />
                   </div>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="mb-2 flex font-semibold text-white-dark">
-                    <h6 className="md:text-base">Pourcentage</h6>
-                    <p className="ltr:ml-auto rtl:mr-auto md:text-base">
+                    <h6 className="text-xs md:text-sm">Pourcentage</h6>
+                    <p className="text-xs md:text-sm ltr:ml-auto rtl:mr-auto">
                       {`${expensesPercentage.toFixed(2)}%`}
                     </p>
                   </div>
@@ -117,54 +118,54 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
             </div>
           </div>
 
-          <div className="panel w-full md:w-1/2 flex-1 min-w-0" id="totalmontant">
+          <div className="panel h-full w-full flex-1 min-w-0 p-3 md:p-5" id="totalmontant">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-lg md:text-xl font-bold">Total des montants</div>
-                <div className="text-primary md:text-base">À la date du {today}</div>
+                <div className="text-base md:text-lg font-bold">Total des montants</div>
+                <div className="text-xs md:text-sm text-primary">À la date du {today}</div>
               </div>
             </div>
-            <div className="relative mt-10">
-              <div className="absolute -bottom-12 h-12 w-12 ltr:-right-12 rtl:-left-12">
-                <IconCircleCheck className="-ml-7 -mt-[25px] h-full w-full text-success opacity-20" />
+            <div className="relative mt-4 md:mt-6 lg:mt-10">
+              <div className="absolute -bottom-12 h-12 w-12 ltr:-right-12 rtl:-left-12 hidden md:block opacity-20">
+                <IconCircleCheck className="-ml-7 -mt-[25px] h-full w-full text-success" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 md:gap-4 lg:grid-cols-3 xl:gap-6">
                 {fetchLoading ? (
                   <>
                     {/* Skeleton loaders */}
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 sm:min-w-[130px] md:min-w-[150px] lg:min-w-[180px]">
+                      <div className="text-xs md:text-sm text-white-black">
                         Total Montant Caisse
                       </div>
-                      <div className="mt-2 text-lg md:text-xl font-light xl:text-xl">
-                        <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
+                      <div className="mt-2 text-sm md:text-base lg:text-lg font-light xl:text-xl">
+                        <div className="h-2 w-20 md:w-24 lg:w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 sm:min-w-[130px] md:min-w-[150px] lg:min-w-[180px]">
+                      <div className="text-xs md:text-sm text-white-black">
                         Total Montant Bordereau
                       </div>
-                      <div className="mt-2 text-lg md:text-xl font-light xl:text-xl">
-                        <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
+                      <div className="mt-2 text-sm md:text-base lg:text-lg font-light xl:text-xl">
+                        <div className="h-2 w-20 md:w-24 lg:w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 sm:min-w-[130px] md:min-w-[150px] lg:min-w-[180px]">
+                      <div className="text-xs md:text-sm text-white-black">
                         Total Montant Relevé
                       </div>
-                      <div className="mt-2 text-lg md:text-xl font-light xl:text-xl">
-                        <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
+                      <div className="mt-2 text-sm md:text-base lg:text-lg font-light xl:text-xl">
+                        <div className="h-2 w-20 md:w-24 lg:w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 sm:min-w-[130px] md:min-w-[150px] lg:min-w-[180px]">
+                      <div className="text-xs md:text-sm text-white-black">
                         Total Montant Caisse
                       </div>
                       <div
-                        className={`mt-2 whitespace-nowrap text-lg md:text-xl font-light xl:text-xl ${getColorClass(
+                        className={`mt-2 whitespace-nowrap text-sm md:text-base lg:text-lg font-light xl:text-xl ${getColorClass(
                           total.totalMontantRestitutionCaisse
                         )}`}
                       >
@@ -173,12 +174,12 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                         )} F CFA`}
                       </div>
                     </div>
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 sm:min-w-[130px] md:min-w-[150px] lg:min-w-[180px]">
+                      <div className="text-xs md:text-sm text-white-black">
                         Total Montant Bordereau
                       </div>
                       <div
-                        className={`mt-2 whitespace-nowrap text-lg md:text-xl font-light xl:text-xl ${getColorClass(
+                        className={`mt-2 whitespace-nowrap text-sm md:text-base lg:text-lg font-light xl:text-xl ${getColorClass(
                           total.totalMontantBordereauBanque
                         )}`}
                       >
@@ -187,12 +188,12 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                         )} F CFA`}
                       </div>
                     </div>
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 sm:min-w-[130px] md:min-w-[150px] lg:min-w-[180px]">
+                      <div className="text-xs md:text-sm text-white-black">
                         Total Montant Relevé
                       </div>
                       <div
-                        className={`mt-2 whitespace-nowrap text-lg md:text-xl font-light xl:text-xl ${getColorClass(
+                        className={`mt-2 whitespace-nowrap text-sm md:text-base lg:text-lg font-light xl:text-xl ${getColorClass(
                           total.totalMontantReleve
                         )}`}
                       >

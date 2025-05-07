@@ -15,6 +15,7 @@ export const fetchDataReleve = createAsyncThunk(
       startDate,
       endDate,
       modeReglement,
+      dailyCaisse,
       search,
       page,
       limit,
@@ -25,6 +26,7 @@ export const fetchDataReleve = createAsyncThunk(
       banque?: string[];
       caisse?: string[];
       produit?: string[];
+      dailyCaisse?: string[];
       startDate?: string;
       endDate?: string;
       search?: any;
@@ -58,6 +60,7 @@ export const fetchDataReleve = createAsyncThunk(
       if (endDate) params["endDate"] = formatDate(endDate);
       if (banque) params["banque"] = formatArray(banque);
       if (caisse) params["caisse"] = formatArray(caisse);
+      if (dailyCaisse) params["dailyCaisse"] = formatArray(dailyCaisse);
       if (produit) params["produit"] = formatArray(produit);
       if (modeReglement) params["modeReglement"] = formatArray(modeReglement);
 

@@ -20,6 +20,7 @@ import caissesReducer from "./select/caisse.slice";
 import produitReducer from "./select/produit.slice";
 import BanquesReducer from "./select/banque.slice";
 import modeReglementReducer from "./select/modeReglement.slice";
+import journeeCaisseReducer from "./select/journeeCaisse.slice";
 
 //habilitation
 import objetReducer from "./permission/objet-get-slice";
@@ -75,6 +76,7 @@ const topReducer = combineReducers({
   produit: produitReducer,
   Banques: BanquesReducer,
   modeReglement: modeReglementReducer,
+  journeeCaisse: journeeCaisseReducer,
 
   //habilitation
   ListHabilitation: objetReducer,
