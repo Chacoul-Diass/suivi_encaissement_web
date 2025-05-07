@@ -1,16 +1,28 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { useDispatch } from "react-redux";
+import { TAppDispatch } from "@/store";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css";
 import IconX from "../icon/icon-x";
 import IconBank from "../icon/icon-bank";
+import IconCashBanknotes from "../icon/icon-cash-banknotes";
+import IconPaperclip from "../icon/icon-paperclip";
 import IconPackage from "../icon/icon-package";
 import IconFileText from "../icon/icon-file-text";
+import IconPencil from "../icon/icon-pencil";
 import { EStatutEncaissement } from "@/utils/enums";
 import AskToRequestModal from "./askToRequestModal";
+import ImageUploading, { ImageListType } from "react-images-uploading";
+import { toast } from "react-hot-toast";
+import { submitEncaissementValidation } from "@/store/reducers/encaissements/soumission.slice";
+import { handleApiError } from "@/utils/apiErrorHandler";
+import { FaSpinner } from "react-icons/fa";
 
 interface ViewModalProps {
-  modalOpen: any;
-  setModalOpen: any;
+  modalOpen: boolean;
+  setModalOpen: (open: boolean) => void;
   formatNumber: any;
   selectedRow: any;
   rasChecked1: any;
@@ -31,7 +43,7 @@ interface ViewModalProps {
   showAlertRamener: any;
   today: any;
   setPreuvePhotoModal: any;
-  handleSubmit: any;
+  handleSubmit: (updatedRow: any) => void;
   observationRejete: any;
   handleSendEmail: any;
   handleMultipleFileUpload: any;
@@ -41,9 +53,9 @@ interface ViewModalProps {
   setParams: any;
   handleOpenConfirmationModal: any;
   setPhotoDocuments: any;
-  setImages2: any;
-  images2: any;
-  onChange2: any;
+  setImages2: (images: ImageListType) => void;
+  images2: ImageListType;
+  onChange2: (imageList: ImageListType) => void;
   observationReclamation: any;
   setObservationReclamation: any;
 }
@@ -88,6 +100,12 @@ export default function ViewModal({
   setObservationReclamation,
 }: ViewModalProps) {
   const [askToRequestModalOpen, setAskToRequestModalOpen] = useState(false);
+  const [isEditingMontantReleve, setIsEditingMontantReleve] = useState(false);
+  const [editedMontantReleve, setEditedMontantReleve] = useState("");
+  const [isMontantLoading, setIsMontantLoading] = useState(false);
+  const dispatch = useDispatch<TAppDispatch>();
+  const maxNumber = 69;
+
   useEffect(() => {
     if (!modalOpen) {
       setAskToRequestModalOpen(false);
@@ -149,7 +167,7 @@ export default function ViewModal({
         {
           label: "Ramener",
           className: "btn btn-success w-full",
-          onClick: () => showAlertRamener(selectedRow.id),
+          onClick: () => showAlertRamener(selectedRow.id, selectedRow["Montant relevé (C)"] || selectedRow.montantReleve || 0),
         },
         {
           label: "Preuve photo",
@@ -208,7 +226,6 @@ export default function ViewModal({
     {
       statut: EStatutEncaissement.DFC,
       buttons: [
-
         {
           label: "Cloturer",
           className: "btn btn-success w-full",
@@ -290,7 +307,10 @@ export default function ViewModal({
   };
 
   const calculateEcart = () => {
-    const montantB = selectedRow["Montant bordereau (B)"] || selectedRow.montantBordereauBanque || 0;
+    const montantB =
+      selectedRow["Montant bordereau (B)"] ||
+      selectedRow.montantBordereauBanque ||
+      0;
     const montantC =
       selectedRow["Montant relevé (C)"] ||
       selectedRow.montantReleve ||
@@ -300,20 +320,73 @@ export default function ViewModal({
     return montantB - montantC;
   };
 
-  console.log(selectedRow["Montant revelé"])
+  console.log(selectedRow["Montant revelé"]);
+
+  // Fonction pour nettoyer le HTML
+  const stripHtml = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.body.textContent || "";
+  };
+
+  // Fonction pour gérer le changement d'images
+  const handleImageChange = (imageList: ImageListType) => {
+    onChange2(imageList);
+  };
+
+  const handleMontantReleveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "");
+    setEditedMontantReleve(value);
+  };
+
+  const handleMontantReleveSubmit = () => {
+    if (!editedMontantReleve) return;
+    setIsMontantLoading(true);
+    const payload = {
+      encaissementId: selectedRow.id,
+      montantReleve: parseInt(editedMontantReleve),
+      statutValidation: EStatutEncaissement.REJETE,
+    };
+
+    dispatch(submitEncaissementValidation(payload))
+      .unwrap()
+      .then((response) => {
+        // Mettre à jour l'état local avec le nouveau montant
+        const updatedRow = {
+          ...selectedRow,
+          "Montant relevé (C)": parseInt(editedMontantReleve),
+          montantReleve: parseInt(editedMontantReleve),
+          validationEncaissement: {
+            ...selectedRow.validationEncaissement,
+            montantReleve: parseInt(editedMontantReleve)
+          }
+        };
+        Object.assign(selectedRow, updatedRow);
+        toast.success("Montant relevé modifié avec succès");
+        setIsEditingMontantReleve(false);
+        setEditedMontantReleve("");
+        setIsMontantLoading(false);
+      })
+      .catch((error) => {
+        const errorMessage = handleApiError(error);
+        toast.error(errorMessage);
+        setIsMontantLoading(false);
+      });
+  };
 
   return (
     <>
       {" "}
       <div>
         <div
-          className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
-            }`}
+          className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${
+            modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
           onClick={handleOpenConfirmationModal}
         />
         <div
-          className={`fixed bottom-0 right-0 top-0 z-[51] w-full max-w-[600px] transform bg-white shadow-xl transition-transform duration-300 dark:bg-gray-800 ${modalOpen ? "translate-x-0" : "translate-x-full"
-            }`}
+          className={`fixed bottom-0 right-0 top-0 z-[51] w-full max-w-[600px] transform bg-white shadow-xl transition-transform duration-300 dark:bg-gray-800 ${
+            modalOpen ? "translate-x-0" : "translate-x-full"
+          }`}
         >
           <div className="flex h-full flex-col">
             {/* Header */}
@@ -321,9 +394,28 @@ export default function ViewModal({
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Formulaire de visualisation du{" "}
+                    Visualisation de l'encaissement{" "}
+                    <span className="font-bold text-primary">
+                      {statutValidation === EStatutEncaissement.EN_ATTENTE &&
+                        "chargé"}
+                      {statutValidation === EStatutEncaissement.TRAITE &&
+                        "vérifié"}
+                      {statutValidation === EStatutEncaissement.REJETE &&
+                        "rejeté"}
+                      {statutValidation === EStatutEncaissement.VALIDE &&
+                        "validé"}
+                      {statutValidation === EStatutEncaissement.DFC && "traité"}
+                      {statutValidation ===
+                        EStatutEncaissement.RECLAMATION_REVERSES &&
+                        "en réclamation"}
+                      {statutValidation ===
+                        EStatutEncaissement.RECLAMATION_TRAITES &&
+                        "en réclamation traité"}
+                      {statutValidation === EStatutEncaissement.CLOTURE &&
+                        "clôturé"}
+                    </span>{" "}
+                    du{" "}
                     <span>
-                      {" "}
                       {formatDateData(selectedRow["Date Validation"])}
                     </span>
                   </h2>
@@ -395,9 +487,9 @@ export default function ViewModal({
             {/* Content */}
             <div className="flex-1 space-y-6 overflow-y-auto p-6">
               {statutValidation === EStatutEncaissement.REJETE ||
-                statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
-                (selectedRow["Observation rejet"] &&
-                  selectedRow["Observation rejet"].trim() !== "") ? (
+              statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
+              (selectedRow["Observation rejet"] &&
+                selectedRow["Observation rejet"].trim() !== "") ? (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/50">
                   <div className="flex flex-col gap-2">
                     <h3 className="font-semibold text-red-900 dark:text-red-200">
@@ -415,9 +507,9 @@ export default function ViewModal({
 
               {(statutValidation === EStatutEncaissement.RECLAMATION_TRAITES ||
                 statutValidation ===
-                EStatutEncaissement.RECLAMATION_REVERSES) &&
-                selectedRow.observationReclamation &&
-                selectedRow.observationReclamation.trim() !== "" ? (
+                  EStatutEncaissement.RECLAMATION_REVERSES) &&
+              selectedRow.observationReclamation &&
+              selectedRow.observationReclamation.trim() !== "" ? (
                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/50">
                   <div className="flex flex-col gap-2">
                     <h3 className="font-semibold text-blue-900 dark:text-blue-200">
@@ -455,20 +547,21 @@ export default function ViewModal({
                   </div>
                   <div>
                     <p
-                      className={`text-lg font-semibold ${selectedRow["Montant caisse (A)"] -
-                        selectedRow["Montant bordereau (B)"] <
+                      className={`text-lg font-semibold ${
+                        selectedRow["Montant caisse (A)"] -
+                          selectedRow["Montant bordereau (B)"] <
                         0
-                        ? "text-red-500"
-                        : selectedRow["Montant caisse (A)"] -
-                          selectedRow["Montant bordereau (B)"] >
-                          0
+                          ? "text-red-500"
+                          : selectedRow["Montant caisse (A)"] -
+                              selectedRow["Montant bordereau (B)"] >
+                            0
                           ? "text-green-500"
                           : "text-gray-900 dark:text-white"
-                        }`}
+                      }`}
                     >
                       {formatNumber(
                         selectedRow["Montant caisse (A)"] -
-                        selectedRow["Montant bordereau (B)"]
+                          selectedRow["Montant bordereau (B)"]
                       )}{" "}
                       F CFA
                     </p>
@@ -479,7 +572,7 @@ export default function ViewModal({
 
               {/* Observation Caisse */}
               {statutValidation ===
-                EStatutEncaissement.RECLAMATION_REVERSES ? null : (
+              EStatutEncaissement.RECLAMATION_REVERSES ? null : (
                 <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
@@ -502,6 +595,86 @@ export default function ViewModal({
                 </div>
               )}
 
+              {/* Image Upload */}
+              {statutValidation === EStatutEncaissement.REJETE && (
+                <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                        Importer le coupon
+                      </h3>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Format accepté: Images
+                      </p>
+                    </div>
+                    {images2.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setImages2([])}
+                        className="text-sm text-red-500 hover:text-red-600"
+                      >
+                        Supprimer tout
+                      </button>
+                    )}
+                  </div>
+
+                  <ImageUploading
+                    multiple
+                    value={images2}
+                    onChange={handleImageChange}
+                    maxNumber={maxNumber}
+                  >
+                    {({
+                      imageList,
+                      onImageUpload,
+                      onImageRemove,
+                      isDragging,
+                      dragProps,
+                    }) => (
+                      <div className="space-y-4">
+                        <button
+                          type="button"
+                          onClick={onImageUpload}
+                          className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-primary dark:border-gray-600 dark:hover:border-primary ${
+                            isDragging ? "border-primary" : ""
+                          }`}
+                          {...dragProps}
+                        >
+                          <IconPaperclip className="h-5 w-5 text-gray-400" />
+                          <span className="text-sm text-gray-600 dark:text-gray-300">
+                            Cliquez ou glissez vos images ici
+                          </span>
+                        </button>
+
+                        {imageList.length > 0 && (
+                          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                            {imageList.map((image, index) => (
+                              <div
+                                key={index}
+                                className="group relative aspect-square overflow-hidden rounded-lg"
+                              >
+                                <img
+                                  src={image.dataURL}
+                                  alt={`Image ${index + 1}`}
+                                  className="h-full w-full object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => onImageRemove(index)}
+                                  className="absolute right-2 top-2 rounded-full bg-white/80 p-1 opacity-0 transition-opacity group-hover:opacity-100 dark:bg-black/80"
+                                >
+                                  <IconX className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </ImageUploading>
+                </div>
+              )}
+
               {/* Détails Bancaires (B-C) */}
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
                 <div className="mb-4">
@@ -515,29 +688,61 @@ export default function ViewModal({
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {formatNumber(selectedRow["Montant bordereau (B)"] || selectedRow.montantBordereauBanque || 0)} F CFA
+                      {formatNumber(
+                        selectedRow["Montant bordereau (B)"] ||
+                          selectedRow.montantBordereauBanque ||
+                          0
+                      )}{" "}
+                      F CFA
                     </p>
                     <p className="text-sm text-gray-500">Montant Bordereaux</p>
                   </div>
                   <div>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {formatNumber(
-                        selectedRow["Montant relevé (C)"] ||
-                        selectedRow.montantReleve ||
-                        selectedRow.validationEncaissement?.montantReleve ||
-                        0
-                      )} F CFA
-                    </p>
-                    <p className="text-sm text-gray-500">Montant Relevé</p>
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {formatNumber(
+                              selectedRow["Montant relevé (C)"] ||
+                                selectedRow.montantReleve ||
+                                selectedRow.validationEncaissement?.montantReleve ||
+                                0
+                            )}{" "}
+                            F CFA
+                          </p>
+                          {statutValidation === EStatutEncaissement.REJETE && !isEditingMontantReleve && (
+                            <Tippy content="Modifier le montant relevé">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsEditingMontantReleve(true);
+                                  setEditedMontantReleve(
+                                    (selectedRow["Montant relevé (C)"] ||
+                                      selectedRow.montantReleve ||
+                                      selectedRow.validationEncaissement?.montantReleve ||
+                                      0).toString()
+                                  );
+                                }}
+                                className="ml-1 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-700"
+                              >
+                                <IconPencil className="h-4 w-4" />
+                              </button>
+                            </Tippy>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500">Montant Relevé</p>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <p
-                      className={`text-lg font-semibold ${calculateEcart() < 0
-                        ? "text-red-500"
-                        : calculateEcart() > 0
+                      className={`text-lg font-semibold ${
+                        calculateEcart() < 0
+                          ? "text-red-500"
+                          : calculateEcart() > 0
                           ? "text-green-500"
                           : "text-gray-900 dark:text-white"
-                        }`}
+                      }`}
                     >
                       {formatNumber(calculateEcart())} F CFA
                     </p>
@@ -546,9 +751,49 @@ export default function ViewModal({
                 </div>
               </div>
 
+              {/* Section édition du montant relevé en bas de la modale */}
+              {isEditingMontantReleve && (
+                <div className="w-full bg-gray-50 dark:bg-gray-800 rounded-lg shadow flex flex-col gap-4 mt-8 p-6 border-t border-gray-200 dark:border-gray-700">
+                  <label className="text-sm font-medium text-gray-900 dark:text-white text-left w-full mb-2">Modifier le montant relevé</label>
+                  <div className="relative w-full flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editedMontantReleve}
+                      onChange={handleMontantReleveChange}
+                      className="form-input w-full rounded-lg border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      placeholder="Montant"
+                      disabled={isMontantLoading}
+                    />
+                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+                      <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+                    </div>
+                    {isMontantLoading && (
+                      <FaSpinner className="animate-spin text-primary text-lg ml-2" />
+                    )}
+                    <button
+                      onClick={handleMontantReleveSubmit}
+                      className="rounded-lg bg-primary px-3 py-2 text-sm text-white hover:bg-primary/90 ml-2"
+                      disabled={isMontantLoading}
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingMontantReleve(false);
+                        setEditedMontantReleve("");
+                      }}
+                      className="rounded-lg bg-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-300 ml-2"
+                      disabled={isMontantLoading}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Observation Banque */}
               {statutValidation ===
-                EStatutEncaissement.RECLAMATION_REVERSES ? null : (
+              EStatutEncaissement.RECLAMATION_REVERSES ? null : (
                 <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
@@ -570,6 +815,8 @@ export default function ViewModal({
                   />
                 </div>
               )}
+
+              
             </div>
 
             {/* Footer avec boutons fixes */}
