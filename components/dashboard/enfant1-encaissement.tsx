@@ -128,43 +128,43 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
               <div className="absolute -bottom-12 h-12 w-12 ltr:-right-12 rtl:-left-12 hidden md:block opacity-20">
                 <IconCircleCheck className="-ml-7 -mt-[25px] h-full w-full text-success" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                 {fetchLoading ? (
                   <>
                     {/* Skeleton loaders */}
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 break-words">
+                      <div className="text-xs sm:text-sm text-white-black">
                         Total Montant Caisse
                       </div>
-                      <div className="mt-2 text-lg md:text-xl font-light xl:text-xl">
-                        <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
+                      <div className="mt-2 text-sm sm:text-lg font-light xl:text-xl">
+                        <div className="h-2 w-20 sm:w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 break-words">
+                      <div className="text-xs sm:text-sm text-white-black">
                         Total Montant Bordereau
                       </div>
-                      <div className="mt-2 text-lg md:text-xl font-light xl:text-xl">
-                        <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
+                      <div className="mt-2 text-sm sm:text-lg font-light xl:text-xl">
+                        <div className="h-2 w-20 sm:w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 break-words">
+                      <div className="text-xs sm:text-sm text-white-black">
                         Total Montant Relevé
                       </div>
-                      <div className="mt-2 text-lg md:text-xl font-light xl:text-xl">
-                        <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
+                      <div className="mt-2 text-sm sm:text-lg font-light xl:text-xl">
+                        <div className="h-2 w-20 sm:w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 break-words">
+                      <div className="text-xs sm:text-sm text-white-black">
                         Total Montant Caisse
                       </div>
                       <div
-                        className={`mt-2 whitespace-nowrap text-lg md:text-xl font-light xl:text-xl ${getColorClass(
+                        className={`mt-2 break-words text-sm sm:text-lg font-light xl:text-xl ${getColorClass(
                           total.totalMontantRestitutionCaisse
                         )}`}
                       >
@@ -173,12 +173,12 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                         )} F CFA`}
                       </div>
                     </div>
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 break-words">
+                      <div className="text-xs sm:text-sm text-white-black">
                         Total Montant Bordereau
                       </div>
                       <div
-                        className={`mt-2 whitespace-nowrap text-lg md:text-xl font-light xl:text-xl ${getColorClass(
+                        className={`mt-2 break-words text-sm sm:text-lg font-light xl:text-xl ${getColorClass(
                           total.totalMontantBordereauBanque
                         )}`}
                       >
@@ -187,12 +187,12 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                         )} F CFA`}
                       </div>
                     </div>
-                    <div className="min-w-[180px]">
-                      <div className="text-white-black md:text-base">
+                    <div className="min-w-0 break-words">
+                      <div className="text-xs sm:text-sm text-white-black">
                         Total Montant Relevé
                       </div>
                       <div
-                        className={`mt-2 whitespace-nowrap text-lg md:text-xl font-light xl:text-xl ${getColorClass(
+                        className={`mt-2 break-words text-sm sm:text-lg font-light xl:text-xl ${getColorClass(
                           total.totalMontantReleve
                         )}`}
                       >
