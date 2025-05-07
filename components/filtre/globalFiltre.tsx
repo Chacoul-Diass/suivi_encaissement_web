@@ -551,7 +551,7 @@ export default function GlobalFiltre({
                     <span className="truncate">
                       {dateRange.startDate && dateRange.endDate
                         ? `${dayjs(dateRange.startDate).format("DD/MM/YYYY")} - ${dayjs(dateRange.endDate).format("DD/MM/YYYY")}`
-                        : "Sélectionner la période"}
+                        : "Période"}
                     </span>
                   </div>
                 }
