@@ -138,7 +138,7 @@ const Table = () => {
     if (CHQ.length > 0) setTableDataCHQ(transformData(CHQ));
     if (ESP.length > 0) setTableDataESP(transformData(ESP));
     if (ESP_SMART.length > 0) setTableDataESPSmart(transformData(ESP_SMART));
-  }, [CHQ, ESP]);
+  }, [CHQ, ESP, ESP_SMART]);
 
   // -- Fonctions d'export (Excel, CSV, PDF) -- //
 
