@@ -253,9 +253,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     const totalUnvalidatedRecords = unvalidatedRecords.length;
     const encaissementText = `${statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
-      statutValidation === EStatutEncaissement.RECLAMATION_TRAITES
-      ? ` Réclamation${totalUnvalidatedRecords > 1 ? "s " : " "}`
-      : ` Encaissement${totalUnvalidatedRecords > 1 ? "s " : " "}`
+        statutValidation === EStatutEncaissement.RECLAMATION_TRAITES
+        ? ` Réclamation${totalUnvalidatedRecords > 1 ? "s " : " "}`
+        : ` Encaissement${totalUnvalidatedRecords > 1 ? "s " : " "}`
       }`;
 
     const [currentPage, setCurrentPage] = useState(paginate.currentPage || 1);
@@ -1033,7 +1033,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
               {/* Icône Voir si l'utilisateur ne peut pas modifier et statutValidation !== 0 */}
               {!canEditComptable && statutValidation !== 0 && (
-
                 <Tippy content="Voir">
                   <button
                     type="button"
@@ -1043,8 +1042,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     <IconEye className="h-5 w-5 stroke-[1.5]" />
                   </button>
                 </Tippy>
-
-
               )}
 
               {/* Icône Envoyer un mail si statutValidation === 4 */}
@@ -1716,8 +1713,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
                             hasPermission("LITIGES", "MODIFIER")) ||
                           statutValidation === 6;
 
-                        const canRclamationAGC = (statutValidation === 2) && hasPermission("ENCAISSEMENTS TRAITES", "MODIFIER");
-
                         return (
                           <div className="flex items-center justify-center gap-3">
                             {/* Icône Modifier si l'utilisateur peut modifier */}
@@ -1754,18 +1749,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
                                   onClick={() => handleOpenModal(row)}
                                 >
                                   <IconEye className="h-5 w-5 stroke-[1.5]" />
-                                </button>
-                              </Tippy>
-                            )}
-
-                            {canRclamationAGC && (
-                              <Tippy content="Passer en réclamation">
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center rounded-lg p-2 text-warning hover:text-warning"
-                                  onClick={() => showAlertReclamation(row.id)}
-                                >
-                                  <IconAlertTriangle className="h-5 w-5 stroke-[1.5]" />
                                 </button>
                               </Tippy>
                             )}
