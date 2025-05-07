@@ -72,27 +72,26 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
   return (
     <div>
       <div className="grid pt-5">
-        <div className="flex flex-wrap gap-4 lg:gap-6 xl:flex-nowrap">
-          <div className="panel h-full w-full flex-1" id="completion">
+        <div className="flex flex-col md:flex-row md:gap-6">
+          <div className="panel w-full md:w-1/2 flex-1 min-w-0 mb-4 md:mb-0 md:mr-4" id="completion">
             <div className="-m-5 mb-5 flex items-center justify-between border-b border-white-light p-5 dark:border-[#1b2e4b]">
               <button type="button" className="flex items-center font-semibold">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-white ltr:mr-4 rtl:ml-4">
                   <span>TC</span>
                 </div>
                 <div style={{ textAlign: "left" }}>
-                  <h6 className="text-base">Taux de complétion</h6>
-                  <p className="mt-1 text-xs text-primary">
+                  <h6 className="text-base md:text-lg">Taux de complétion</h6>
+                  <p className="mt-1 text-xs md:text-sm text-primary">
                     {`${total.dossiersClotures}/${total.totalDossiers} lignes`}
                   </p>
                 </div>
               </button>
             </div>
             <div className="group">
-              <div className="mb-5 text-sm text-white-dark">
+              <div className="mb-5 text-sm md:text-base text-white-dark">
                 Vous indique combien de fiches ont été éditées
               </div>
             </div>
-
             <div className="space-y-9">
               <div className="flex h-5 items-center">
                 <div className="h-9 w-9 ltr:mr-3 rtl:ml-3">
@@ -102,8 +101,8 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                 </div>
                 <div className="flex-1">
                   <div className="mb-2 flex font-semibold text-white-dark">
-                    <h6>Pourcentage</h6>
-                    <p className="ltr:ml-auto rtl:mr-auto">
+                    <h6 className="md:text-base">Pourcentage</h6>
+                    <p className="ltr:ml-auto rtl:mr-auto md:text-base">
                       {`${expensesPercentage.toFixed(2)}%`}
                     </p>
                   </div>
@@ -118,42 +117,42 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
             </div>
           </div>
 
-          <div className="panel h-full w-full flex-1" id="totalmontant">
+          <div className="panel w-full md:w-1/2 flex-1 min-w-0" id="totalmontant">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-lg font-bold">Total des montants</div>
-                <div className="text-primary">À la date du {today}</div>
+                <div className="text-lg md:text-xl font-bold">Total des montants</div>
+                <div className="text-primary md:text-base">À la date du {today}</div>
               </div>
             </div>
             <div className="relative mt-10">
               <div className="absolute -bottom-12 h-12 w-12 ltr:-right-12 rtl:-left-12">
                 <IconCircleCheck className="-ml-7 -mt-[25px] h-full w-full text-success opacity-20" />
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {fetchLoading ? (
                   <>
                     {/* Skeleton loaders */}
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">
+                      <div className="text-white-black md:text-base">
                         Total Montant Caisse
                       </div>
-                      <div className="mt-2 text-lg font-light xl:text-xl">
+                      <div className="mt-2 text-lg md:text-xl font-light xl:text-xl">
                         <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">
+                      <div className="text-white-black md:text-base">
                         Total Montant Bordereau
                       </div>
-                      <div className="mt-2 text-lg font-light xl:text-xl">
+                      <div className="mt-2 text-lg md:text-xl font-light xl:text-xl">
                         <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">
+                      <div className="text-white-black md:text-base">
                         Total Montant Relevé
                       </div>
-                      <div className="mt-2 text-lg font-light xl:text-xl">
+                      <div className="mt-2 text-lg md:text-xl font-light xl:text-xl">
                         <div className="h-2 w-32 animate-pulse rounded bg-gray-300"></div>
                       </div>
                     </div>
@@ -161,11 +160,11 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                 ) : (
                   <>
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">
+                      <div className="text-white-black md:text-base">
                         Total Montant Caisse
                       </div>
                       <div
-                        className={`mt-2 whitespace-nowrap text-lg font-light xl:text-xl ${getColorClass(
+                        className={`mt-2 whitespace-nowrap text-lg md:text-xl font-light xl:text-xl ${getColorClass(
                           total.totalMontantRestitutionCaisse
                         )}`}
                       >
@@ -175,11 +174,11 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                       </div>
                     </div>
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">
+                      <div className="text-white-black md:text-base">
                         Total Montant Bordereau
                       </div>
                       <div
-                        className={`mt-2 whitespace-nowrap text-lg font-light xl:text-xl ${getColorClass(
+                        className={`mt-2 whitespace-nowrap text-lg md:text-xl font-light xl:text-xl ${getColorClass(
                           total.totalMontantBordereauBanque
                         )}`}
                       >
@@ -189,11 +188,11 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                       </div>
                     </div>
                     <div className="min-w-[180px]">
-                      <div className="text-white-black">
+                      <div className="text-white-black md:text-base">
                         Total Montant Relevé
                       </div>
                       <div
-                        className={`mt-2 whitespace-nowrap text-lg font-light xl:text-xl ${getColorClass(
+                        className={`mt-2 whitespace-nowrap text-lg md:text-xl font-light xl:text-xl ${getColorClass(
                           total.totalMontantReleve
                         )}`}
                       >
