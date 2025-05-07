@@ -103,7 +103,10 @@ const SessionExpiredModal: React.FC<SessionExpiredModalProps> = ({
                     {/* Bouton */}
                     <div className="mt-6 flex justify-center">
                         <button
-                            onClick={onConfirm}
+                            onClick={() => {
+                                localStorage.removeItem('hasCheckedAlerts');
+                                onConfirm();
+                            }}
                             className="group relative overflow-hidden rounded-lg bg-red-500 px-6 py-3 text-white shadow-lg transition-all duration-300 hover:bg-red-600 hover:shadow-red-300/30"
                         >
                             <span className="relative z-10 flex items-center font-medium">

@@ -450,12 +450,7 @@ const Sidebar = () => {
                         className="relative mb-4 flex items-center justify-between cursor-pointer px-2 py-2 text-sm font-bold uppercase tracking-wider text-white/90 rounded-xl hover:bg-white/5 transition-all duration-300"
                       >
                         <div className="flex items-center gap-3">
-                          <span className={`relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/70 to-primary/20 transition-all duration-300 group-hover:shadow-lg ${pathname.startsWith('/dashboard') ? 'shadow-md shadow-primary/30' : ''}`}>
-                            <IconMinus className="h-4 w-4 text-white" />
-                            {pathname.startsWith('/dashboard') && (
-                              <span className="absolute -inset-0.5 rounded-full bg-primary/20 animate-ping opacity-75"></span>
-                            )}
-                          </span>
+
                           <span className="animate-slideRight">
                             {t("Analyse")}
                           </span>
@@ -488,12 +483,7 @@ const Sidebar = () => {
                         className="relative mb-4 flex items-center justify-between cursor-pointer px-2 py-2 text-sm font-bold uppercase tracking-wider text-white/90 rounded-xl hover:bg-white/5 transition-all duration-300"
                       >
                         <div className="flex items-center gap-3">
-                          <span className={`relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/70 to-primary/20 transition-all duration-300 group-hover:shadow-lg ${pathname.startsWith('/encaissement') || pathname.startsWith('/litige') || pathname.startsWith('/rapprochement') || pathname.startsWith('/etat') ? 'shadow-md shadow-primary/30' : ''}`}>
-                            <IconMinus className="h-4 w-4 text-white" />
-                            {(pathname.startsWith('/encaissement') || pathname.startsWith('/litige') || pathname.startsWith('/rapprochement') || pathname.startsWith('/etat')) && (
-                              <span className="absolute -inset-0.5 rounded-full bg-primary/20 animate-ping opacity-75"></span>
-                            )}
-                          </span>
+
                           <span className="animate-slideRight">{t("Menu")}</span>
                         </div>
                         <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-black/40 hover:bg-primary/30 transition-all duration-300">
@@ -525,12 +515,7 @@ const Sidebar = () => {
                         className="relative mb-4 flex items-center justify-between cursor-pointer px-2 py-2 text-sm font-bold uppercase tracking-wider text-white/90 rounded-xl hover:bg-white/5 transition-all duration-300"
                       >
                         <div className="flex items-center gap-3">
-                          <span className={`relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/70 to-primary/20 transition-all duration-300 group-hover:shadow-lg ${pathname.startsWith('/habilitation') || pathname.startsWith('/user') || pathname.startsWith('/historique') || pathname.startsWith('/parametres') ? 'shadow-md shadow-primary/30' : ''}`}>
-                            <IconMinus className="h-4 w-4 text-white" />
-                            {(pathname.startsWith('/habilitation') || pathname.startsWith('/user') || pathname.startsWith('/historique') || pathname.startsWith('/parametres')) && (
-                              <span className="absolute -inset-0.5 rounded-full bg-primary/20 animate-ping opacity-75"></span>
-                            )}
-                          </span>
+
                           <span className="animate-slideRight">
                             {t("Administration")}
                           </span>

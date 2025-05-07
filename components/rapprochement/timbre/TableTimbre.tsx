@@ -132,17 +132,107 @@ const Table = () => {
     if (Prepaye.length > 0) setTableDataPrepaye(transformData(Prepaye));
   }, [V2, V3, Prepaye]);
 
+  // Fonction utilitaire pour nettoyer les données avant export
+  const getRawData = (data: any[]): any[] => {
+    const months = [
+      "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+    ];
+    return data.map((row: any) => {
+      const cleanRow: any = { Libelle: row.Libelle };
+      months.forEach(month => {
+        if (typeof row[month] === "object" && row[month]?.props?.children) {
+          cleanRow[month] = Number(
+            Array.isArray(row[month].props.children)
+              ? row[month].props.children.join("")
+              : row[month].props.children
+          );
+        } else {
+          cleanRow[month] = typeof row[month] === "string"
+            ? Number(row[month].replace(/\s/g, ""))
+            : row[month];
+        }
+      });
+      cleanRow.Total = months.reduce((sum, m) => sum + (Number(cleanRow[m]) || 0), 0);
+      return cleanRow;
+    });
+  };
+
   // -- Fonctions d'export (Excel / CSV / PDF) -- //
   const exportToExcel = (data: MontantData[], title: string) => {
-    // ... identique à votre code
+    const rawData = getRawData(data);
+    const worksheet = XLSX.utils.json_to_sheet(rawData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, title);
+    XLSX.writeFile(workbook, `${title}.xlsx`);
   };
 
   const exportToCSV = (data: MontantData[], title: string) => {
-    // ... identique
+    const rawData = getRawData(data);
+    const worksheet = XLSX.utils.json_to_sheet(rawData);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const exportToPDF = (data: MontantData[], title: string) => {
-    // ... identique
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(title, doc.internal.pageSize.getWidth() / 2, 18, { align: "center" });
+
+    const rawData = getRawData(data);
+    const months = [
+      "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+    ];
+    const headers = ["Libellé", ...months, "Total"];
+    const tableData = rawData.map(row => [
+      row.Libelle,
+      ...months.map(month => row[month]?.toLocaleString("fr-FR") || "0"),
+      row.Total?.toLocaleString("fr-FR") || "0"
+    ]);
+
+    // Si tu utilises import autoTable from "jspdf-autotable"
+    // sinon remplace autoTable(doc, ...) par (window as any).jspdf_autotable(doc, ...)
+    import('jspdf-autotable').then(({ default: autoTable }) => {
+      autoTable(doc, {
+        head: [headers],
+        body: tableData,
+        startY: 28,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: 255,
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: 12,
+        },
+        bodyStyles: {
+          fontSize: 10,
+          halign: 'right',
+          valign: 'middle',
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        styles: {
+          cellPadding: 3,
+          lineColor: [44, 62, 80],
+          lineWidth: 0.2,
+          font: "helvetica",
+        },
+        columnStyles: {
+          0: { halign: 'left', fontStyle: 'bold', fontSize: 11 },
+        },
+      });
+      doc.save(`${title}.pdf`);
+    });
   };
 
   // Pour factoriser l'affichage
@@ -161,25 +251,20 @@ const Table = () => {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="btn btn-outline-primary btn-sm"
+            className="mr-1"
             onClick={() => exportToExcel(data, title)}
           >
-            <IconExcel className="w-5 h-5" />
+            <IconExcel />
           </button>
           <button
             type="button"
-            className="btn btn-outline-primary btn-sm"
+            className="text-white"
             onClick={() => exportToCSV(data, title)}
           >
-            <Csv className="w-5 h-5" />
+            <Csv />
           </button>
-          <button
-            type="button"
-            className="btn btn-outline-primary btn-sm"
-            onClick={() => exportToPDF(data, title)}
-          >
-            <Pdf className="w-5 h-5" />
-          </button>
+
+
         </div>
       </div>
 
