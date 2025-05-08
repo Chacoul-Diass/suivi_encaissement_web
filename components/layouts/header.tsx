@@ -284,74 +284,17 @@ const Header = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <Dropdown
-              offset={[0, 12]}
-              placement={"bottom-end"}
-              btnClassName="relative group"
-              button={
-                <button
-                  onClick={async () => {
-                    // D'abord ouvrir la modale avec les données initiales
-                    openAlertModal({
-                      alerts: alertsData,
-                      loading: true,
-                      pagination: paginationInfo,
-                      onPageChange: handleAlertPageChange,
-                      activeTabId: alertTabId,
-                      onTabChange: handleAlertTabChange,
-                      onShowConfirmModal: handleShowConfirmModal
-                    });
-
-                    // Ensuite charger les données
-                    await getAlerts(1, 0);
-                  }}
-                  className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gray-50 to-gray-100 transition-all duration-300 hover:from-gray-100 hover:to-gray-200 hover:shadow-lg hover:shadow-gray-200/50 active:scale-95"
-                  aria-label="Notifications"
-                >
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-                  <IconBell className="h-5 w-5 text-gray-600 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
-                  <span
-                    className="absolute -right-1 -top-1 flex min-w-[20px] h-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-[11px] font-semibold text-white ring-2 ring-white shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md px-1"
-                    title={`${total} notifications`}
-                  >
-                    {total > 99 ? '99+' : total}
-                  </span>
-                </button>
-              }
+            <button
+              className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gray-50 to-gray-100 transition-all duration-300 hover:from-gray-100 hover:to-gray-200 hover:shadow-lg hover:shadow-gray-200/50 active:scale-95"
+              aria-label="Notifications"
             >
-              <div className="w-[320px] rounded-xl border border-gray-100/50 bg-white p-4 shadow-xl">
-                <div className="mb-4">
-                  <h3 className="text-base font-semibold text-gray-900">Statistiques des encaissements</h3>
-                  <p className="text-sm text-gray-500">État actuel des encaissements</p>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between rounded-lg bg-blue-50/50 p-3">
-                    <span className="text-sm font-medium text-blue-700">Chargés</span>
-                    <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-sm font-semibold text-blue-700">
-                      {notificationStats.chargés}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg bg-yellow-50/50 p-3">
-                    <span className="text-sm font-medium text-yellow-700">Vérifiés</span>
-                    <span className="rounded-full bg-yellow-100 px-2.5 py-0.5 text-sm font-semibold text-yellow-700">
-                      {notificationStats.vérifiés}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg bg-green-50/50 p-3">
-                    <span className="text-sm font-medium text-green-700">Validés</span>
-                    <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-semibold text-green-700">
-                      {notificationStats.validés}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg bg-purple-50/50 p-3">
-                    <span className="text-sm font-medium text-purple-700">Traités</span>
-                    <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-sm font-semibold text-purple-700">
-                      {notificationStats.traités}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Dropdown>
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+              <IconBell className="h-5 w-5 text-gray-600 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-[11px] font-semibold text-white ring-2 ring-white shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md">
+                3
+              </span>
+              <div className="absolute -bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-gradient-to-br from-red-500 to-red-600 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-110"></div>
+            </button>
             <div className="relative">
               <Dropdown
                 offset={[0, 12]}
