@@ -47,7 +47,7 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
 
   const today = formatDate(new Date());
 
-  const formatNumber = (number: number): string => {
+  const formatNumber: any = (number: number): string => {
     return number?.toLocaleString("fr-FR", {
       useGrouping: true,
       maximumFractionDigits: 0,
