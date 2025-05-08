@@ -4,6 +4,7 @@ import store from "@/store";
 import { ReactNode, Suspense } from "react";
 import { Provider } from "react-redux";
 import Loading from "./loading";
+import { AlertModalProvider } from "../contexts/AlertModalContext";
 
 interface IProps {
   children?: ReactNode;
@@ -13,7 +14,9 @@ const ProviderComponent = ({ children }: IProps) => {
   return (
     <Provider store={store}>
       <Suspense fallback={<Loading />}>
-        <App>{children} </App>
+        <AlertModalProvider>
+          <App>{children}</App>
+        </AlertModalProvider>
       </Suspense>
     </Provider>
   );
