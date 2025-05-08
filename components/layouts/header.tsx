@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import IconLogout from "@/components/icon/icon-logout";
+import IconBell from "@/components/icon/icon-bell";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import { handleApiError } from "@/utils/apiErrorHandler";
 import axios from "@/utils/axios";
@@ -111,11 +112,11 @@ const Header = () => {
     } catch (error: any) {
       // Journaliser l'erreur pour le débogage
       console.error("Erreur lors de la déconnexion:", error);
-      
+
       // Afficher un message d'erreur
       const errorMessage = handleApiError(error);
       toast.error(errorMessage);
-      
+
       // Même en cas d'erreur, déconnecter l'utilisateur
       cleanSessionAndRedirect();
     }
@@ -139,7 +140,18 @@ const Header = () => {
             </div>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
+            <button
+              className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gray-50 to-gray-100 transition-all duration-300 hover:from-gray-100 hover:to-gray-200 hover:shadow-lg hover:shadow-gray-200/50 active:scale-95"
+              aria-label="Notifications"
+            >
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+              <IconBell className="h-5 w-5 text-gray-600 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-[11px] font-semibold text-white ring-2 ring-white shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md">
+                3
+              </span>
+              <div className="absolute -bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-gradient-to-br from-red-500 to-red-600 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-110"></div>
+            </button>
             <div className="relative">
               <Dropdown
                 offset={[0, 12]}
