@@ -313,8 +313,8 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                   </span>
                   {pagination && (
                     <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium transition-all duration-300 ${activeTab === tab.id
-                        ? "bg-primary/10 text-primary"
-                        : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                      ? "bg-primary/10 text-primary"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                       }`}>
                       {pagination.totalCount}
                     </span>
