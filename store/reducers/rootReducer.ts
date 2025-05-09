@@ -21,7 +21,7 @@ import produitReducer from "./select/produit.slice";
 import BanquesReducer from "./select/banque.slice";
 import modeReglementReducer from "./select/modeReglement.slice";
 import journeeCaisseReducer from "./select/journeeCaisse.slice";
-
+import nombreAlertReducer from "./select/nombrealert.slice";
 //habilitation
 import objetReducer from "./permission/objet-get-slice";
 import permissionsReducer from "./permission/list-crud.slice";
@@ -101,6 +101,9 @@ const topReducer = combineReducers({
 
   //parametre
   parametres: parametreReducer,
+
+  //nombre alert
+  nombreAlert: nombreAlertReducer,
 });
 
 const rootReducer = (state: any, action: any) => {

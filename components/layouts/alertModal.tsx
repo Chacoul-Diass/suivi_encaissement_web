@@ -13,6 +13,9 @@ import * as XLSX from 'xlsx';
 import { API_AUTH_SUIVI } from '@/config/constants';
 import axios from '@/utils/axios';
 import { Toastify } from '@/utils/toast';
+import { useAppDispatch } from '@/store';
+import { useSelector } from 'react-redux';
+import { fetchNombreAlert } from '@/store/reducers/select/nombrealert.slice';
 
 interface AlertItem {
   id: number;
@@ -67,6 +70,19 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
     return new Intl.NumberFormat("fr-FR").format(num);
   };
 
+  const dispatch = useAppDispatch();
+  const { data: nombreAlert, loading: loadingNombreAlert } = useSelector((state: any) => state.nombreAlert);
+
+
+  useEffect(() => {
+    dispatch(fetchNombreAlert());
+  }, []);
+
+  const { chargeCount, verifyCount, validCount, reclamationCount, total } = nombreAlert;
+
+
+
+
   const [pageSize, setPageSize] = useState(5);
   const [sortStatus, setSortStatus] = useState<{ columnAccessor: string; direction: 'asc' | 'desc' }>({
     columnAccessor: 'id',
@@ -84,7 +100,7 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
     { id: 0, name: "Encaissements Chargés", icon: <IconUpload className="h-4 w-4" /> },
     { id: 2, name: "Encaissements Vérifiés", icon: <IconCheckCircle className="h-4 w-4" /> },
     { id: 3, name: "Encaissements Validés", icon: <IconShield className="h-4 w-4" /> },
-    { id: 7, name: "Encaissements Traités", icon: <IconClipboardCheck className="h-4 w-4" /> }
+    { id: 4, name: "Réclamations en retard", icon: <IconClipboardCheck className="h-4 w-4" /> }
   ];
 
   const handleTabChange = (tabId: number) => {
@@ -249,13 +265,13 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                 <IconBell className="w-5 h-5 mr-2" />
                 Alertes d'encaissements
               </h3>
-              {pagination && (
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center rounded-full bg-white/20 px-2.5 py-1 text-xs font-medium text-white">
-                    {pagination.totalCount} {pagination.totalCount > 1 ? "alertes" : "alerte"}
-                  </span>
-                </div>
-              )}
+
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center rounded-full bg-white/20 px-2.5 py-1 text-xs font-medium text-white">
+                  {total} {total > 1 ? "alertes" : "alerte"}
+                </span>
+              </div>
+
             </div>
 
             {/* Boutons d'exportation */}
@@ -316,7 +332,10 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
                       ? "bg-primary/10 text-primary"
                       : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                       }`}>
-                      {pagination.totalCount}
+                      {tab.id === 0 ? chargeCount :
+                        tab.id === 2 ? verifyCount :
+                          tab.id === 3 ? validCount :
+                            tab.id === 4 ? reclamationCount : 0}
                     </span>
                   )}
                 </div>

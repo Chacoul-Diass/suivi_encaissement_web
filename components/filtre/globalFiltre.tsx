@@ -143,16 +143,19 @@ export default function GlobalFiltre({
 
     const codeExpl = selectedSecteurIds.length > 0
       ? selectedSecteurIds.map(id => {
-        const code = secteurs.find((secteur: any) => secteur.id === id)?.code || "";
-        return code.trim();
+        const secteur = secteurs.find((secteur: any) => secteur.id === id);
+        return secteur?.code?.trim() || "";
       }).filter(Boolean)
       : [];
 
-    dispatch(fetchcaisses({
-      directionRegional: dirRegional,
-      codeExpl: codeExpl
-    }));
-  }, [selectedDRIds, selectedSecteurIds, drData, secteurs, dispatch]);
+    // On ne dispatch que si on a des valeurs à filtrer
+    if (dirRegional.length > 0 || codeExpl.length > 0) {
+      dispatch(fetchcaisses({
+        directionRegional: dirRegional,
+        codeExpl: codeExpl
+      }));
+    }
+  }, [selectedDRIds, selectedSecteurIds, drData, dispatch]);
 
   // Reset selected sectors when DR selection changes
   useEffect(() => {
