@@ -1,7 +1,7 @@
 "use client";
 import Dropdown from "@/components/dropdown";
 import { getTranslation } from "@/i18n";
-import { TRootState } from "@/store";
+import { TRootState, useAppDispatch } from "@/store";
 import { logout } from "@/store/reducers/auth/user.slice";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,6 +22,7 @@ import { useClientSide, safeDOM } from "@/hooks/useClientSide";
 import getUserHabilitation from "@/utils/getHabilitation";
 import AlertModal from "./alertModal";
 import { useAlertModal } from "../contexts/AlertModalContext";
+import { fetchNombreAlert } from "@/store/reducers/select/nombrealert.slice";
 
 // Interfaces pour les alertes
 interface AlertItem {
@@ -83,7 +84,7 @@ const Header = () => {
   }, []);
 
   const pathname = usePathname();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const {
     email = "",
@@ -171,6 +172,16 @@ const Header = () => {
       cleanSessionAndRedirect();
     }
   };
+
+
+  const { data: nombreAlert, loading: loadingNombreAlert } = useSelector((state: any) => state.nombreAlert);
+
+
+  useEffect(() => {
+    dispatch(fetchNombreAlert());
+  }, []);
+
+  const { total } = nombreAlert;
 
   // Fonction pour récupérer les alertes
   const getAlerts = async (page: number = 1, tabId: number = 0) => {
@@ -299,8 +310,11 @@ const Header = () => {
                 >
                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                   <IconBell className="h-5 w-5 text-gray-600 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-[11px] font-semibold text-white ring-2 ring-white shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md">
-                    {notificationStats.chargés + notificationStats.vérifiés + notificationStats.validés + notificationStats.traités}
+                  <span
+                    className="absolute -right-1 -top-1 flex min-w-[20px] h-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-[11px] font-semibold text-white ring-2 ring-white shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md px-1"
+                    title={`${total} notifications`}
+                  >
+                    {total > 99 ? '99+' : total}
                   </span>
                 </button>
               }
