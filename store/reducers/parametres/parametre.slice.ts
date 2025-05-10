@@ -1,6 +1,6 @@
 import { API_AUTH_SUIVI } from "@/config/constants";
 import axiosInstance from "@/utils/axios";
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 interface Parametre {
   id: number;
@@ -32,7 +32,7 @@ export const fetchParametres = createAsyncThunk(
   async (params: { page?: number } = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get<ParametreResponse>(
-        `${API_AUTH_SUIVI}/settings/list-paginate${params.page ? `?page=${params.page}` : ''}`
+        `${API_AUTH_SUIVI}/email-receiver/list-paginate${params.page ? `?page=${params.page}` : ''}`
       );
       return response.data;
     } catch (error: any) {
@@ -52,7 +52,7 @@ export const createParametre = createAsyncThunk(
   ) => {
     try {
       const response = await axiosInstance.post<ParametreResponse>(
-        `${API_AUTH_SUIVI}/settings`,
+        `${API_AUTH_SUIVI}/email-receiver`,
         parametre
       );
       return response.data;
@@ -73,7 +73,7 @@ export const updateParametre = createAsyncThunk(
   ) => {
     try {
       const response = await axiosInstance.patch<ParametreResponse>(
-        `${API_AUTH_SUIVI}/settings/${id}`,
+        `${API_AUTH_SUIVI}/email-receiver/${id}`,
         updateData
       );
       return response.data;
@@ -91,7 +91,7 @@ export const deleteParametre = createAsyncThunk(
   async (id: number, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.delete<ParametreResponse>(
-        `${API_AUTH_SUIVI}/settings/${id}`
+        `${API_AUTH_SUIVI}/email-receiver/${id}`
       );
       return { id, ...response.data };
     } catch (error: any) {
