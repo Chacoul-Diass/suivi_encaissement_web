@@ -26,6 +26,7 @@ interface GlobalFiltreProps {
   drData: any;
   onApplyFilters: (params: any) => void;
   statutValidation: any;
+  showStatusSelector?: boolean;
 }
 
 // Constante pour signifier "pas de dates sélectionnées"
@@ -35,6 +36,7 @@ export default function GlobalFiltre({
   drData,
   onApplyFilters,
   statutValidation,
+  showStatusSelector = false,
 }: GlobalFiltreProps) {
   const dispatch = useDispatch<TAppDispatch>();
   const [isFilterExpanded, setIsFilterExpanded] = useState(true);
@@ -76,6 +78,9 @@ export default function GlobalFiltre({
     modes: [],
     journeeCaisse: [],
   });
+
+  // Add status state
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
 
   // Récupération des données via Redux
   const {
@@ -292,6 +297,7 @@ export default function GlobalFiltre({
       dailyCaisse: selectedItems.journeeCaisse.map((jc) => jc.libelle.trim()),
       startDate: dateRange.startDate || "",
       endDate: dateRange.endDate || "",
+      status: selectedStatus,
     };
   };
 
@@ -306,6 +312,7 @@ export default function GlobalFiltre({
     setDateRange({ startDate: "", endDate: "" });
     setSelectedDRIds([]);
     setSelectedSecteurIds([]);
+    setSelectedStatus("");
     setSelectedItems({ produit: [], banques: [], caisses: [], modes: [], journeeCaisse: [] });
 
     setSearchQueries({
@@ -318,7 +325,6 @@ export default function GlobalFiltre({
       journeeCaisse: "",
     });
 
-    // On repasse l'id pour le conserver
     onApplyFilters({ id: statutValidation });
   };
 
@@ -541,58 +547,205 @@ export default function GlobalFiltre({
       {isFilterExpanded && (
         <div className="space-y-4 p-4">
           <div className="flex flex-col space-y-4">
-            {/* Sélecteur de dates personnalisé */}
-            <div className="relative w-full" ref={datePickerRef}>
-              <Dropdown
-                placement="bottom-start"
-                offset={[0, 10]}
-                btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${dateRange.startDate && dateRange.endDate ? "ring-2 ring-primary/30" : ""
-                  }`}
-                button={
-                  <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                    <IconCalendar className={`h-4 w-4 ${dateRange.startDate && dateRange.endDate ? 'text-primary' : 'text-gray-400'}`} />
-                    <span className="truncate">
-                      {dateRange.startDate && dateRange.endDate
-                        ? `${dayjs(dateRange.startDate).format("DD/MM/YYYY")} - ${dayjs(dateRange.endDate).format("DD/MM/YYYY")}`
-                        : "Période"}
-                    </span>
-                  </div>
-                }
-              >
-                <div
-                  className="w-full min-w-[250px] max-w-full rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
-                  onClick={(e) => e.stopPropagation()}
+            {/* Sélecteur de dates et statut dans une même ligne */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Sélecteur de dates personnalisé */}
+              <div className="relative w-full" ref={datePickerRef}>
+                <Dropdown
+                  placement="bottom-start"
+                  offset={[0, 10]}
+                  btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${dateRange.startDate && dateRange.endDate ? "ring-2 ring-primary/30" : ""}`}
+                  button={
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                      <IconCalendar className={`h-4 w-4 ${dateRange.startDate && dateRange.endDate ? 'text-primary' : 'text-gray-400'}`} />
+                      <span className="truncate">
+                        {dateRange.startDate && dateRange.endDate
+                          ? `${dayjs(dateRange.startDate).format("DD/MM/YYYY")} - ${dayjs(dateRange.endDate).format("DD/MM/YYYY")}`
+                          : "Période"}
+                      </span>
+                    </div>
+                  }
                 >
-                  <div className="mb-3 space-y-3">
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date début</label>
-                      <div className="relative">
-                        <input
-                          type="date"
-                          className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
-                          value={dateRange.startDate || ""}
-                          onChange={(e) => handleDateChange('startDate', e.target.value)}
-                          max={new Date().toISOString().split('T')[0]}
-                        />
+                  <div
+                    className="w-full min-w-[250px] max-w-full rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="mb-3 space-y-3">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date début</label>
+                        <div className="relative">
+                          <input
+                            type="date"
+                            className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                            value={dateRange.startDate || ""}
+                            onChange={(e) => handleDateChange('startDate', e.target.value)}
+                            max={new Date().toISOString().split('T')[0]}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date fin</label>
+                        <div className="relative">
+                          <input
+                            type="date"
+                            className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                            value={dateRange.endDate || ""}
+                            onChange={(e) => handleDateChange('endDate', e.target.value)}
+                            min={dateRange.startDate || undefined}
+                            max={new Date().toISOString().split('T')[0]}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Date fin</label>
-                      <div className="relative">
-                        <input
-                          type="date"
-                          className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
-                          value={dateRange.endDate || ""}
-                          onChange={(e) => handleDateChange('endDate', e.target.value)}
-                          min={dateRange.startDate || undefined}
-                          max={new Date().toISOString().split('T')[0]}
-                        />
-                      </div>
-                    </div>
-                  </div>
 
+                  </div>
+                </Dropdown>
+              </div>
+
+              {/* Sélecteur de statut */}
+              {showStatusSelector && (
+                <div className="relative w-full">
+                  <Dropdown
+                    placement="bottom-start"
+                    offset={[0, 10]}
+                    btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${selectedStatus
+                        ? selectedStatus === "VALIDES" || selectedStatus === "VALIDÉS"
+                          ? "ring-2 ring-success/30 bg-success-light dark:bg-success/20"
+                          : selectedStatus === "CHARGES" || selectedStatus === "CHARGÉS"
+                            ? "ring-2 ring-primary/30 bg-primary-light dark:bg-primary/20"
+                            : selectedStatus === "VERIFIES" || selectedStatus === "VÉRIFIÉS"
+                              ? "ring-2 ring-secondary/30 bg-secondary-light dark:bg-secondary/20"
+                              : selectedStatus === "REJETES" || selectedStatus === "REJETÉS"
+                                ? "ring-2 ring-danger/30 bg-danger-light dark:bg-danger/20"
+                                : "ring-2 ring-warning/30 bg-warning-light dark:bg-warning/20"
+                        : ""
+                      }`}
+                    button={
+                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                        {selectedStatus ? (
+                          <div className={`flex items-center justify-center w-5 h-5 rounded-full ${selectedStatus === "VALIDES" || selectedStatus === "VALIDÉS"
+                              ? "bg-success-light dark:bg-success/30"
+                              : selectedStatus === "CHARGES" || selectedStatus === "CHARGÉS"
+                                ? "bg-primary-light dark:bg-primary/30"
+                                : selectedStatus === "VERIFIES" || selectedStatus === "VÉRIFIÉS"
+                                  ? "bg-secondary-light dark:bg-secondary/30"
+                                  : selectedStatus === "REJETES" || selectedStatus === "REJETÉS"
+                                    ? "bg-danger-light dark:bg-danger/30"
+                                    : "bg-warning-light dark:bg-warning/30"
+                            }`}>
+                            <svg
+                              className={`h-3 w-3 ${selectedStatus === "VALIDES" || selectedStatus === "VALIDÉS"
+                                  ? "text-success dark:text-success"
+                                  : selectedStatus === "CHARGES" || selectedStatus === "CHARGÉS"
+                                    ? "text-primary dark:text-primary"
+                                    : selectedStatus === "VERIFIES" || selectedStatus === "VÉRIFIÉS"
+                                      ? "text-secondary dark:text-secondary"
+                                      : selectedStatus === "REJETES" || selectedStatus === "REJETÉS"
+                                        ? "text-danger dark:text-danger"
+                                        : "text-warning dark:text-warning"
+                                }`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              {selectedStatus === "VALIDES" || selectedStatus === "VALIDÉS" ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                              ) : selectedStatus === "CHARGES" || selectedStatus === "CHARGÉS" ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              ) : selectedStatus === "VERIFIES" || selectedStatus === "VÉRIFIÉS" ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              ) : selectedStatus === "REJETES" || selectedStatus === "REJETÉS" ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                              ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              )}
+                            </svg>
+                          </div>
+                        ) : (
+                          <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        )}
+                        <span className="truncate">
+                          {selectedStatus || "Statut"}
+                        </span>
+                      </div>
+                    }
+                  >
+                    <div className="w-full min-w-[200px] rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                      <div className="space-y-1">
+                        <button
+                          onClick={() => setSelectedStatus("")}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${!selectedStatus ? "bg-gray-100 dark:bg-gray-700" : ""
+                            }`}
+                        >
+                          <span className="text-gray-500 dark:text-gray-400">Tous les statuts</span>
+                        </button>
+                        <button
+                          onClick={() => setSelectedStatus("CHARGÉS")}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-primary-light dark:hover:bg-primary/20 ${selectedStatus === "CHARGÉS" ? "bg-primary-light dark:bg-primary/20" : ""
+                            }`}
+                        >
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-light dark:bg-primary/30">
+                            <svg className="h-3 w-3 text-primary dark:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <span className="text-primary dark:text-primary">Chargés</span>
+                        </button>
+                        <button
+                          onClick={() => setSelectedStatus("VÉRIFIÉS")}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-secondary-light dark:hover:bg-secondary/20 ${selectedStatus === "VÉRIFIÉS" ? "bg-secondary-light dark:bg-secondary/20" : ""
+                            }`}
+                        >
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-secondary-light dark:bg-secondary/30">
+                            <svg className="h-3 w-3 text-secondary dark:text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <span className="text-secondary dark:text-secondary">Vérifiés</span>
+                        </button>
+                        <button
+                          onClick={() => setSelectedStatus("VALIDÉS")}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-success-light dark:hover:bg-success/20 ${selectedStatus === "VALIDÉS" ? "bg-success-light dark:bg-success/20" : ""
+                            }`}
+                        >
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success-light dark:bg-success/30">
+                            <svg className="h-3 w-3 text-success dark:text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span className="text-success dark:text-success">Validés</span>
+                        </button>
+                        <button
+                          onClick={() => setSelectedStatus("REJETÉS")}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-danger-light dark:hover:bg-danger/20 ${selectedStatus === "REJETÉS" ? "bg-danger-light dark:bg-danger/20" : ""
+                            }`}
+                        >
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-danger-light dark:bg-danger/30">
+                            <svg className="h-3 w-3 text-danger dark:text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </div>
+                          <span className="text-danger dark:text-danger">Rejetés</span>
+                        </button>
+                        <button
+                          onClick={() => setSelectedStatus("TRAITÉS")}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-warning-light dark:hover:bg-warning/20 ${selectedStatus === "TRAITÉS" ? "bg-warning-light dark:bg-warning/20" : ""
+                            }`}
+                        >
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-warning-light dark:bg-warning/30">
+                            <svg className="h-3 w-3 text-warning dark:text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <span className="text-warning dark:text-warning">Traités</span>
+                        </button>
+                      </div>
+                    </div>
+                  </Dropdown>
                 </div>
-              </Dropdown>
+              )}
             </div>
 
             {/* Dropdowns avec icônes */}
@@ -692,6 +845,11 @@ export default function GlobalFiltre({
         <div className="px-3 sm:px-4 py-3 bg-gray-50 dark:bg-gray-700/30 rounded-b-lg overflow-x-auto">
           <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
             <span className="font-medium">Filtres actifs:</span>
+            {showStatusSelector && selectedStatus && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                Statut: {selectedStatus === "VALIDES" || selectedStatus === "VALIDÉS" ? "Validé" : selectedStatus === "CHARGES" || selectedStatus === "CHARGÉS" ? "Chargé" : selectedStatus === "VERIFIES" || selectedStatus === "VÉRIFIÉS" ? "Vérifié" : selectedStatus === "REJETES" || selectedStatus === "REJETÉS" ? "Rejeté" : "Traité"}
+              </span>
+            )}
             {dateRange.startDate && dateRange.endDate && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 <IconCalendar className="h-3 w-3 inline-block mr-1" />
