@@ -19,6 +19,7 @@ import { fetchcaisses } from "@/store/reducers/select/caisse.slice";
 import { fetchmodeReglement } from "@/store/reducers/select/modeReglement.slice";
 import { fetchSecteurs } from "@/store/reducers/select/secteur.slice";
 import { fetchProduit } from "@/store/reducers/select/produit.slice";
+import { fetchJourneeCaisse } from "@/store/reducers/select/journeeCaisse.slice";
 import dayjs from "dayjs";
 
 interface GlobalFiltreProps {
@@ -56,6 +57,7 @@ export default function GlobalFiltre({
     modes: "",
     drs: "",
     secteurs: "",
+    journeeCaisse: "",
   });
 
   const [selectedDRIds, setSelectedDRIds] = useState<number[]>([]);
@@ -66,11 +68,13 @@ export default function GlobalFiltre({
     caisses: { libelle: string }[];
     produit: { libelle: string }[];
     modes: { libelle: string }[];
+    journeeCaisse: { libelle: string }[];
   }>({
     banques: [],
     caisses: [],
     produit: [],
     modes: [],
+    journeeCaisse: [],
   });
 
   // Récupération des données via Redux
@@ -80,8 +84,10 @@ export default function GlobalFiltre({
     banques,
     modes,
     secteurs,
+    journeeCaisseData,
     drLoading,
     secteurLoading,
+    journeeCaisseLoading,
   } = useSelector((state: TRootState) => ({
     produit:
       state?.produit?.data?.map((item: any) => ({ libelle: item.libelle })) ||
@@ -97,16 +103,18 @@ export default function GlobalFiltre({
         libelle: item.libelle,
       })) || [],
     secteurs: state?.secteur?.data || [],
+    journeeCaisseData: state?.journeeCaisse?.data || [],
     drLoading: state?.dr?.loading,
     secteurLoading: state?.secteur?.loading,
+    journeeCaisseLoading: state?.journeeCaisse?.loading,
   }));
 
-  // Charger les données initiales (caisse, banque, modes)
+  // Charger les données initiales (banque, modes, journeeCaisse)
   useEffect(() => {
-    dispatch(fetchcaisses());
     dispatch(fetchProduit());
     dispatch(fetchBanques());
     dispatch(fetchmodeReglement());
+    dispatch(fetchJourneeCaisse());
   }, [dispatch]);
 
   // Charger les secteurs en fonction des DR sélectionnées
@@ -124,16 +132,46 @@ export default function GlobalFiltre({
     }
   }, [selectedDRIds, dispatch]);
 
+  // Charger les caisses en fonction des DR et secteurs sélectionnés
+  useEffect(() => {
+    const dirRegional = selectedDRIds.length > 0
+      ? selectedDRIds.map(id => {
+        const name = drData.find((dr: any) => dr.id === id)?.name || "";
+        return name.trim();
+      }).filter(Boolean)
+      : [];
+
+    const codeExpl = selectedSecteurIds.length > 0
+      ? selectedSecteurIds.map(id => {
+        const secteur = secteurs.find((secteur: any) => secteur.id === id);
+        return secteur?.code?.trim() || "";
+      }).filter(Boolean)
+      : [];
+
+    // On ne dispatch que si on a des valeurs à filtrer
+    if (dirRegional.length > 0 || codeExpl.length > 0) {
+      dispatch(fetchcaisses({
+        directionRegional: dirRegional,
+        codeExpl: codeExpl
+      }));
+    }
+  }, [selectedDRIds, selectedSecteurIds, drData, dispatch]);
+
   // Reset selected sectors when DR selection changes
   useEffect(() => {
     setSelectedSecteurIds([]);
   }, [selectedDRIds]);
 
-  // Ajout/suppression d'un item (banque, caisse, mode)
+  // Ajout/suppression d'un item (banque, caisse, mode, journeeCaisse)
   const toggleSelection = (
     libelle: string,
-    type: "produit" | "banques" | "caisses" | "modes"
+    type: "produit" | "banques" | "caisses" | "modes" | "journeeCaisse"
   ) => {
+    // Si on essaie de sélectionner une caisse et qu'aucune DR ou exploitation n'est sélectionnée, ne rien faire
+    if (type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0) {
+      return;
+    }
+
     setSelectedItems((prev) => ({
       ...prev,
       [type]: prev[type].some((item) => item.libelle === libelle)
@@ -165,9 +203,9 @@ export default function GlobalFiltre({
     );
   };
 
-  // Sélectionner/dé-sélectionner tout (DRs, Secteurs, banques, caisses, modes)
+  // Sélectionner/dé-sélectionner tout (DRs, Secteurs, banques, caisses, modes, journeeCaisse)
   const toggleAll = (
-    type: "produit" | "banques" | "caisses" | "modes" | "drs" | "secteurs",
+    type: "produit" | "banques" | "caisses" | "modes" | "drs" | "secteurs" | "journeeCaisse",
     items: any[],
     isAllSelected: boolean
   ) => {
@@ -215,10 +253,24 @@ export default function GlobalFiltre({
 
   // Gestion du changement de date
   const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
-    setDateRange(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setDateRange(prev => {
+      const newDateRange = {
+        ...prev,
+        [field]: value
+      };
+
+      // Si on change la date de début et qu'elle est supérieure à la date de fin existante
+      if (field === 'startDate' && newDateRange.endDate && value > newDateRange.endDate) {
+        newDateRange.endDate = value;
+      }
+
+      // Si on change la date de fin et qu'elle est inférieure à la date de début existante
+      if (field === 'endDate' && newDateRange.startDate && value < newDateRange.startDate) {
+        return prev; // On n'autorise pas ce changement
+      }
+
+      return newDateRange;
+    });
   };
 
   // Construit l'objet de filtres pour onApplyFilters
@@ -237,6 +289,7 @@ export default function GlobalFiltre({
       caisse: selectedItems.caisses.map((caisse) => caisse.libelle.trim()),
       produit: selectedItems.produit.map((produit) => produit.libelle.trim()),
       modeReglement: selectedItems.modes.map((mode) => mode.libelle.trim()),
+      dailyCaisse: selectedItems.journeeCaisse.map((jc) => jc.libelle.trim()),
       startDate: dateRange.startDate || "",
       endDate: dateRange.endDate || "",
     };
@@ -253,7 +306,7 @@ export default function GlobalFiltre({
     setDateRange({ startDate: "", endDate: "" });
     setSelectedDRIds([]);
     setSelectedSecteurIds([]);
-    setSelectedItems({ produit: [], banques: [], caisses: [], modes: [] });
+    setSelectedItems({ produit: [], banques: [], caisses: [], modes: [], journeeCaisse: [] });
 
     setSearchQueries({
       produit: "",
@@ -262,6 +315,7 @@ export default function GlobalFiltre({
       modes: "",
       drs: "",
       secteurs: "",
+      journeeCaisse: "",
     });
 
     // On repasse l'id pour le conserver
@@ -271,7 +325,7 @@ export default function GlobalFiltre({
   // Petite fonction utilitaire pour générer un Dropdown
   const renderDropdown = (
     label: React.ReactNode,
-    type: "produit" | "banques" | "caisses" | "modes" | "drs" | "secteurs",
+    type: "produit" | "banques" | "caisses" | "modes" | "drs" | "secteurs" | "journeeCaisse",
     items: any[],
     selected: any[],
     onToggle: (id: any | string) => void
@@ -325,7 +379,7 @@ export default function GlobalFiltre({
         }
       >
         <div
-          className="z-50 w-full min-w-[250px] rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+          className="z-50 w-full min-w-[200px] max-w-[calc(100vw-2rem)] rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Barre de recherche */}
@@ -348,12 +402,14 @@ export default function GlobalFiltre({
           <div className="mb-2 flex items-center justify-between border-b border-gray-200 pb-2 dark:border-gray-700">
             <button
               type="button"
-              className={`text-xs font-medium ${type === "secteurs" && selectedDRIds.length === 0
+              className={`text-xs font-medium ${(type === "secteurs" && selectedDRIds.length === 0) ||
+                (type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0)
                 ? "cursor-not-allowed text-gray-400 dark:text-gray-500"
                 : "text-primary hover:text-primary/80"
                 }`}
               onClick={() =>
-                type === "secteurs" && selectedDRIds.length === 0
+                (type === "secteurs" && selectedDRIds.length === 0) ||
+                  (type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0)
                   ? null
                   : toggleAll(type, items, selected.length === items.length)
               }
@@ -368,10 +424,14 @@ export default function GlobalFiltre({
           </div>
 
           {/* Liste des éléments */}
-          <div className="max-h-[250px] overflow-y-auto">
+          <div className="max-h-[200px] md:max-h-[250px] overflow-y-auto">
             {type === "secteurs" && selectedDRIds.length === 0 ? (
               <div className="py-4 text-center text-sm text-amber-600 dark:text-amber-400">
                 Veuillez sélectionner au moins une Direction Régionale
+              </div>
+            ) : type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0 ? (
+              <div className="py-4 text-center text-sm text-amber-600 dark:text-amber-400">
+                Veuillez sélectionner au moins une Direction Régionale ou une Exploitation
               </div>
             ) : (
               items
@@ -401,8 +461,9 @@ export default function GlobalFiltre({
                           : onToggle(item.libelle)
                       }
                       className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      disabled={type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0}
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-200">
+                    <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
                       {item.libelle || item.name}
                     </span>
                   </label>
@@ -423,6 +484,7 @@ export default function GlobalFiltre({
       selectedItems.caisses.length +
       selectedItems.produit.length +
       selectedItems.modes.length +
+      selectedItems.journeeCaisse.length +
       (dateRange.startDate && dateRange.endDate ? 1 : 0)
     );
   };
@@ -431,11 +493,22 @@ export default function GlobalFiltre({
 
   return (
     <div className="mb-8 rounded-lg bg-white shadow-sm transition-all duration-300 hover:shadow-md dark:bg-gray-800">
-      <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+        <div className="flex items-center gap-2 mb-4 sm:mb-0">
           <IconFilter className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-            Filtres {totalSelectedFilters > 0 && (
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
+            Filtres
+            <button
+              type="button"
+              onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+              className="ml-2 flex items-center justify-center h-6 w-6 rounded-md bg-gradient-to-br from-[#0E1726] via-[#162236] to-[#1a2941]"
+              aria-label={isFilterExpanded ? "Réduire" : "Développer"}
+            >
+              <IconCaretDown
+                className={`h-4 w-4 text-white transition-transform duration-300 ${isFilterExpanded ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {totalSelectedFilters > 0 && (
               <span className="relative ml-2 inline-flex items-center justify-center">
                 <span className="animate-ping absolute h-full w-full rounded-full bg-primary/30 opacity-75"></span>
                 <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-white shadow-sm">
@@ -445,42 +518,31 @@ export default function GlobalFiltre({
             )}
           </h2>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-            aria-label={isFilterExpanded ? "Réduire" : "Développer"}
-          >
-            <IconCaretDown
-              className={`h-4 w-4 text-primary transition-transform duration-300 ${isFilterExpanded ? 'rotate-180' : ''}`}
-            />
-            <span>{isFilterExpanded ? "Réduire" : "Développer"}</span>
-          </button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={resetFilters}
-            className="group flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            className="flex-1 sm:flex-none group flex items-center justify-center sm:justify-start gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
           >
             <IconRefresh className="h-4 w-4 text-primary transition-transform duration-200 group-hover:rotate-180" />
-            Réinitialiser
+            <span className="inline-block">Réinitialiser</span>
           </button>
           <button
             type="button"
             onClick={applyFilters}
-            className="group flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white transition-all duration-200 hover:bg-primary/90 hover:shadow-sm"
+            className="flex-1 sm:flex-none group flex items-center justify-center sm:justify-start gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white transition-all duration-200 hover:bg-primary/90 hover:shadow-sm"
           >
             <IconFilter className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-            Appliquer
+            <span className="inline-block">Appliquer</span>
           </button>
         </div>
       </div>
 
       {isFilterExpanded && (
         <div className="space-y-4 p-4">
-          <div className="flex flex-wrap items-start gap-4 lg:flex-nowrap lg:items-center">
+          <div className="flex flex-col space-y-4">
             {/* Sélecteur de dates personnalisé */}
-            <div className="relative w-full sm:w-auto" ref={datePickerRef}>
+            <div className="relative w-full" ref={datePickerRef}>
               <Dropdown
                 placement="bottom-start"
                 offset={[0, 10]}
@@ -489,16 +551,16 @@ export default function GlobalFiltre({
                 button={
                   <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
                     <IconCalendar className={`h-4 w-4 ${dateRange.startDate && dateRange.endDate ? 'text-primary' : 'text-gray-400'}`} />
-                    <span>
+                    <span className="truncate">
                       {dateRange.startDate && dateRange.endDate
                         ? `${dayjs(dateRange.startDate).format("DD/MM/YYYY")} - ${dayjs(dateRange.endDate).format("DD/MM/YYYY")}`
-                        : "Sélectionner la période"}
+                        : "Période"}
                     </span>
                   </div>
                 }
               >
                 <div
-                  className="w-full min-w-[300px] rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                  className="w-full min-w-[250px] max-w-full rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="mb-3 space-y-3">
@@ -522,6 +584,7 @@ export default function GlobalFiltre({
                           className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
                           value={dateRange.endDate || ""}
                           onChange={(e) => handleDateChange('endDate', e.target.value)}
+                          min={dateRange.startDate || undefined}
                           max={new Date().toISOString().split('T')[0]}
                         />
                       </div>
@@ -533,12 +596,12 @@ export default function GlobalFiltre({
             </div>
 
             {/* Dropdowns avec icônes */}
-            <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+            <div className="grid w-full grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
               <div className="w-full">
                 {renderDropdown(
                   <>
                     <IconCash className="h-4 w-4 text-gray-400" />
-                    <span>Produits</span>
+                    <span className="truncate">Produits</span>
                   </>,
                   "produit",
                   produit,
@@ -549,44 +612,8 @@ export default function GlobalFiltre({
               <div className="w-full">
                 {renderDropdown(
                   <>
-                    <IconCash className="h-4 w-4 text-gray-400" />
-                    <span>Caisses</span>
-                  </>,
-                  "caisses",
-                  caisses,
-                  selectedItems.caisses,
-                  (libelle) => toggleSelection(libelle, "caisses")
-                )}
-              </div>
-              <div className="w-full">
-                {renderDropdown(
-                  <>
-                    <IconCreditCard className="h-4 w-4 text-gray-400" />
-                    <span>Mode de règlement</span>
-                  </>,
-                  "modes",
-                  modes,
-                  selectedItems.modes,
-                  (libelle) => toggleSelection(libelle, "modes")
-                )}
-              </div>
-              <div className="w-full">
-                {renderDropdown(
-                  <>
-                    <IconBank className="h-4 w-4 text-gray-400" />
-                    <span>Banque</span>
-                  </>,
-                  "banques",
-                  banques,
-                  selectedItems.banques,
-                  (libelle) => toggleSelection(libelle, "banques")
-                )}
-              </div>
-              <div className="w-full">
-                {renderDropdown(
-                  <>
                     <IconBuilding className="h-4 w-4 text-gray-400" />
-                    <span>Direction Régionale</span>
+                    <span className="truncate">Direction Régionale</span>
                   </>,
                   "drs",
                   drData,
@@ -598,7 +625,7 @@ export default function GlobalFiltre({
                 {renderDropdown(
                   <>
                     <IconOffice className="h-4 w-4 text-gray-400" />
-                    <span>{"Exploitations"}</span>
+                    <span className="truncate">Exploitations</span>
                   </>,
                   "secteurs",
                   secteurs.filter((secteur: any) =>
@@ -607,7 +634,54 @@ export default function GlobalFiltre({
                   selectedSecteurIds,
                   (id) => toggleSecteur(id as number)
                 )}
-
+              </div>
+              <div className="w-full">
+                {renderDropdown(
+                  <>
+                    <IconCash className="h-4 w-4 text-gray-400" />
+                    <span className="truncate">No Caisses</span>
+                  </>,
+                  "caisses",
+                  caisses,
+                  selectedItems.caisses,
+                  (libelle) => toggleSelection(libelle, "caisses")
+                )}
+              </div>
+              <div className="w-full">
+                {renderDropdown(
+                  <>
+                    <IconCalendar className="h-4 w-4 text-gray-400" />
+                    <span className="truncate">Journée Caisse</span>
+                  </>,
+                  "journeeCaisse",
+                  journeeCaisseData,
+                  selectedItems.journeeCaisse,
+                  (libelle) => toggleSelection(libelle, "journeeCaisse")
+                )}
+              </div>
+              <div className="w-full">
+                {renderDropdown(
+                  <>
+                    <IconBank className="h-4 w-4 text-gray-400" />
+                    <span className="truncate">Banque</span>
+                  </>,
+                  "banques",
+                  banques,
+                  selectedItems.banques,
+                  (libelle) => toggleSelection(libelle, "banques")
+                )}
+              </div>
+              <div className="w-full">
+                {renderDropdown(
+                  <>
+                    <IconCreditCard className="h-4 w-4 text-gray-400" />
+                    <span className="truncate">Mode de règlement</span>
+                  </>,
+                  "modes",
+                  modes,
+                  selectedItems.modes,
+                  (libelle) => toggleSelection(libelle, "modes")
+                )}
               </div>
             </div>
           </div>
@@ -615,8 +689,8 @@ export default function GlobalFiltre({
       )}
 
       {!isFilterExpanded && totalSelectedFilters > 0 && (
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/30 rounded-b-lg">
-          <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-300">
+        <div className="px-3 sm:px-4 py-3 bg-gray-50 dark:bg-gray-700/30 rounded-b-lg overflow-x-auto">
+          <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
             <span className="font-medium">Filtres actifs:</span>
             {dateRange.startDate && dateRange.endDate && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
@@ -643,6 +717,12 @@ export default function GlobalFiltre({
             {selectedItems.banques.length > 0 && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 {selectedItems.banques.length} Banque(s)
+              </span>
+            )}
+            {selectedItems.journeeCaisse.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                <IconCalendar className="h-3 w-3 inline-block mr-1" />
+                {selectedItems.journeeCaisse.length} Journée(s) Caisse
               </span>
             )}
             {selectedDRIds.length > 0 && (

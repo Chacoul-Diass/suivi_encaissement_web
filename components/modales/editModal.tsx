@@ -106,26 +106,29 @@ const UnvalidatedAmount: React.FC<{
   onValidateClick,
 }) => (
     <div className="space-y-2">
-      <div className="relative">
-        <input
-          type="text"
-          className="form-input w-full cursor-not-allowed rounded-lg border-gray-300 bg-gray-100 py-3 pl-10 pr-4 text-gray-600 opacity-80 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
-          placeholder="Montant automatique remonté"
-          value={formatNumber(montantAuto)}
-          disabled={true}
-        />
-        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-          <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            className="form-input w-full cursor-not-allowed rounded-lg border-gray-300 bg-gray-100 py-3 pl-10 pr-4 text-gray-600 opacity-80 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400"
+            placeholder="Montant automatique remonté"
+            value={formatNumber(montantAuto)}
+            disabled={true}
+          />
+          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+            <IconCashBanknotes className="h-5 w-5 text-gray-400" />
+          </div>
         </div>
+
+        <button
+          type="button"
+          onClick={onValidateClick}
+          className="whitespace-nowrap rounded-lg bg-primary px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        >
+          Valider ce montant
+        </button>
       </div>
 
-      <button
-        type="button"
-        onClick={onValidateClick}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-      >
-        Valider ce montant
-      </button>
       <div className="relative">
         <input
           type="text"
@@ -138,7 +141,6 @@ const UnvalidatedAmount: React.FC<{
           <IconCashBanknotes className="h-5 w-5 text-gray-400" />
         </div>
       </div>
-
     </div>
   );
 

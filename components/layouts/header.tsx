@@ -1,7 +1,7 @@
 "use client";
 import Dropdown from "@/components/dropdown";
 import { getTranslation } from "@/i18n";
-import { TRootState } from "@/store";
+import { TRootState, useAppDispatch } from "@/store";
 import { logout } from "@/store/reducers/auth/user.slice";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import IconLogout from "@/components/icon/icon-logout";
+import IconBell from "@/components/icon/icon-bell";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import { handleApiError } from "@/utils/apiErrorHandler";
 import axios from "@/utils/axios";
@@ -19,6 +20,38 @@ import IconSettings from "../icon/icon-settings";
 import IconUser from "../icon/icon-user";
 import { useClientSide, safeDOM } from "@/hooks/useClientSide";
 import getUserHabilitation from "@/utils/getHabilitation";
+import AlertModal from "./alertModal";
+import { useAlertModal } from "../contexts/AlertModalContext";
+import { fetchNombreAlert } from "@/store/reducers/select/nombrealert.slice";
+
+// Interfaces pour les alertes
+interface AlertItem {
+  id: number;
+  directionRegionale: string;
+  codeExpl: string;
+  dateEncaissement: string;
+  banque: string;
+  produit: string;
+  compteBanque: string | null;
+  numeroBordereau: string;
+  journeeCaisse: string;
+  modeReglement: string;
+  montantReleve: number;
+  isCorrect: number;
+  montantRestitutionCaisse: number;
+  montantBordereauBanque: number;
+  ecartCaisseBanque: number;
+  validationEncaissement: any;
+}
+
+interface PaginationInfo {
+  currentPage: number;
+  previousPage: number | null;
+  nextPage: number | null;
+  count: number;
+  totalCount: number;
+  totalPages: number;
+}
 
 const Header = () => {
   const router = useRouter();
@@ -26,13 +59,32 @@ const Header = () => {
   const userLogin = useSelector((state: TRootState) => state.auth?.loading);
   const habilitation = getUserHabilitation();
   const [mounted, setMounted] = useState(false);
+  const [notificationStats, setNotificationStats] = useState({
+    chargés: 0,
+    vérifiés: 0,
+    validés: 0,
+    traités: 0
+  });
+  const [alertsData, setAlertsData] = useState<AlertItem[]>([]);
+  const [alertsLoading, setAlertsLoading] = useState(false);
+  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo | null>(null);
+  const [alertPage, setAlertPage] = useState(1);
+  const [alertTabId, setAlertTabId] = useState(0);
+  const { openAlertModal, updateModalData } = useAlertModal();
+  const [confirmModalProps, setConfirmModalProps] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => { },
+    onClose: () => setConfirmModalProps(prev => ({ ...prev, isOpen: false }))
+  });
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const pathname = usePathname();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const {
     email = "",
@@ -111,15 +163,107 @@ const Header = () => {
     } catch (error: any) {
       // Journaliser l'erreur pour le débogage
       console.error("Erreur lors de la déconnexion:", error);
-      
+
       // Afficher un message d'erreur
       const errorMessage = handleApiError(error);
       toast.error(errorMessage);
-      
+
       // Même en cas d'erreur, déconnecter l'utilisateur
       cleanSessionAndRedirect();
     }
   };
+
+
+  const { data: nombreAlert, loading: loadingNombreAlert } = useSelector((state: any) => state.nombreAlert);
+
+
+  useEffect(() => {
+    dispatch(fetchNombreAlert());
+  }, []);
+
+  const { total } = nombreAlert;
+
+  // Fonction pour récupérer les alertes
+  const getAlerts = async (page: number = 1, tabId: number = 0) => {
+    try {
+      setAlertsLoading(true);
+      updateModalData({ loading: true });
+
+      const response: any = await axios.get(
+        `${API_AUTH_SUIVI}/encaissements/alerts/${tabId}?page=${page}`
+      );
+
+      if (response?.error === false) {
+        const newAlerts = response?.data?.result || [];
+        const newPagination = response?.data?.pagination;
+
+        setAlertsData(newAlerts);
+        setPaginationInfo(newPagination);
+
+        // Mettre à jour les données dans la modale
+        updateModalData({
+          alerts: newAlerts,
+          pagination: newPagination,
+          loading: false
+        });
+
+        return response?.data;
+      }
+      return null;
+    } catch (error) {
+      console.error("Erreur lors de la récupération des alertes:", error);
+      updateModalData({ loading: false });
+      return null;
+    } finally {
+      setAlertsLoading(false);
+    }
+  };
+
+  // Gestionnaires d'événements pour les alertes
+  const handleAlertPageChange = (page: number) => {
+    if (page < 1) {
+      page = 1;
+    } else if (paginationInfo && paginationInfo.totalPages && page > paginationInfo.totalPages) {
+      page = paginationInfo.totalPages;
+    }
+    setAlertPage(page);
+    getAlerts(page, alertTabId);
+  };
+
+  const handleAlertTabChange = (tabId: number) => {
+    setAlertTabId(tabId);
+    setAlertPage(1);
+    getAlerts(1, tabId);
+  };
+
+  const handleShowConfirmModal = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModalProps({
+      isOpen: true,
+      title,
+      message,
+      onConfirm,
+      onClose: () => {
+        setConfirmModalProps(prev => ({ ...prev, isOpen: false }));
+        toast.warning("Export Excel annulé");
+      }
+    });
+  };
+
+  // Mettre à jour les statistiques des notifications
+  useEffect(() => {
+    const fetchNotificationStats = async () => {
+      try {
+        const response: any = await axios.get(`${API_AUTH_SUIVI}/encaissements/alerts/stats`);
+        if (response?.error === false) {
+          setNotificationStats(response.data);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des statistiques:", error);
+      }
+    };
+
+    fetchNotificationStats();
+  }, []);
 
   return (
     <header className="z-40">
@@ -139,7 +283,75 @@ const Header = () => {
             </div>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
+            <Dropdown
+              offset={[0, 12]}
+              placement={"bottom-end"}
+              btnClassName="relative group"
+              button={
+                <button
+                  onClick={async () => {
+                    // D'abord ouvrir la modale avec les données initiales
+                    openAlertModal({
+                      alerts: alertsData,
+                      loading: true,
+                      pagination: paginationInfo,
+                      onPageChange: handleAlertPageChange,
+                      activeTabId: alertTabId,
+                      onTabChange: handleAlertTabChange,
+                      onShowConfirmModal: handleShowConfirmModal
+                    });
+
+                    // Ensuite charger les données
+                    await getAlerts(1, 0);
+                  }}
+                  className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gray-50 to-gray-100 transition-all duration-300 hover:from-gray-100 hover:to-gray-200 hover:shadow-lg hover:shadow-gray-200/50 active:scale-95"
+                  aria-label="Notifications"
+                >
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                  <IconBell className="h-5 w-5 text-gray-600 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
+                  <span
+                    className="absolute -right-1 -top-1 flex min-w-[20px] h-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-[11px] font-semibold text-white ring-2 ring-white shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md px-1"
+                    title={`${total} notifications`}
+                  >
+                    {total > 99 ? '99+' : total}
+                  </span>
+                </button>
+              }
+            >
+              <div className="w-[320px] rounded-xl border border-gray-100/50 bg-white p-4 shadow-xl">
+                <div className="mb-4">
+                  <h3 className="text-base font-semibold text-gray-900">Statistiques des encaissements</h3>
+                  <p className="text-sm text-gray-500">État actuel des encaissements</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between rounded-lg bg-blue-50/50 p-3">
+                    <span className="text-sm font-medium text-blue-700">Chargés</span>
+                    <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-sm font-semibold text-blue-700">
+                      {notificationStats.chargés}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-yellow-50/50 p-3">
+                    <span className="text-sm font-medium text-yellow-700">Vérifiés</span>
+                    <span className="rounded-full bg-yellow-100 px-2.5 py-0.5 text-sm font-semibold text-yellow-700">
+                      {notificationStats.vérifiés}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-green-50/50 p-3">
+                    <span className="text-sm font-medium text-green-700">Validés</span>
+                    <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-semibold text-green-700">
+                      {notificationStats.validés}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-purple-50/50 p-3">
+                    <span className="text-sm font-medium text-purple-700">Traités</span>
+                    <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-sm font-semibold text-purple-700">
+                      {notificationStats.traités}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Dropdown>
             <div className="relative">
               <Dropdown
                 offset={[0, 12]}

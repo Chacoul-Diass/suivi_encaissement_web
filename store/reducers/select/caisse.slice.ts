@@ -2,14 +2,35 @@ import { API_AUTH_SUIVI } from "@/config/constants";
 import axiosInstance from "@/utils/axios";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+interface FilterParams {
+  directionRegional?: string[];
+  codeExpl?: string[];
+}
+
 export const fetchcaisses = createAsyncThunk(
   "caisses/fetchcaisses",
-  async (_, { rejectWithValue }) => {
+  async (params: FilterParams = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(
-        `${API_AUTH_SUIVI}/encaissements/no-caisses`
-      );
-      return response.data;
+      const queryParams = new URLSearchParams();
+
+      if (params.directionRegional?.length) {
+        queryParams.append(
+          "directionRegional",
+          JSON.stringify(params.directionRegional)
+        );
+      }
+
+      if (params.codeExpl?.length) {
+        queryParams.append("codeExpl", JSON.stringify(params.codeExpl));
+      }
+
+      const queryString = queryParams.toString();
+      const url = `${API_AUTH_SUIVI}/encaissements/no-caisses${
+        queryString ? `?${queryString}` : ""
+      }`;
+
+      const response = await axiosInstance.get(url);
+      return response?.data;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data || "Erreur lors du chargement des caisses"

@@ -730,6 +730,7 @@ export default function Profil() {
                         onChange={handleInputChange}
                         className="w-full rounded-xl border border-gray-300 bg-gray-50 py-2.5 pl-11 pr-4 text-gray-700 transition-all duration-200 focus:border-primary/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10"
                         placeholder="votre@email.com"
+                        disabled={true}
                       />
                     </div>
                   </div>
