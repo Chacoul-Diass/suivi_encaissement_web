@@ -33,6 +33,7 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
     dailyCaisse: [],
     codeCaisse: [],
     noCaisse: [],
+    status: "",
   });
 
   // États pour la pagination
@@ -211,6 +212,7 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
           drData={drData}
           onApplyFilters={handleApplyFilters}
           statutValidation={null}
+          showStatusSelector={true}
         />
       </div>
 

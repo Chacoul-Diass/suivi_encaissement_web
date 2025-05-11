@@ -1,6 +1,5 @@
 import React, { Fragment } from "react";
 import IconMail from "../icon/icon-mail";
-import IconBank from "../icon/icon-bank";
 import { Dialog, Transition } from "@headlessui/react";
 import ReactQuill from "react-quill";
 import ImageUploading from "react-images-uploading";
@@ -29,9 +28,6 @@ const AskToRequestModal = ({
   handleAskToRequest,
   observationReclamation,
   setObservationReclamation,
-  params,
-  setParams,
-  setImages2,
   images2,
   onChange2,
 }: AskToRequestModalProps) => {
