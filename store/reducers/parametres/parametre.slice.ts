@@ -6,6 +6,7 @@ interface Parametre {
   id: number;
   email: string;
   description: string;
+  banque?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,7 +33,9 @@ export const fetchParametres = createAsyncThunk(
   async (params: { page?: number } = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get<ParametreResponse>(
-        `${API_AUTH_SUIVI}/email-receiver/list-paginate${params.page ? `?page=${params.page}` : ''}`
+        `${API_AUTH_SUIVI}/email-receiver/list-paginate${
+          params.page ? `?page=${params.page}` : ""
+        }`
       );
       return response.data;
     } catch (error: any) {
@@ -47,7 +50,7 @@ export const fetchParametres = createAsyncThunk(
 export const createParametre = createAsyncThunk(
   "parametres/createParametre",
   async (
-    parametre: { email: string; description: string },
+    parametre: { email: string; description: string; banque?: string },
     { rejectWithValue }
   ) => {
     try {
