@@ -145,16 +145,14 @@ const Parametre = () => {
 
   // Fonction pour charger les banques si nécessaire
   const loadBanques = async () => {
-    // Si les banques ne sont pas encore chargées ou si une erreur s'est produite, les recharger
-    if (banques.length === 0 || banquesError) {
-      console.log("Chargement des banques...");
-      try {
-        await dispatch(fetchBanques()).unwrap();
-        console.log("Banques chargées avec succès");
-      } catch (err: any) {
-        console.error("Erreur lors du chargement des banques:", err);
-        toast.error("Erreur lors du chargement des banques. Veuillez réessayer.");
-      }
+    // Toujours recharger les banques depuis l'API
+    console.log("Chargement des banques depuis l'API...");
+    try {
+      await dispatch(fetchBanques()).unwrap();
+      console.log("Banques chargées avec succès:", banquesData);
+    } catch (err: any) {
+      console.error("Erreur lors du chargement des banques:", err);
+      toast.error("Erreur lors du chargement des banques. Veuillez réessayer.");
     }
   };
 
@@ -783,9 +781,9 @@ const Parametre = () => {
                           // Ajouter un clic explicite pour ouvrir le dropdown
                           onClick={() => {
                             setShowBanqueDropdown(true);
-                            if (banques.length === 0) {
-                              loadBanques();
-                            }
+                            // Toujours recharger les banques depuis l'API pour s'assurer d'avoir les dernières données
+                            console.log("Chargement des banques lors du clic sur le champ");
+                            loadBanques();
                           }}
                         />
 
@@ -856,9 +854,25 @@ const Parametre = () => {
                               {filteredBanques.length !== banques.length && (
                                 <button
                                   type="button"
-                                  className="text-primary hover:underline"
-                                  onClick={() => setBanqueSearchTerm('')}
+                                  className="text-primary hover:underline flex items-center gap-1"
+                                  onClick={() => {
+                                    setBanqueSearchTerm('');
+                                    // Recharger toutes les banques depuis l'API
+                                    console.log("Recharger toutes les banques depuis l'API");
+                                    dispatch(fetchBanques()).then(() => {
+                                      console.log("Banques rechargées avec succès");
+                                    });
+                                  }}
                                 >
+                                  <svg
+                                    className="h-3.5 w-3.5"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  >
+                                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
                                   Voir tout
                                 </button>
                               )}
