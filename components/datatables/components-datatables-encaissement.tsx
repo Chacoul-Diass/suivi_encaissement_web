@@ -991,85 +991,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
         ]
         : [];
 
-    const actionsCol = [
-      {
-        accessor: "Actions",
-        title: "Actions",
-        sortable: false,
-        render: (row: DataReverse) => {
-          const canEditComptable =
-            statutValidation === 0 &&
-            hasPermission("ENCAISSEMENTS CHARGES", "MODIFIER");
 
-          const seeEmailIcon =
-            (statutValidation === 4 && hasPermission("LITIGES", "MODIFIER")) ||
-            statutValidation === 6;
-
-          return (
-            <div className="flex items-center justify-center gap-3">
-              {canEditComptable && (
-                <>
-                  <Tippy content="Modifier">
-                    <button
-                      type="button"
-                      className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                      onClick={() => handleOpenModal(row)}
-                    >
-                      <IconPencil className="h-5 w-5 stroke-[1.5]" />
-                    </button>
-                  </Tippy>
-                  {/* Reclamation action  */}
-                  <Tippy content="Passer en réclamation">
-                    <button
-                      type="button"
-                      className="flex items-center justify-center rounded-lg p-2 text-warning hover:text-warning"
-                      onClick={() => showAlertReclamation(row.id)}
-                    >
-                      <IconAlertTriangle className="h-5 w-5 stroke-[1.5]" />
-                    </button>
-                  </Tippy>
-                </>
-              )}
-
-              {/* Icône Voir si l'utilisateur ne peut pas modifier et statutValidation !== 0 */}
-              {!canEditComptable && statutValidation !== 0 && (
-
-                <Tippy content="Voir">
-                  <button
-                    type="button"
-                    className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                    onClick={() => handleOpenModal(row)}
-                  >
-                    <IconEye className="h-5 w-5 stroke-[1.5]" />
-                  </button>
-                </Tippy>
-
-
-              )}
-
-              {/* Icône Envoyer un mail si statutValidation === 4 */}
-              {seeEmailIcon && (
-                <Tippy content="Envoyer un mail">
-                  <button
-                    type="button"
-                    className="flex items-center justify-center rounded-lg p-2 text-primary hover:text-primary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedRow(row);
-                      setEmailModalOpen(true);
-                    }}
-                  >
-                    <IconMail className="h-5 w-5 stroke-[1.5]" />
-                  </button>
-                </Tippy>
-              )}
-            </div>
-          );
-        },
-      },
-    ];
-
-    const cols = [...baseCols, ...additionalCols, ...actionsCol];
+    const cols = [...baseCols, ...additionalCols];
 
     useEffect(() => {
       const filteredData = filterAndMapData(data, statutValidation);
@@ -1186,37 +1109,51 @@ const ComponentsDatatablesColumnChooser: React.FC<
       }
 
       try {
-        const attachments = uploadedFiles.map((item) => item.file);
-
-        const payload: any = {
-          to: params.toEmails.map((emailObj: any) => emailObj.mail).join(","),
-          cc:
-            params.ccEmails?.map((emailObj: any) => emailObj.mail).join(",") ||
-            "",
-          subject: emailSubject,
-          text: params.description,
-          attachments,
+        // 1. D'abord, mettre à jour le statut
+        const validationPayload = {
+          encaissementId: selectedRow?.id,
+          statutValidation: EStatutEncaissement.RECLAMATION_TRAITES,
         };
 
-        const resultAction = await dispatch(sendEmail(payload));
+        const validationResult = await dispatch(submitEncaissementValidation(validationPayload)).unwrap();
 
-        if (sendEmail.fulfilled.match(resultAction)) {
-          setEmailModalOpen(false);
-          ToastSuccess.fire({ text: "Email envoyé avec succès !" });
+        if (validationResult) {
+          // 2. Si la validation réussit, envoyer l'email
+          const attachments = uploadedFiles.map((item) => item.file);
+          const emailPayload = {
+            to: params.toEmails.map((emailObj: any) => emailObj.mail).join(","),
+            cc: params.ccEmails?.map((emailObj: any) => emailObj.mail).join(",") || "",
+            subject: emailSubject,
+            text: params.description,
+            attachments,
+          };
 
-          // ✅ Réinitialisation correcte des états
-          setParams({
-            toEmails: [],
-            ccEmails: [],
-            description: "",
-            displayDescription: "",
-          });
+          const emailResult = await dispatch(sendEmail(emailPayload));
 
-          setUploadedFiles([]);
-          setEmailSubject("");
+          if (sendEmail.fulfilled.match(emailResult)) {
+            setEmailModalOpen(false);
+            ToastSuccess.fire({ text: "Statut mis à jour et email envoyé avec succès !" });
+
+            // ✅ Réinitialisation correcte des états
+            setParams({
+              toEmails: [],
+              ccEmails: [],
+              description: "",
+              displayDescription: "",
+            });
+
+            setUploadedFiles([]);
+            setEmailSubject("");
+
+            // Rafraîchir les données après l'envoi de l'email
+            await refreshTableData(false);
+          } else {
+            console.error("❌ Échec lors de l'envoi de l'email :", emailResult);
+            ToastError.fire({ text: "Le statut a été mis à jour mais l'envoi de l'email a échoué." });
+          }
         } else {
-          console.error("❌ Échec lors de l'envoi de l'email :", resultAction);
-          ToastError.fire({ text: "Échec lors de l'envoi de l'email." });
+          console.error("❌ Échec lors de la mise à jour du statut");
+          ToastError.fire({ text: "Échec lors de la mise à jour du statut." });
         }
       } catch (error) {
         console.error("⚠️ Erreur inattendue :", error);
@@ -1911,6 +1848,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     onChange2={onChange2}
                     observationReclamation={observationReclamation}
                     setObservationReclamation={setObservationReclamation}
+                    refreshTableData={refreshTableData}
                   />
                 )}
               </div>
@@ -1927,27 +1865,18 @@ const ComponentsDatatablesColumnChooser: React.FC<
             {/* EmailModale */}
             <EmailModal
               emailModalOpen={emailModalOpen}
-              ccEmails={ccEmails}
-              emailConnecte={emailConnecte}
-              removeToEmail={removeToEmail}
-              emailInput={emailInput}
-              setEmailInput={setEmailInput}
-              handleCcKeyDown={handleCcKeyDown}
-              emailSubject={emailSubject}
-              setEmailSubject={setEmailSubject}
+              setEmailModalOpen={setEmailModalOpen}
               params={params}
               setParams={setParams}
+              emailSubject={emailSubject}
+              setEmailSubject={setEmailSubject}
               handleMultipleFileUpload={handleMultipleFileUpload}
               uploadedFiles={uploadedFiles}
               removeFile={removeFile}
-              setEmailModalOpen={setEmailModalOpen}
               handleSendEmail={handleSendEmail}
-              handleToKeyDown={handleToKeyDown}
-              setToInput={setToInput}
+              emailConnecte={emailConnecte}
+              removeToEmail={removeToEmail}
               removeCcEmail={removeCcEmail}
-              toEmails={toEmails}
-              toInput={toInput}
-              numeroBordereau={numeroBordereau}
               setToEmails={setToEmails}
             />
             {/* PreuvePhoto */}

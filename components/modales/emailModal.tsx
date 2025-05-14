@@ -20,16 +20,7 @@ interface EmailModalProps {
   removeFile: (index: number) => void;
   handleSendEmail: () => void;
   emailConnecte: string;
-  numeroBordereau?: string;
-  ccEmails: Array<{ mail: string }>;
   removeToEmail: (index: number) => void;
-  emailInput: string;
-  setEmailInput: (value: string) => void;
-  handleCcKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  toEmails: Array<{ mail: string }>;
-  toInput: string;
-  setToInput: (value: string) => void;
-  handleToKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   removeCcEmail: (index: number) => void;
   setToEmails: any;
 }
@@ -46,17 +37,8 @@ export default function EmailModal({
   removeFile,
   handleSendEmail,
   emailConnecte,
-  numeroBordereau,
   setToEmails,
-  ccEmails,
   removeToEmail,
-  emailInput,
-  setEmailInput,
-  handleCcKeyDown,
-  toEmails,
-  toInput,
-  setToInput,
-  handleToKeyDown,
   removeCcEmail,
 }: EmailModalProps) {
   const dispatch = useDispatch<TAppDispatch>();
@@ -190,13 +172,58 @@ export default function EmailModal({
     }
   }, [emailConnecte, setParams]);
 
+  // Fonction pour réinitialiser tous les champs
+  const resetAllFields = () => {
+    setParams({
+      toEmails: [],
+      ccEmails: emailConnecte ? [{ mail: emailConnecte }] : [],
+      description: "",
+      displayDescription: "",
+    });
+    setEmailSubject("");
+    setInputValue("");
+    setToEmails([]);
+    // Réinitialiser les fichiers
+    uploadedFiles.forEach((_, index) => removeFile(index));
+  };
+
+  // Modifier la fermeture de la modale pour réinitialiser les champs
+  const handleCloseModal = () => {
+    resetAllFields();
+    setEmailModalOpen(false);
+  };
+
+  // Fonctions corrigées pour la suppression des emails
+  const handleRemoveToEmail = (index: number) => {
+    setParams((prevParams: any) => {
+      const updatedToEmails = [...(prevParams?.toEmails || [])];
+      updatedToEmails.splice(index, 1);
+      setToEmails(updatedToEmails.map((item) => item.mail));
+      return {
+        ...prevParams,
+        toEmails: updatedToEmails,
+      };
+    });
+  };
+
+  const handleRemoveCcEmail = (index: number) => {
+    setParams((prevParams: any) => {
+      const updatedCcEmails = [...(prevParams?.ccEmails || [])];
+      updatedCcEmails.splice(index, 1);
+      return {
+        ...prevParams,
+        ccEmails: updatedCcEmails,
+      };
+    });
+  };
+
   return (
     <Transition appear show={emailModalOpen} as={Fragment}>
       <Dialog
         as="div"
         open={emailModalOpen}
         className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
-        onClose={() => setEmailModalOpen(false)}
+        onClose={handleCloseModal}
       >
         <div className="fixed inset-0 z-[999] overflow-y-auto bg-[black]/60">
           <div className="flex min-h-screen items-start justify-center px-4">
@@ -212,7 +239,7 @@ export default function EmailModal({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setEmailModalOpen(false)}
+                  onClick={handleCloseModal}
                   className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
                 >
                   <svg
@@ -244,7 +271,7 @@ export default function EmailModal({
                         <button
                           type="button"
                           className="ml-1 rounded-full p-0.5 hover:bg-primary/20"
-                          onClick={() => removeToEmail(index)}
+                          onClick={() => handleRemoveToEmail(index)}
                         >
                           <svg
                             className="h-3.5 w-3.5"
@@ -364,11 +391,7 @@ export default function EmailModal({
                             <button
                               type="button"
                               className="ml-1 rounded-full p-0.5 hover:bg-gray-200"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                removeCcEmail(index);
-                              }}
+                              onClick={() => handleRemoveCcEmail(index)}
                             >
                               <svg
                                 className="h-3.5 w-3.5"
@@ -609,7 +632,7 @@ export default function EmailModal({
               <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
                 <button
                   type="button"
-                  onClick={() => setEmailModalOpen(false)}
+                  onClick={handleCloseModal}
                   className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                 >
                   Annuler

@@ -23,6 +23,7 @@ import { FaSpinner } from "react-icons/fa";
 interface ViewModalProps {
   modalOpen: boolean;
   setModalOpen: (open: boolean) => void;
+  refreshTableData: any;
   formatNumber: any;
   selectedRow: any;
   rasChecked1: any;
@@ -65,6 +66,7 @@ export default function ViewModal({
   setModalOpen,
   formatNumber,
   selectedRow,
+  refreshTableData,
   rasChecked1,
   handleRasChecked1Change,
   statutValidation,
@@ -845,9 +847,6 @@ export default function ViewModal({
           askToRequestModalOpen={askToRequestModalOpen}
           setAskToRequestModalOpen={setAskToRequestModalOpen}
           handleAskToRequest={handleSendEmail}
-          handleMultipleFileUpload={handleMultipleFileUpload}
-          uploadedFiles={uploadedFiles}
-          removeFile={removeFile}
           params={params}
           setParams={setParams}
           setImages2={setImages2}
@@ -855,6 +854,9 @@ export default function ViewModal({
           onChange2={onChange2}
           observationReclamation={observationReclamation}
           setObservationReclamation={setObservationReclamation}
+          selectedRow={selectedRow}
+          refreshTableData={refreshTableData}
+          setModalOpen={setModalOpen}
         />
       )}
     </>

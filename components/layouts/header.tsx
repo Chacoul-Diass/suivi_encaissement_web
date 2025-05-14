@@ -250,20 +250,20 @@ const Header = () => {
   };
 
   // Mettre à jour les statistiques des notifications
-  useEffect(() => {
-    const fetchNotificationStats = async () => {
-      try {
-        const response: any = await axios.get(`${API_AUTH_SUIVI}/encaissements/alerts/stats`);
-        if (response?.error === false) {
-          setNotificationStats(response.data);
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des statistiques:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchNotificationStats = async () => {
+  //     try {
+  //       const response: any = await axios.get(`${API_AUTH_SUIVI}/encaissements/alerts/stats/0`);
+  //       if (response?.error === false) {
+  //         setNotificationStats(response.data);
+  //       }
+  //     } catch (error) {
+  //       console.error("Erreur lors de la récupération des statistiques:", error);
+  //     }
+  //   };
 
-    fetchNotificationStats();
-  }, []);
+  //   fetchNotificationStats();
+  // }, []);
 
   return (
     <header className="z-40">
