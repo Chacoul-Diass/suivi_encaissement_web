@@ -182,6 +182,8 @@ const ComponentsDashboardValider = () => {
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(5);
   const [ecartDataEncaissement, setEcartDataEncaissement] = useState<any>(null);
+
+  console.log(ecartDataEncaissement, "ecartDataEncaissement")
   // Ajouter un état pour stocker les filtres courants
   const [currentFilters, setCurrentFilters] = useState<Record<string, any>>({});
 

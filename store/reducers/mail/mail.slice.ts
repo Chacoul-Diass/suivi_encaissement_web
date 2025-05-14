@@ -12,6 +12,7 @@ interface ISendEmailPayload {
   subject: string;
   text: string;
   attachments: File[];
+  statutValidation?: number;
 }
 
 /**
@@ -37,6 +38,10 @@ export const sendEmail = createAsyncThunk(
 
       data.append("subject", payload.subject);
       data.append("text", payload.text);
+
+      if (payload.statutValidation) {
+        data.append("statutValidation", payload.statutValidation.toString());
+      }
 
       payload.attachments.forEach((file, index) => {
         data.append(`attachments`, file);

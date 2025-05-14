@@ -5,21 +5,35 @@ import ReactQuill from "react-quill";
 import ImageUploading from "react-images-uploading";
 import IconPaperclip from "../icon/icon-paperclip";
 import IconX from "../icon/icon-x";
+import { useDispatch } from "react-redux";
+import { TAppDispatch } from "@/store";
+import { submitEncaissementValidation } from "@/store/reducers/encaissements/soumission.slice";
+import { EStatutEncaissement } from "@/utils/enums";
+import { toast } from "react-hot-toast";
+import { handleApiError } from "@/utils/apiErrorHandler";
+import Swal from "sweetalert2";
+
+interface ValidationPayload {
+  encaissementId: number;
+  statutValidation: EStatutEncaissement;
+  observationReclamation: string;
+  files?: File[];
+}
 
 interface AskToRequestModalProps {
-  askToRequestModalOpen: any;
-  setAskToRequestModalOpen: any;
-  handleAskToRequest: any;
-  handleMultipleFileUpload: any;
-  uploadedFiles: any;
-  removeFile: any;
-  observationReclamation: any;
-  setObservationReclamation: any;
+  askToRequestModalOpen: boolean;
+  setAskToRequestModalOpen: (open: boolean) => void;
+  handleAskToRequest: () => void;
+  observationReclamation: string;
+  setObservationReclamation: (value: string) => void;
   params: any;
-  setParams: any;
-  setImages2: any;
-  images2: any;
-  onChange2: any;
+  setParams: (p: any) => void;
+  setImages2: (images: any[]) => void;
+  images2: any[];
+  onChange2: (imageList: any[], addUpdateIndex: number[] | undefined) => void;
+  selectedRow: any;
+  refreshTableData: (showToast?: boolean) => Promise<void>;
+  setModalOpen: (open: boolean) => void;
 }
 
 const AskToRequestModal = ({
@@ -30,8 +44,102 @@ const AskToRequestModal = ({
   setObservationReclamation,
   images2,
   onChange2,
+  selectedRow,
+  refreshTableData,
+  setModalOpen,
 }: AskToRequestModalProps) => {
+  const dispatch = useDispatch<TAppDispatch>();
   const maxNumber = 69;
+
+  const handleSubmitReclamation = async () => {
+    try {
+      if (!selectedRow?.id) {
+        toast.error("Aucun encaissement sélectionné");
+        return;
+      }
+
+      // Préparation du payload
+      const payload: ValidationPayload = {
+        encaissementId: selectedRow.id,
+        statutValidation: EStatutEncaissement.TRAITE,
+        observationReclamation: observationReclamation,
+      };
+
+      // Ajout des fichiers s'ils existent
+      if (images2 && images2.length > 0) {
+        const files = images2
+          .filter((image: { file?: File; dataURL?: string }) => image.file)
+          .map((image: { file?: File; dataURL?: string }) => image.file as File);
+        payload.files = files;
+      }
+
+      // Envoi de la requête
+      const response = await dispatch(submitEncaissementValidation(payload)).unwrap();
+      
+      // Si la réponse existe, c'est un succès
+      if (response) {
+        const swalWithBootstrapButtons = Swal.mixin({
+          customClass: {
+            confirmButton: "btn btn-primary",
+            cancelButton: "btn btn-dark ltr:mr-3 rtl:ml-3",
+            popup: "sweet-alerts",
+          },
+          buttonsStyling: false,
+        });
+
+        await swalWithBootstrapButtons.fire(
+          "Traité",
+          "L'encaissement a été traité avec succès. La réclamation a été résolue.",
+          "success"
+        );
+        
+        // Fermer toutes les modales
+        setAskToRequestModalOpen(false);
+        setModalOpen(false);
+        
+        // Réinitialisation des états
+        setObservationReclamation("");
+        setImages2([]);
+        if (params?.setParams) {
+          params.setParams({
+            toEmails: [],
+            ccEmails: [],
+            description: "",
+            displayDescription: "",
+          });
+        }
+        
+        setTimeout(() => {
+          // Méthode 1: Utiliser le prop fetchData (refreshTableData)
+          if (refreshTableData) {
+            refreshTableData();
+          }
+
+          // Méthode 2: Utiliser window.fetchData global
+          if (
+            typeof window !== "undefined" &&
+            (window as any).fetchData
+          ) {
+            (window as any).fetchData();
+          }
+          // Méthode 3: Forcer un rafraîchissement de la page si rien d'autre ne fonctionne
+          // Cette méthode est plus drastique mais garantit la mise à jour
+          if (
+            !refreshTableData &&
+            (typeof window === "undefined" ||
+              !(window as any).refreshTableData)
+          ) {
+            if (typeof window !== "undefined") {
+              window.location.reload();
+            }
+          }
+        }, 800);
+      }
+    } catch (error) {
+      const errorMessage = handleApiError(error);
+      toast.error(errorMessage);
+    }
+  };
 
   return (
     <Transition appear show={askToRequestModalOpen} as={Fragment}>
@@ -88,8 +196,8 @@ const AskToRequestModal = ({
                   <div className="p-4">
                     <ReactQuill
                       theme="snow"
-                      value={observationReclamation} // Utilisation du state ici
-                      onChange={(content) => setObservationReclamation(content)} // Mise à jour du state
+                      value={observationReclamation}
+                      onChange={(content) => setObservationReclamation(content)}
                       className="min-h-[200px] text-black"
                     />
                   </div>
@@ -182,7 +290,7 @@ const AskToRequestModal = ({
                 </button>
                 <button
                   type="button"
-                  onClick={handleAskToRequest}
+                  onClick={handleSubmitReclamation}
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary/90 hover:shadow-md active:scale-95"
                 >
                   <svg
