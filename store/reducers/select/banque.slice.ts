@@ -7,7 +7,7 @@ export const fetchBanques = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(
-        `${API_AUTH_SUIVI}/encaissements/banques`
+        `${API_AUTH_SUIVI}/email-receiver/banques`
       );
       return response.data;
     } catch (error: any) {
