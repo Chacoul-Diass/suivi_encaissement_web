@@ -171,13 +171,13 @@ const Parametre = () => {
     loadInitialData();
 
     // Rafraîchir périodiquement
-    const refreshInterval = setInterval(() => {
-      fetchParametresDirectly(currentPage);
-    }, 300000); // 5 minutes
+    // const refreshInterval = setInterval(() => {
+    //   fetchParametresDirectly(currentPage);
+    // }, 300000); // 5 minutes
 
-    return () => {
-      clearInterval(refreshInterval);
-    };
+    // return () => {
+    //   clearInterval(refreshInterval);
+    // };
   }, [dispatch]);
 
   // Recharger les données quand la page change

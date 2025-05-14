@@ -6,7 +6,7 @@ import { FaAddressBook } from "react-icons/fa";
 import ReactQuill from "react-quill";
 import { TAppDispatch, TRootState } from "@/store";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchParametres } from "@/store/reducers/parametres/parametre.slice";
+import { fetchBanquesMail } from "@/store/reducers/select/banqueMail.slice";
 
 interface EmailModalProps {
   emailModalOpen: boolean;
@@ -23,6 +23,12 @@ interface EmailModalProps {
   removeToEmail: (index: number) => void;
   removeCcEmail: (index: number) => void;
   setToEmails: any;
+}
+
+interface Banque {
+  id: number;
+  libelle: string;
+  emails: string[];
 }
 
 export default function EmailModal({
@@ -44,16 +50,24 @@ export default function EmailModal({
   const dispatch = useDispatch<TAppDispatch>();
   const user = useSelector((state: TRootState) => state.auth?.user);
   const { email = "" } = user || {};
-  const data = useSelector((state: TRootState) => state.parametres?.data);
-  const carnetAdresse = data?.result;
+  const banquesMailData: any = useSelector((state: TRootState) => state.BanquesMail?.data);
+  let banquesMail: Banque[] = [];
+  if (banquesMailData) {
+    if (banquesMailData.data && Array.isArray(banquesMailData.data)) {
+      banquesMail = banquesMailData.data;
+    } else if (Array.isArray(banquesMailData)) {
+      banquesMail = banquesMailData;
+    }
+  }
   const [showAddressBook, setShowAddressBook] = useState(false);
   const [currentType, setCurrentType] = useState<"to" | "cc">("to");
   const [inputValue, setInputValue] = useState("");
 
   console.log(emailConnecte, "emailConnecte");
+  console.log("Banques disponibles:", banquesMail);
 
   useEffect(() => {
-    dispatch(fetchParametres({}));
+    dispatch(fetchBanquesMail());
   }, [dispatch]);
 
   useEffect(() => {
@@ -75,6 +89,67 @@ export default function EmailModal({
   const handleAddressBookClick = (type: "to" | "cc") => {
     setCurrentType(type);
     setShowAddressBook((prev) => !prev);
+  };
+
+  // Fonction pour rafraîchir la liste des banques
+  const refreshBanquesList = () => {
+    dispatch(fetchBanquesMail());
+  };
+
+  // Fonction améliorée pour gérer la sélection d'une banque et ajouter tous ses emails
+  const handleSelectBanque = (banque: Banque) => {
+    console.log("Banque sélectionnée:", banque);
+    if (!banque.emails || banque.emails.length === 0) {
+      console.log("Aucun email associé à cette banque");
+      return;
+    }
+
+    if (currentType === "to") {
+      // Créer une copie des emails actuels
+      const currentEmails = [...(params?.toEmails || [])];
+      let newEmails = [...currentEmails];
+      let emailsAdded = false;
+
+      // Ajouter chaque email de la banque qui n'est pas déjà dans la liste
+      banque.emails.forEach((email: string) => {
+        if (!currentEmails.some((e: any) => e.mail === email)) {
+          newEmails.push({ mail: email });
+          emailsAdded = true;
+        }
+      });
+
+      if (emailsAdded) {
+        // Mettre à jour l'état params avec les nouveaux emails
+        const updatedParams = { ...params, toEmails: newEmails };
+        setParams(updatedParams);
+
+        // Mettre à jour la liste d'emails pour l'affichage externe
+        setToEmails(newEmails.map((item: any) => item.mail));
+        console.log("Emails ajoutés dans TO:", newEmails);
+      }
+    } else {
+      // Créer une copie des emails CC actuels
+      const currentEmails = [...(params?.ccEmails || [])];
+      let newEmails = [...currentEmails];
+      let emailsAdded = false;
+
+      // Ajouter chaque email de la banque qui n'est pas déjà dans la liste
+      banque.emails.forEach((email: string) => {
+        if (!currentEmails.some((e: any) => e.mail === email)) {
+          newEmails.push({ mail: email });
+          emailsAdded = true;
+        }
+      });
+
+      if (emailsAdded) {
+        // Mettre à jour l'état params avec les nouveaux emails CC
+        setParams({ ...params, ccEmails: newEmails });
+        console.log("Emails ajoutés dans CC:", newEmails);
+      }
+    }
+
+    // Fermer le carnet d'adresses après la sélection
+    setShowAddressBook(false);
   };
 
   const handleSelectEmail = (selectedEmail: string) => {
@@ -122,10 +197,13 @@ export default function EmailModal({
     if (e.key === "Enter" && inputValue.trim()) {
       if (currentType === "to") {
         if (!params?.toEmails?.some((item: any) => item.mail === inputValue)) {
+          const updatedToEmails = [...(params?.toEmails || []), { mail: inputValue }];
           setParams({
             ...params,
-            toEmails: [...(params?.toEmails || []), { mail: inputValue }],
+            toEmails: updatedToEmails,
           });
+          // Mettre à jour également la liste d'emails pour l'affichage externe
+          setToEmails(updatedToEmails.map((item: any) => item.mail));
         }
       } else {
         if (!params?.ccEmails?.some((item: any) => item.mail === inputValue)) {
@@ -286,7 +364,7 @@ export default function EmailModal({
                     <input
                       type="text"
                       value={currentType === "to" ? inputValue : ""}
-                      onChange={(e) => setToEmails(e.target.value)}
+                      onChange={(e) => setInputValue(e.target.value)}
                       onKeyDown={handleKeyDown}
                       onFocus={() => setCurrentType("to")}
                       placeholder="Ajouter un email"
@@ -307,54 +385,72 @@ export default function EmailModal({
                             position: "absolute",
                             right: 0,
                             top: "100%",
+                            zIndex: 99999,
+                            maxHeight: "300px",
+                            overflow: "auto",
+                            width: "300px",
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
                           }}
-                          className="address-book-menu z-50 mt-1 w-80 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                          className="address-book-menu mt-2 rounded-md bg-white ring-1 ring-black ring-opacity-5"
                         >
                           <div className="flex items-center justify-between border-b border-gray-100 p-3">
                             <h3 className="font-medium text-gray-900">
                               Carnet d'adresses
                             </h3>
-                            <button
-                              type="button"
-                              onClick={() => setShowAddressBook(false)}
-                              className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
-                            >
-                              <svg
-                                className="h-5 w-5"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={refreshBanquesList}
+                                className="rounded-lg p-1 text-primary hover:bg-primary/10"
+                                title="Rafraîchir la liste"
                               >
-                                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                              </svg>
-                            </button>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setShowAddressBook(false)}
+                                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+                              >
+                                <svg
+                                  className="h-5 w-5"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
                           <div className="z-50 max-h-60 divide-y divide-gray-100 overflow-y-auto">
-                            {carnetAdresse?.length > 0 ? (
-                              carnetAdresse.map((item: any) => {
-                                const isSelected = params?.toEmails?.some(
-                                  (e: any) => e.mail === item.email
+                            {banquesMail?.length > 0 ? (
+                              banquesMail.map((banque: Banque) => {
+                                // Vérifier si tous les emails de cette banque sont déjà sélectionnés
+                                const emailsAlreadySelected = banque.emails?.every(
+                                  (email) => params?.toEmails?.some((e: any) => e.mail === email)
                                 );
+
                                 return (
                                   <button
-                                    key={item.id}
-                                    className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${
-                                      isSelected
-                                        ? "bg-primary/5"
-                                        : "hover:bg-gray-50"
-                                    }`}
-                                    onClick={() =>
-                                      handleSelectEmail(item.email)
-                                    }
+                                    key={banque.id}
+                                    className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${emailsAlreadySelected
+                                      ? "bg-primary/5"
+                                      : "hover:bg-gray-50"
+                                      }`}
+                                    onClick={() => handleSelectBanque(banque)}
                                   >
                                     <div>
                                       <span className="block text-sm font-medium text-gray-700">
-                                        {item.email}
+                                        {banque.libelle}
                                       </span>
                                       <span className="block text-xs text-gray-500">
-                                        {item.description}
+                                        {banque.emails?.length > 0
+                                          ? `${banque.emails.length} email${banque.emails.length > 1 ? 's' : ''}`
+                                          : "Aucun email associé"}
                                       </span>
                                     </div>
-                                    {isSelected && (
+                                    {emailsAlreadySelected && (
                                       <span className="text-xs font-medium text-primary">
                                         Ajouté
                                       </span>
@@ -364,7 +460,7 @@ export default function EmailModal({
                               })
                             ) : (
                               <div className="px-4 py-3 text-sm text-gray-500">
-                                Aucun email dans le carnet d'adresses
+                                Aucune banque disponible
                               </div>
                             )}
                           </div>
@@ -432,54 +528,72 @@ export default function EmailModal({
                             position: "absolute",
                             right: 0,
                             top: "100%",
+                            zIndex: 9999,
+                            maxHeight: "300px",
+                            overflow: "auto",
+                            width: "300px",
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
                           }}
-                          className="address-book-menu z-50 mt-1 w-80 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                          className="address-book-menu mt-2 rounded-md bg-white ring-1 ring-black ring-opacity-5"
                         >
                           <div className="flex items-center justify-between border-b border-gray-100 p-3">
                             <h3 className="font-medium text-gray-900">
                               Carnet d'adresses
                             </h3>
-                            <button
-                              type="button"
-                              onClick={() => setShowAddressBook(false)}
-                              className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
-                            >
-                              <svg
-                                className="h-5 w-5"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={refreshBanquesList}
+                                className="rounded-lg p-1 text-primary hover:bg-primary/10"
+                                title="Rafraîchir la liste"
                               >
-                                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                              </svg>
-                            </button>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setShowAddressBook(false)}
+                                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+                              >
+                                <svg
+                                  className="h-5 w-5"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
                           <div className="max-h-60 divide-y divide-gray-100 overflow-y-auto">
-                            {carnetAdresse?.length > 0 ? (
-                              carnetAdresse.map((item: any) => {
-                                const isSelected = params?.ccEmails?.some(
-                                  (e: any) => e.mail === item.email
+                            {banquesMail?.length > 0 ? (
+                              banquesMail.map((banque: Banque) => {
+                                // Vérifier si tous les emails de cette banque sont déjà sélectionnés
+                                const emailsAlreadySelected = banque.emails?.every(
+                                  (email) => params?.ccEmails?.some((e: any) => e.mail === email)
                                 );
+
                                 return (
                                   <button
-                                    key={item.id}
-                                    className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${
-                                      isSelected
-                                        ? "bg-primary/5"
-                                        : "hover:bg-gray-50"
-                                    }`}
-                                    onClick={() =>
-                                      handleSelectEmail(item.email)
-                                    }
+                                    key={banque.id}
+                                    className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${emailsAlreadySelected
+                                      ? "bg-primary/5"
+                                      : "hover:bg-gray-50"
+                                      }`}
+                                    onClick={() => handleSelectBanque(banque)}
                                   >
                                     <div>
                                       <span className="block text-sm font-medium text-gray-700">
-                                        {item.email}
+                                        {banque.libelle}
                                       </span>
                                       <span className="block text-xs text-gray-500">
-                                        {item.description}
+                                        {banque.emails?.length > 0
+                                          ? `${banque.emails.length} email${banque.emails.length > 1 ? 's' : ''}`
+                                          : "Aucun email associé"}
                                       </span>
                                     </div>
-                                    {isSelected && (
+                                    {emailsAlreadySelected && (
                                       <span className="text-xs font-medium text-primary">
                                         Ajouté
                                       </span>
@@ -489,7 +603,7 @@ export default function EmailModal({
                               })
                             ) : (
                               <div className="px-4 py-3 text-sm text-gray-500">
-                                Aucun email dans le carnet d'adresses
+                                Aucune banque disponible
                               </div>
                             )}
                           </div>
