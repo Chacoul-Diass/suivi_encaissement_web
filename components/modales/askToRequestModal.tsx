@@ -42,6 +42,8 @@ const AskToRequestModal = ({
   handleAskToRequest,
   observationReclamation,
   setObservationReclamation,
+  params,
+  setImages2,
   images2,
   onChange2,
   selectedRow,
@@ -75,7 +77,7 @@ const AskToRequestModal = ({
 
       // Envoi de la requête
       const response = await dispatch(submitEncaissementValidation(payload)).unwrap();
-      
+
       // Si la réponse existe, c'est un succès
       if (response) {
         const swalWithBootstrapButtons = Swal.mixin({
@@ -92,11 +94,11 @@ const AskToRequestModal = ({
           "L'encaissement a été traité avec succès. La réclamation a été résolue.",
           "success"
         );
-        
+
         // Fermer toutes les modales
         setAskToRequestModalOpen(false);
         setModalOpen(false);
-        
+
         // Réinitialisation des états
         setObservationReclamation("");
         setImages2([]);
@@ -108,7 +110,7 @@ const AskToRequestModal = ({
             displayDescription: "",
           });
         }
-        
+
         setTimeout(() => {
           // Méthode 1: Utiliser le prop fetchData (refreshTableData)
           if (refreshTableData) {
