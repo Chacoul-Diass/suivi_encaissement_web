@@ -259,7 +259,7 @@ const Sidebar = () => {
       case "DASHBOARD":
         return t("Tableau de bord");
       case "MES ENCAISSEMENTS":
-        return t("Encaissements");
+        return t("Encaissements cloturés");
       case "LITIGES":
         return t("Réclamations");
       case "RAPPROCHEMENT":

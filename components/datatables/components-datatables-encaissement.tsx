@@ -821,7 +821,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
       },
       {
         accessor: "journeeCaisse",
-        title: "Journee caisse",
+        title: "Journée caisse",
         sortable: true,
         render: ({ journeeCaisse }: DataReverse) => (
           <div>

@@ -46,7 +46,7 @@ export default function ExportBtn({
     const csv = XLSX.utils.sheet_to_csv(worksheet);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = window.URL.createObjectURL(blob);
-    
+
     downloadFile(url, "encaissements.csv");
     window.URL.revokeObjectURL(url);
   };
@@ -83,9 +83,8 @@ export default function ExportBtn({
           }
 
           if (accessor === "modeEtJournee") {
-            return `${row.journeeCaisse || "N/A"} - ${
-              row.modeReglement || "N/A"
-            }`;
+            return `${row.journeeCaisse || "N/A"} - ${row.modeReglement || "N/A"
+              }`;
           }
 
           return "N/A";
