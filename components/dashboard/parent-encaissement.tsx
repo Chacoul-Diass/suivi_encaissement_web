@@ -47,7 +47,7 @@ const ComponentsDashboardValider = () => {
       label: "Encaissements Rejetés",
       icon: IconXCircle,
       habilitationName: "ENCAISSEMENTS REJETES",
-      order: 3, // Troisième dans l'ordre
+      order: 5, // Troisième dans l'ordre
     },
     {
       id: EStatutEncaissement.VALIDE, // 3
@@ -61,7 +61,7 @@ const ComponentsDashboardValider = () => {
       label: "Encaissements Traités",
       icon: IconArchive,
       habilitationName: "ENCAISSEMENTS TRAITES",
-      order: 7, // Cinquième dans l'ordre
+      order: 3, // Cinquième dans l'ordre
     },
   ];
 
@@ -73,7 +73,10 @@ const ComponentsDashboardValider = () => {
           h.name === tab.habilitationName && h.LIRE === true
       )
     )
-    .sort((a, b) => a.order - b.order); // Trier selon l'ordre défini
+    .sort((a, b) => a.order - b.order); // Trier selon l'ordre défini - Chargés → Vérifiés → Rejetés → Validés → Traités
+
+  // Debug: Afficher l'ordre des onglets
+  console.log("🔍 Ordre des onglets:", filteredTabs.map(tab => `${tab.label} (order: ${tab.order})`));
 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -151,7 +154,7 @@ const ComponentsDashboardValider = () => {
     if (hasVerifiesAccess) return EStatutEncaissement.TRAITE; // 2 - Priorité 2
     if (hasRejetesAccess) return EStatutEncaissement.REJETE; // 1 - Priorité 3
     if (hasValidesAccess) return EStatutEncaissement.VALIDE; // 3 - Priorité 4
-    if (hasTraitesAccess) return EStatutEncaissement.DFC; // 7 - Priorité 7
+    if (hasTraitesAccess) return EStatutEncaissement.DFC; // 7 - Priorité 5
 
     // Valeur par défaut si aucune habilitation n'est trouvée
     return EStatutEncaissement.EN_ATTENTE; // 0

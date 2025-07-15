@@ -148,7 +148,7 @@ const Parametre = () => {
     // Toujours recharger les banques depuis l'API
     console.log("Chargement des banques depuis l'API...");
     try {
-      await dispatch(fetchBanques()).unwrap();
+      await dispatch(fetchBanques({})).unwrap();
       console.log("Banques chargées avec succès:", banquesData);
     } catch (err: any) {
       console.error("Erreur lors du chargement des banques:", err);
@@ -255,7 +255,7 @@ const Parametre = () => {
 
   const handleRefresh = () => {
     fetchParametresDirectly(currentPage);
-    dispatch(fetchBanques());
+    dispatch(fetchBanques({}));
     toast.info("Liste des paramètres actualisée");
   };
 
@@ -859,7 +859,7 @@ const Parametre = () => {
                                     setBanqueSearchTerm('');
                                     // Recharger toutes les banques depuis l'API
                                     console.log("Recharger toutes les banques depuis l'API");
-                                    dispatch(fetchBanques()).then(() => {
+                                    dispatch(fetchBanques({})).then(() => {
                                       console.log("Banques rechargées avec succès");
                                     });
                                   }}

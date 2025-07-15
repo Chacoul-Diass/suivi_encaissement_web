@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import Dropdown from "../dropdown";
 import IconCaretDown from "../icon/icon-caret-down";
 import IconCalendar from "../icon/icon-calendar";
@@ -114,13 +114,30 @@ export default function GlobalFiltre({
     journeeCaisseLoading: state?.journeeCaisse?.loading,
   }));
 
-  // Charger les données initiales (banque, modes, journeeCaisse)
+  // Charger les données initiales (produit, modes)
   useEffect(() => {
     dispatch(fetchProduit());
-    dispatch(fetchBanques());
     dispatch(fetchmodeReglement());
-    dispatch(fetchJourneeCaisse());
   }, [dispatch]);
+
+  // Mémoriser les valeurs pour éviter les re-calculs
+  const dirRegionalMemo = useMemo(() => {
+    return selectedDRIds.length > 0
+      ? selectedDRIds.map(id => {
+        const name = drData.find((dr: any) => dr.id === id)?.name || "";
+        return name.trim();
+      }).filter(Boolean)
+      : [];
+  }, [selectedDRIds, drData]);
+
+  const codeExplMemo = useMemo(() => {
+    return selectedSecteurIds.length > 0
+      ? selectedSecteurIds.map(id => {
+        const secteur = secteurs.find((secteur: any) => secteur.id === id);
+        return secteur?.code?.trim() || "";
+      }).filter(Boolean)
+      : [];
+  }, [selectedSecteurIds, secteurs]);
 
   // Charger les secteurs en fonction des DR sélectionnées
   useEffect(() => {
@@ -139,41 +156,56 @@ export default function GlobalFiltre({
 
   // Charger les caisses en fonction des DR et secteurs sélectionnés
   useEffect(() => {
-    const dirRegional = selectedDRIds.length > 0
-      ? selectedDRIds.map(id => {
-        const name = drData.find((dr: any) => dr.id === id)?.name || "";
-        return name.trim();
-      }).filter(Boolean)
-      : [];
-
-    const codeExpl = selectedSecteurIds.length > 0
-      ? selectedSecteurIds.map(id => {
-        const secteur = secteurs.find((secteur: any) => secteur.id === id);
-        return secteur?.code?.trim() || "";
-      }).filter(Boolean)
-      : [];
-
-    // On ne dispatch que si on a des valeurs à filtrer
-    if (dirRegional.length > 0 || codeExpl.length > 0) {
+    if (dirRegionalMemo.length > 0 || codeExplMemo.length > 0) {
       dispatch(fetchcaisses({
-        directionRegional: dirRegional,
-        codeExpl: codeExpl
+        directionRegional: dirRegionalMemo,
+        codeExpl: codeExplMemo
       }));
     }
-  }, [selectedDRIds, selectedSecteurIds, drData, dispatch]);
+  }, [dirRegionalMemo, codeExplMemo, dispatch]);
+
+  // Charger les banques en fonction des DR et secteurs sélectionnés
+  useEffect(() => {
+    if (dirRegionalMemo.length > 0 || codeExplMemo.length > 0) {
+      dispatch(fetchBanques({
+        directionRegional: dirRegionalMemo,
+        codeExpl: codeExplMemo
+      }));
+    }
+  }, [dirRegionalMemo, codeExplMemo, dispatch]);
+
+  // Charger les journées caisse en fonction des DR et secteurs sélectionnés
+  useEffect(() => {
+    if (dirRegionalMemo.length > 0 || codeExplMemo.length > 0) {
+      dispatch(fetchJourneeCaisse({
+        directionRegional: dirRegionalMemo,
+        codeExpl: codeExplMemo
+      }));
+    }
+  }, [dirRegionalMemo, codeExplMemo, dispatch]);
 
   // Reset selected sectors when DR selection changes
   useEffect(() => {
     setSelectedSecteurIds([]);
   }, [selectedDRIds]);
 
+  // Reset selected items when DR or sector selection changes
+  useEffect(() => {
+    setSelectedItems((prev) => ({
+      ...prev,
+      caisses: [],
+      banques: [],
+      journeeCaisse: [],
+    }));
+  }, [selectedDRIds, selectedSecteurIds]);
+
   // Ajout/suppression d'un item (banque, caisse, mode, journeeCaisse)
   const toggleSelection = (
     libelle: string,
     type: "produit" | "banques" | "caisses" | "modes" | "journeeCaisse"
   ) => {
-    // Si on essaie de sélectionner une caisse et qu'aucune DR ou exploitation n'est sélectionnée, ne rien faire
-    if (type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0) {
+    // Si on essaie de sélectionner une caisse, banque ou journée caisse et qu'aucune DR ou exploitation n'est sélectionnée, ne rien faire
+    if ((type === "caisses" || type === "banques" || type === "journeeCaisse") && selectedDRIds.length === 0 && selectedSecteurIds.length === 0) {
       return;
     }
 
@@ -409,13 +441,17 @@ export default function GlobalFiltre({
             <button
               type="button"
               className={`text-xs font-medium ${(type === "secteurs" && selectedDRIds.length === 0) ||
-                (type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0)
+                (type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0) ||
+                (type === "banques" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0) ||
+                (type === "journeeCaisse" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0)
                 ? "cursor-not-allowed text-gray-400 dark:text-gray-500"
                 : "text-primary hover:text-primary/80"
                 }`}
               onClick={() =>
                 (type === "secteurs" && selectedDRIds.length === 0) ||
-                  (type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0)
+                  (type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0) ||
+                  (type === "banques" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0) ||
+                  (type === "journeeCaisse" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0)
                   ? null
                   : toggleAll(type, items, selected.length === items.length)
               }
@@ -435,7 +471,7 @@ export default function GlobalFiltre({
               <div className="py-4 text-center text-sm text-amber-600 dark:text-amber-400">
                 Veuillez sélectionner au moins une Direction Régionale
               </div>
-            ) : type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0 ? (
+            ) : (type === "caisses" || type === "banques" || type === "journeeCaisse") && selectedDRIds.length === 0 && selectedSecteurIds.length === 0 ? (
               <div className="py-4 text-center text-sm text-amber-600 dark:text-amber-400">
                 Veuillez sélectionner au moins une Direction Régionale ou une Exploitation
               </div>
@@ -467,7 +503,7 @@ export default function GlobalFiltre({
                           : onToggle(item.libelle)
                       }
                       className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      disabled={type === "caisses" && selectedDRIds.length === 0 && selectedSecteurIds.length === 0}
+                      disabled={(type === "caisses" || type === "banques" || type === "journeeCaisse") && selectedDRIds.length === 0 && selectedSecteurIds.length === 0}
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
                       {item.libelle || item.name}

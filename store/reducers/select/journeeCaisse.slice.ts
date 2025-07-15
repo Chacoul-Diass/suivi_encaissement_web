@@ -4,10 +4,24 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 export const fetchJourneeCaisse = createAsyncThunk(
   "journeeCaisse/fetchJourneeCaisse",
-  async (_, { rejectWithValue }) => {
+  async (
+    filters: { directionRegional?: string[]; codeExpl?: string[] } = {},
+    { rejectWithValue }
+  ) => {
     try {
+      const params: any = {};
+
+      if (filters?.directionRegional && filters.directionRegional.length > 0) {
+        params.directionRegional = JSON.stringify(filters.directionRegional);
+      }
+
+      if (filters?.codeExpl && filters.codeExpl.length > 0) {
+        params.codeExpl = JSON.stringify(filters.codeExpl);
+      }
+
       const response = await axiosInstance.get(
-        `${API_AUTH_SUIVI}/encaissements/daily-caisse`
+        `${API_AUTH_SUIVI}/encaissements/daily-caisse`,
+        { params }
       );
       console.log("Données journée caisse reçues:", response.data);
 

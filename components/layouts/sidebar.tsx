@@ -261,7 +261,7 @@ const Sidebar = () => {
       case "MES ENCAISSEMENTS":
         return t("Encaissements");
       case "LITIGES":
-        return t("Reclamations");
+        return t("Réclamations");
       case "RAPPROCHEMENT":
         return t("Rapprochements");
       case "ÉTAT DES ENCAISSEMENTS":

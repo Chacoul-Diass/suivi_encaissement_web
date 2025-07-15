@@ -4,10 +4,24 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 export const fetchBanques = createAsyncThunk(
   "Banques/fetchBanques",
-  async (_, { rejectWithValue }) => {
+  async (
+    filters: { directionRegional?: string[]; codeExpl?: string[] } = {},
+    { rejectWithValue }
+  ) => {
     try {
+      const params: any = {};
+
+      if (filters?.directionRegional && filters.directionRegional.length > 0) {
+        params.directionRegional = JSON.stringify(filters.directionRegional);
+      }
+
+      if (filters?.codeExpl && filters.codeExpl.length > 0) {
+        params.codeExpl = JSON.stringify(filters.codeExpl);
+      }
+
       const response = await axiosInstance.get(
-        `${API_AUTH_SUIVI}/encaissements/banques`
+        `${API_AUTH_SUIVI}/encaissements/banques`,
+        { params }
       );
       return response.data;
     } catch (error: any) {

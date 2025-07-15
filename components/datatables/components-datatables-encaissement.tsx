@@ -809,7 +809,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const baseCols = [
       {
         accessor: "numeroBordereau",
-        title: "Numero Bordereau",
+        title: "Numéro Bordereau",
         sortable: true,
         render: ({ numeroBordereau }: DataReverse) => (
           <div className="cursor-pointer font-semibold text-primary underline hover:no-underline">
