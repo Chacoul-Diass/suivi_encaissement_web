@@ -537,13 +537,13 @@ export default function ViewModal({
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       {formatNumber(selectedRow["Montant caisse (A)"])} F CFA
                     </p>
-                    <p className="text-sm text-gray-500">Montant Caisses</p>
+                    <p className="text-sm text-gray-500">Montant Caisse</p>
                   </div>
                   <div>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       {formatNumber(selectedRow["Montant bordereau (B)"])} F CFA
                     </p>
-                    <p className="text-sm text-gray-500">Montant Bordereaux</p>
+                    <p className="text-sm text-gray-500">Montant Cloturé</p>
                   </div>
                   <div>
                     <p
@@ -728,7 +728,7 @@ export default function ViewModal({
                             </Tippy>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500">Montant Relevé</p>
+                        <p className="text-sm text-gray-500">Montant relevé bancaire</p>
                       </div>
                     </div>
                   </div>
@@ -743,7 +743,7 @@ export default function ViewModal({
                     >
                       {formatNumber(calculateEcart())} F CFA
                     </p>
-                    <p className="text-sm text-gray-500">Écart (B-C)</p>
+                    <p className="text-sm text-gray-500">Écart (A-C)</p>
                   </div>
                 </div>
               </div>

@@ -582,7 +582,7 @@ export default function EditModal({
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
                     {formatNumber(selectedRow["Montant bordereau (B)"])} F CFA
                   </p>
-                  <p className="text-sm text-gray-500">Montant Bordereaux</p>
+                  <p className="text-sm text-gray-500">Montant Cloturé</p>
                 </div>
                 <div>
                   <p
@@ -712,7 +712,7 @@ export default function EditModal({
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                      Montant Banque
+                      Montant relevé bancaire
                     </h3>
                     <p className="mt-1 text-xs text-gray-500">
                       {selectedRow.montantReleve !== undefined &&
@@ -800,7 +800,7 @@ export default function EditModal({
                       ? `${formatNumber(selectedRow.montantReleve ?? 0)} F CFA`
                       : montantSaisiAffichage ? `${formatNumber(parseFloat(montantSaisiAffichage))} F CFA` : "Non saisi"}
                   </p>
-                  <p className="text-sm text-gray-500">Montant Banque</p>
+                  <p className="text-sm text-gray-500">Montant relevé bancaire</p>
                 </div>
                 <div className="">
                   <p
@@ -828,7 +828,7 @@ export default function EditModal({
                       return formatNumber(selectedRow["Montant caisse (A)"] - montantBancaire);
                     })()} F CFA
                   </p>
-                  <p className="text-sm text-gray-500">Écart (B-C)</p>
+                  <p className="text-sm text-gray-500">Écart (A-C)</p>
                 </div>
               </div>
             </div>
