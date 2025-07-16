@@ -114,6 +114,12 @@ export default function GlobalFiltre({
     journeeCaisseLoading: state?.journeeCaisse?.loading,
   }));
 
+  // Debug: afficher les secteurs reçus
+  useEffect(() => {
+    console.log("Secteurs reçus:", secteurs);
+    console.log("DR sélectionnées:", selectedDRIds);
+  }, [secteurs, selectedDRIds]);
+
   // Charger les données initiales (produit, modes)
   useEffect(() => {
     dispatch(fetchProduit());
@@ -122,22 +128,25 @@ export default function GlobalFiltre({
 
   // Mémoriser les valeurs pour éviter les re-calculs
   const dirRegionalMemo = useMemo(() => {
-    return selectedDRIds.length > 0
-      ? selectedDRIds.map(id => {
-        const name = drData.find((dr: any) => dr.id === id)?.name || "";
-        return name.trim();
-      }).filter(Boolean)
-      : [];
+    if (!selectedDRIds.length || !drData.length) return [];
+
+    return selectedDRIds.map(id => {
+      const name = drData.find((dr: any) => dr.id === id)?.name || "";
+      return name.trim();
+    }).filter(Boolean);
   }, [selectedDRIds, drData]);
 
   const codeExplMemo = useMemo(() => {
-    return selectedSecteurIds.length > 0
-      ? selectedSecteurIds.map(id => {
-        const secteur = secteurs.find((secteur: any) => secteur.id === id);
-        return secteur?.code?.trim() || "";
-      }).filter(Boolean)
-      : [];
+    if (!selectedSecteurIds.length || !secteurs.length) return [];
+
+    return selectedSecteurIds.map(id => {
+      const secteur = secteurs.find((secteur: any) => secteur.id === id);
+      return secteur?.code?.trim() || "";
+    }).filter(Boolean);
   }, [selectedSecteurIds, secteurs]);
+
+  // Utiliser useRef pour éviter les appels API répétés
+  const lastApiCall = useRef<{ directionRegional: string[], codeExpl: string[] } | null>(null);
 
   // Charger les secteurs en fonction des DR sélectionnées
   useEffect(() => {
@@ -150,39 +159,45 @@ export default function GlobalFiltre({
     // Only fetch sectors if we have valid DR IDs
     const validDrIds = selectedDRIds.filter((id) => id != null);
     if (validDrIds.length > 0) {
+      console.log("Chargement des secteurs pour les DR:", validDrIds);
       dispatch(fetchSecteurs(validDrIds));
     }
   }, [selectedDRIds, dispatch]);
 
-  // Charger les caisses en fonction des DR et secteurs sélectionnés
+  // Charger les données en fonction des DR et secteurs sélectionnés
   useEffect(() => {
-    if (dirRegionalMemo.length > 0 || codeExplMemo.length > 0) {
-      dispatch(fetchcaisses({
-        directionRegional: dirRegionalMemo,
-        codeExpl: codeExplMemo
-      }));
+    // Éviter les appels API si les données sont déjà en cours de chargement
+    if (drLoading || secteurLoading || journeeCaisseLoading) {
+      return;
     }
-  }, [dirRegionalMemo, codeExplMemo, dispatch]);
 
-  // Charger les banques en fonction des DR et secteurs sélectionnés
-  useEffect(() => {
-    if (dirRegionalMemo.length > 0 || codeExplMemo.length > 0) {
-      dispatch(fetchBanques({
-        directionRegional: dirRegionalMemo,
-        codeExpl: codeExplMemo
-      }));
-    }
-  }, [dirRegionalMemo, codeExplMemo, dispatch]);
+    const currentParams = {
+      directionRegional: dirRegionalMemo,
+      codeExpl: codeExplMemo
+    };
 
-  // Charger les journées caisse en fonction des DR et secteurs sélectionnés
-  useEffect(() => {
-    if (dirRegionalMemo.length > 0 || codeExplMemo.length > 0) {
-      dispatch(fetchJourneeCaisse({
-        directionRegional: dirRegionalMemo,
-        codeExpl: codeExplMemo
-      }));
+    // Vérifier si les paramètres ont changé depuis le dernier appel
+    const lastCall = lastApiCall.current;
+    if (lastCall &&
+      JSON.stringify(lastCall.directionRegional) === JSON.stringify(currentParams.directionRegional) &&
+      JSON.stringify(lastCall.codeExpl) === JSON.stringify(currentParams.codeExpl)) {
+      return; // Les paramètres n'ont pas changé, ne pas refaire l'appel
     }
-  }, [dirRegionalMemo, codeExplMemo, dispatch]);
+
+    if (currentParams.directionRegional.length > 0 || currentParams.codeExpl.length > 0) {
+      // Mémoriser les paramètres de cet appel
+      lastApiCall.current = currentParams;
+
+      // Charger les caisses
+      dispatch(fetchcaisses(currentParams));
+
+      // Charger les banques
+      dispatch(fetchBanques(currentParams));
+
+      // Charger les journées caisse
+      dispatch(fetchJourneeCaisse(currentParams));
+    }
+  }, [dirRegionalMemo, codeExplMemo, dispatch, drLoading, secteurLoading, journeeCaisseLoading]);
 
   // Reset selected sectors when DR selection changes
   useEffect(() => {
@@ -823,9 +838,7 @@ export default function GlobalFiltre({
                     <span className="truncate">Exploitations</span>
                   </>,
                   "secteurs",
-                  secteurs.filter((secteur: any) =>
-                    selectedDRIds.includes(secteur.directionRegionaleId)
-                  ),
+                  secteurs,
                   selectedSecteurIds,
                   (id) => toggleSecteur(id as number)
                 )}
