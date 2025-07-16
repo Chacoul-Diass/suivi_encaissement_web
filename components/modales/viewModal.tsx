@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { useDispatch } from "react-redux";
-import { TAppDispatch } from "@/store";
+import { useDispatch, useSelector } from "react-redux";
+import { TAppDispatch, TRootState } from "@/store";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import IconX from "../icon/icon-x";
@@ -12,6 +12,7 @@ import IconPaperclip from "../icon/icon-paperclip";
 import IconPackage from "../icon/icon-package";
 import IconFileText from "../icon/icon-file-text";
 import IconPencil from "../icon/icon-pencil";
+import IconUser from "../icon/icon-user";
 import { EStatutEncaissement } from "@/utils/enums";
 import AskToRequestModal from "./askToRequestModal";
 import ImageUploading, { ImageListType } from "react-images-uploading";
@@ -101,6 +102,13 @@ export default function ViewModal({
   observationReclamation,
   setObservationReclamation,
 }: ViewModalProps) {
+  // Récupérer les informations de l'utilisateur connecté
+  const user = useSelector((state: TRootState) => state.auth?.user);
+
+  // Fonction pour vérifier si l'utilisateur est comptable
+  const isComptable = () => {
+    return user?.profile?.name === "COMPTABLE";
+  };
   const [askToRequestModalOpen, setAskToRequestModalOpen] = useState(false);
   const [isEditingMontantReleve, setIsEditingMontantReleve] = useState(false);
   const [editedMontantReleve, setEditedMontantReleve] = useState("");
@@ -166,11 +174,11 @@ export default function ViewModal({
     {
       statut: 1,
       buttons: [
-        {
+        ...(isComptable() ? [{
           label: "Ramener",
           className: "btn btn-success w-full",
           onClick: () => showAlertRamener(selectedRow.id, selectedRow["Montant relevé (C)"] || selectedRow.montantReleve || 0),
-        },
+        }] : []),
         {
           label: "Preuve photo",
           className: "btn btn-primary w-full",
@@ -420,18 +428,36 @@ export default function ViewModal({
                     </span>
                   </h2>
                   <div className="mt-4 space-y-3">
-                    <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
-                      <div className="flex items-start gap-3">
-                        <div className="shrink-0 rounded-full bg-primary/20 p-2">
-                          <IconBank className="h-5 w-5 text-primary" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 rounded-full bg-primary/20 p-2">
+                            <IconBank className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                              Banque
+                            </p>
+                            <p className="break-words text-sm font-semibold text-primary">
+                              {selectedRow.banque}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                            Banque
-                          </p>
-                          <p className="break-words text-sm font-semibold text-primary">
-                            {selectedRow.banque}
-                          </p>
+                      </div>
+
+                      <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 rounded-full bg-primary/20 p-2">
+                            <IconUser className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                              Matricule Caissière
+                            </p>
+                            <p className="break-words text-sm font-semibold text-primary">
+                              {(selectedRow as any).matriculeCaissiere || (selectedRow as any).matricule || (selectedRow as any).caissiere || "N/A"}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -595,7 +621,7 @@ export default function ViewModal({
               )}
 
               {/* Image Upload */}
-              {statutValidation === EStatutEncaissement.REJETE && (
+              {statutValidation === EStatutEncaissement.REJETE && isComptable() && (
                 <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
@@ -708,7 +734,7 @@ export default function ViewModal({
                             )}{" "}
                             F CFA
                           </p>
-                          {statutValidation === EStatutEncaissement.REJETE && !isEditingMontantReleve && (
+                          {statutValidation === EStatutEncaissement.REJETE && !isEditingMontantReleve && isComptable() && (
                             <Tippy content="Modifier le montant relevé">
                               <button
                                 type="button"
@@ -749,7 +775,7 @@ export default function ViewModal({
               </div>
 
               {/* Section édition du montant relevé en bas de la modale */}
-              {isEditingMontantReleve && (
+              {isEditingMontantReleve && isComptable() && (
                 <div className="w-full bg-gray-50 dark:bg-gray-800 rounded-lg shadow flex flex-col gap-4 mt-8 p-6 border-t border-gray-200 dark:border-gray-700">
                   <label className="text-sm font-medium text-gray-900 dark:text-white text-left w-full mb-2">Modifier le montant relevé</label>
                   <div className="relative w-full flex items-center gap-2">

@@ -11,6 +11,7 @@ import IconCashBanknotes from "../icon/icon-cash-banknotes";
 import IconPaperclip from "../icon/icon-paperclip";
 import IconPackage from "../icon/icon-package";
 import IconFileText from "../icon/icon-file-text";
+import IconUser from "../icon/icon-user";
 import ImageUploading, { ImageListType } from "react-images-uploading";
 
 import "swiper/css";
@@ -495,18 +496,36 @@ export default function EditModal({
                   Formulaire d'édition
                 </h2>
                 <div className="mt-4 space-y-3">
-                  <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
-                    <div className="flex items-start gap-3">
-                      <div className="shrink-0 rounded-full bg-primary/20 p-2">
-                        <IconBank className="h-5 w-5 text-primary" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
+                      <div className="flex items-start gap-3">
+                        <div className="shrink-0 rounded-full bg-primary/20 p-2">
+                          <IconBank className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            Banque
+                          </p>
+                          <p className="break-words text-sm font-semibold text-primary">
+                            {selectedRow.banque}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                          Banque
-                        </p>
-                        <p className="break-words text-sm font-semibold text-primary">
-                          {selectedRow.banque}
-                        </p>
+                    </div>
+
+                    <div className="group transform rounded-lg bg-white p-3 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800">
+                      <div className="flex items-start gap-3">
+                        <div className="shrink-0 rounded-full bg-primary/20 p-2">
+                          <IconUser className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            Matricule Caissière
+                          </p>
+                          <p className="break-words text-sm font-semibold text-primary">
+                            {(selectedRow as any).matriculeCaissiere || (selectedRow as any).matricule || (selectedRow as any).caissiere || "N/A"}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>

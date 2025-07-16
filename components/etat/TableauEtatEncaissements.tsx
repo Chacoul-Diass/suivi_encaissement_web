@@ -20,6 +20,7 @@ import EncaissementActions from "@/components/encaissements/EncaissementActions"
 import { MenuName } from "@/types/habilitation";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import EncaissementDetailsModal from "../modales/EncaissementDetailsModal";
+import axiosInstance from "@/utils/axios";
 
 interface TableauEtatEncaissementsProps {
     data: any[];
@@ -55,7 +56,69 @@ interface Encaissement {
     montantBordereauBanque: number;
     ecartCaisseBanque: number;
     statut: string;
-    validationEncaissement: any | null;
+    // Nouveaux champs ajoutés
+    fullnameCaissiere?: string;
+    codeCaisse?: string;
+    numeroCaisse?: string;
+    numeroJourneeCaisse?: string;
+    codeBanque?: string;
+    montantCheque?: number;
+    montantEspece?: number;
+    montantBordereauBanqueCheque?: number;
+    montantBordereauBanqueEspece?: number;
+    montantReleve?: number;
+    isCorrect?: number;
+    createdAt?: string;
+    updatedAt?: string;
+    // Validation étendue - maintenant un objet simple, pas un tableau
+    validationEncaissement?: {
+        id?: number;
+        numeroReclamation?: string | null;
+        validationLevel?: string;
+        dateValidation?: string;
+        dateCloture?: string | null;
+        statutValidation?: number;
+        observationCaisse?: string | null;
+        observationReleve?: string | null;
+        observationReclamation?: string | null;
+        observationRejete?: string | null;
+        justificatifReclamation?: string | null;
+        ecartReleve?: number;
+        montantReleve?: number;
+        createdAt?: string;
+        updatedAt?: string;
+        userFullname?: string;
+        user?: {
+            id?: number;
+            firstname?: string;
+            lastname?: string;
+            profile?: string;
+        };
+    } | null;
+    // Validation actuelle
+    currentValidation?: {
+        numeroReclamation?: string | null;
+        validationLevel?: string;
+        dateValidation?: string;
+        dateCloture?: string | null;
+        statutValidation?: number;
+        observationCaisse?: string | null;
+        observationReleve?: string | null;
+        observationReclamation?: string | null;
+        observationRejete?: string | null;
+        justificatifReclamation?: string | null;
+        ecartReleve?: number;
+        montantReleve?: number;
+        userFullname?: string;
+        user?: {
+            id?: number;
+            firstname?: string;
+            lastname?: string;
+            profile?: string;
+        };
+    } | null;
+    // Propriété pour l'accessor de la colonne Validation Level
+    validationLevel?: string;
     documents: Array<{
         id: number;
         encaissementId: number;
@@ -78,6 +141,8 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
     // États pour le modal de détails
     const [selectedEncaissement, setSelectedEncaissement] = useState<Encaissement | null>(null);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+    const [detailsLoading, setDetailsLoading] = useState(false);
+    const [encaissementDetails, setEncaissementDetails] = useState<any>(null);
 
     // États pour le modal d'erreur
     const [errorModalOpen, setErrorModalOpen] = useState(false);
@@ -90,15 +155,30 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
     const [loadingMessage, setLoadingMessage] = useState("");
 
     // Ouverture du modal avec l'encaissement sélectionné
-    const openDetailsModal = (encaissement: Encaissement) => {
+    const openDetailsModal = async (encaissement: Encaissement) => {
         setSelectedEncaissement(encaissement);
         setDetailsModalOpen(true);
+        setDetailsLoading(true);
+        setEncaissementDetails(null);
+
+        try {
+            const response = await axiosInstance.get(`/encaissements/details/${encaissement.id}`);
+            console.log('Détails de l\'encaissement:', response.data);
+            setEncaissementDetails(response.data);
+        } catch (error) {
+            console.error('Erreur lors du chargement des détails:', error);
+            setEncaissementDetails(null);
+        } finally {
+            setDetailsLoading(false);
+        }
     };
 
     // Fermeture du modal
     const closeDetailsModal = () => {
         setDetailsModalOpen(false);
         setSelectedEncaissement(null);
+        setEncaissementDetails(null);
+        setDetailsLoading(false);
     };
 
     // Log pour le débogage
@@ -151,26 +231,94 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
             }
         }
 
-        return items.map((item: any) => ({
-            id: item.id || 0,
-            directionRegionale: item.directionRegionale || '',
-            codeExpl: item.codeExpl || '',
-            libelleExpl: item.libelleExpl || '',
-            matriculeCaissiere: item.matriculeCaissiere || '',
-            dateEncaissement: item.dateEncaissement || '',
-            banque: item.banque || '',
-            produit: item.produit || '',
-            compteBanque: item.compteBanque,
-            numeroBordereau: item.numeroBordereau || '',
-            journeeCaisse: item.journeeCaisse || '',
-            modeReglement: item.modeReglement || '',
-            montantRestitutionCaisse: item.montantRestitutionCaisse || 0,
-            montantBordereauBanque: item.montantBordereauBanque || 0,
-            ecartCaisseBanque: item.ecartCaisseBanque || 0,
-            statut: item.statut || '',
-            validationEncaissement: item.validationEncaissement,
-            documents: item.documents || []
-        }));
+        return items.map((item: any) => {
+            // Déterminer le niveau de validation pour l'accessor
+            // validationEncaissement est maintenant un objet simple, pas un tableau
+            const validation = item.currentValidation || item.validationEncaissement || null;
+            const validationLevel = validation?.validationLevel || '';
+
+            return {
+                id: item.id || 0,
+                directionRegionale: item.directionRegionale || '',
+                codeExpl: item.codeExpl || '',
+                libelleExpl: item.libelleExpl || '',
+                matriculeCaissiere: item.matriculeCaissiere || '',
+                dateEncaissement: item.dateEncaissement || '',
+                banque: item.banque || '',
+                produit: item.produit || '',
+                compteBanque: item.compteBanque,
+                numeroBordereau: item.numeroBordereau || '',
+                journeeCaisse: item.journeeCaisse || '',
+                modeReglement: item.modeReglement || '',
+                montantRestitutionCaisse: item.montantRestitutionCaisse || 0,
+                montantBordereauBanque: item.montantBordereauBanque || 0,
+                ecartCaisseBanque: item.ecartCaisseBanque || 0,
+                statut: item.statut || '',
+                // Nouveaux champs ajoutés
+                fullnameCaissiere: item.fullnameCaissiere || '',
+                codeCaisse: item.codeCaisse || '',
+                numeroCaisse: item.numeroCaisse || '',
+                numeroJourneeCaisse: item.numeroJourneeCaisse || '',
+                codeBanque: item.codeBanque || '',
+                montantCheque: item.montantCheque || 0,
+                montantEspece: item.montantEspece || 0,
+                montantBordereauBanqueCheque: item.montantBordereauBanqueCheque || 0,
+                montantBordereauBanqueEspece: item.montantBordereauBanqueEspece || 0,
+                montantReleve: item.montantReleve || 0,
+                isCorrect: item.isCorrect || 0,
+                createdAt: item.createdAt || '',
+                updatedAt: item.updatedAt || '',
+                // Validation étendue
+                validationEncaissement: item.validationEncaissement || null,
+                currentValidation: item.currentValidation || null,
+                // Propriété pour l'accessor de la colonne Validation Level
+                validationLevel: validationLevel,
+                documents: item.documents || []
+            };
+        });
+    };
+
+    // Fonction pour normaliser les données spécifiquement pour l'export (version simplifiée)
+    const normalizeDataForExport = (items: any): any[] => {
+        // Vérifier si items est un tableau
+        if (!Array.isArray(items)) {
+            console.error("Les données reçues ne sont pas un tableau:", items);
+            // Si items n'est pas un tableau mais un objet avec une propriété data
+            if (items && typeof items === 'object' && Array.isArray(items.data)) {
+                items = items.data;
+            } else {
+                // Si impossible de récupérer un tableau, retourner un tableau vide
+                console.warn("Impossible de trouver un tableau dans les données reçues");
+                return [];
+            }
+        }
+
+        return items.map((item: any) => {
+            // Déterminer le niveau de validation actuel seulement
+            const validation = item.currentValidation || item.validationEncaissement || null;
+            const currentValidationLevel = validation?.validationLevel || 'Non validé';
+
+            return {
+                id: item.id || 0,
+                directionRegionale: item.directionRegionale || '',
+                codeExpl: item.codeExpl || '',
+                libelleExpl: item.libelleExpl || '',
+                matriculeCaissiere: item.matriculeCaissiere || '',
+                dateEncaissement: item.dateEncaissement || '',
+                banque: item.banque || '',
+                produit: item.produit || '',
+                compteBanque: item.compteBanque,
+                numeroBordereau: item.numeroBordereau || '',
+                journeeCaisse: item.journeeCaisse || '',
+                modeReglement: item.modeReglement || '',
+                montantRestitutionCaisse: item.montantRestitutionCaisse || 0,
+                montantBordereauBanque: item.montantBordereauBanque || 0,
+                ecartCaisseBanque: item.ecartCaisseBanque || 0,
+                statut: item.statut || '',
+                // Seulement le niveau de validation actuel pour l'export
+                validationLevel: currentValidationLevel
+            };
+        });
     };
 
     // Normaliser les données avant de les utiliser
@@ -276,6 +424,93 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${statusInfo.classes}`}>
                         {statut}
                     </span>
+                );
+            },
+        },
+        {
+            accessor: "validationLevel",
+            title: "Validation Level",
+            sortable: false,
+            width: 130,
+            render: ({ validationEncaissement, currentValidation }: Encaissement) => {
+                // Utiliser currentValidation en priorité, sinon utiliser validationEncaissement (maintenant un objet simple)
+                const validation = currentValidation || validationEncaissement || null;
+                const validationLevel = validation?.validationLevel;
+                // Utiliser userFullname directement ou construire à partir de user si disponible
+                const userFullname = validation?.userFullname || (validation?.user ? `${validation.user.firstname} ${validation.user.lastname}` : null);
+
+                if (!validationLevel) {
+                    return (
+                        <div className="flex items-center">
+                            <div className="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
+                            <span className="text-gray-500 text-xs">Non validé</span>
+                        </div>
+                    );
+                }
+
+                // Définir les couleurs et icônes selon le niveau de validation
+                const getValidationLevelInfo = (level: string) => {
+                    switch (level.toUpperCase()) {
+                        case "AGC":
+                            return {
+                                bgColor: "bg-blue-50",
+                                textColor: "text-blue-700",
+                                borderColor: "border-blue-200",
+                                dotColor: "bg-blue-500",
+                                icon: "🏢",
+                                label: "AGC"
+                            };
+                        case "DR":
+                            return {
+                                bgColor: "bg-emerald-50",
+                                textColor: "text-emerald-700",
+                                borderColor: "border-emerald-200",
+                                dotColor: "bg-emerald-500",
+                                icon: "🏛️",
+                                label: "DR"
+                            };
+                        case "CAISSE":
+                            return {
+                                bgColor: "bg-amber-50",
+                                textColor: "text-amber-700",
+                                borderColor: "border-amber-200",
+                                dotColor: "bg-amber-500",
+                                icon: "💰",
+                                label: "CAISSE"
+                            };
+                        default:
+                            return {
+                                bgColor: "bg-slate-50",
+                                textColor: "text-slate-700",
+                                borderColor: "border-slate-200",
+                                dotColor: "bg-slate-500",
+                                icon: "📋",
+                                label: level
+                            };
+                    }
+                };
+
+                const levelInfo = getValidationLevelInfo(validationLevel);
+
+                return (
+                    <div className="space-y-1">
+                        <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-md border ${levelInfo.bgColor} ${levelInfo.borderColor}`}>
+                            <div className={`w-2 h-2 rounded-full ${levelInfo.dotColor}`}></div>
+                            <span className={`text-xs font-medium ${levelInfo.textColor}`}>
+                                {levelInfo.label}
+                            </span>
+                        </div>
+                        {userFullname && (
+                            <div className="text-xs text-gray-500 max-w-[110px] overflow-hidden">
+                                <div
+                                    className={`whitespace-nowrap ${userFullname.length > 15 ? 'animate-marquee' : ''}`}
+                                    title={userFullname}
+                                >
+                                    {userFullname}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 );
             },
         },
@@ -590,16 +825,16 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                 }
             }
 
-            // Normaliser les données
-            const normalizedData = normalizeData(dataToNormalize);
-            console.log(`Données normalisées pour Excel: ${normalizedData.length} éléments`);
+            // Normaliser les données pour l'export (version simplifiée)
+            const exportData = normalizeDataForExport(dataToNormalize);
+            console.log(`Données normalisées pour Excel: ${exportData.length} éléments`);
 
-            if (normalizedData.length === 0) {
+            if (exportData.length === 0) {
                 throw new Error("Aucune donnée à exporter");
             }
 
             // Préparer les données pour l'export Excel
-            const worksheet = XLSX.utils.json_to_sheet(normalizedData);
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Encaissements");
 
@@ -620,11 +855,11 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
     // Fonction pour générer un fichier CSV
     const generateCSVFile = (data: any[]) => {
         try {
-            // Normaliser les données si nécessaire
-            const normalizedData = normalizeData(data);
+            // Normaliser les données pour l'export (version simplifiée)
+            const exportData = normalizeDataForExport(data);
 
             // Préparer les données pour l'export CSV
-            const worksheet = XLSX.utils.json_to_sheet(normalizedData);
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
             const csvOutput = XLSX.utils.sheet_to_csv(worksheet);
 
             // Créer le blob et télécharger
@@ -660,11 +895,11 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                 }
             }
 
-            // Normaliser les données
-            const normalizedData = normalizeData(dataToNormalize);
-            console.log(`Données normalisées pour PDF: ${normalizedData.length} éléments`);
+            // Normaliser les données pour l'export (version simplifiée)
+            const exportData = normalizeDataForExport(dataToNormalize);
+            console.log(`Données normalisées pour PDF: ${exportData.length} éléments`);
 
-            if (normalizedData.length === 0) {
+            if (exportData.length === 0) {
                 throw new Error("Aucune donnée à exporter");
             }
 
@@ -676,10 +911,10 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
 
             // Préparer les en-têtes et les données
             const headers = [
-                ["Direction", "Code", "Date", "Banque", "Produit", "Mode", "Montant Caisse", "Montant Banque", "Écart", "Statut"]
+                ["Direction", "Code", "Date", "Banque", "Produit", "Mode", "Montant Caisse", "Montant Banque", "Écart", "Statut", "Validation Level"]
             ];
 
-            const body = normalizedData.map(item => [
+            const body = exportData.map(item => [
                 item.directionRegionale || "N/A",
                 item.codeExpl || "N/A",
                 item.dateEncaissement || "N/A",
@@ -689,7 +924,8 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                 formatMontantForPDF(item.montantRestitutionCaisse || 0),
                 formatMontantForPDF(item.montantBordereauBanque || 0),
                 formatMontantForPDF(item.ecartCaisseBanque || 0),
-                item.statut || "N/A"
+                item.statut || "N/A",
+                item.validationLevel || "N/A"
             ]);
 
             // Utiliser autoTable comme une fonction externe
@@ -733,7 +969,7 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
     };
 
     return (
-        <div className="panel overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="panel rounded-lg border border-gray-200 bg-white shadow-sm">
             <div className="p-5">
                 <div className="flex items-center justify-between mb-4">
                     <h5 className="text-lg font-semibold text-gray-800">
@@ -804,17 +1040,7 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                             </div>
                         </div>
 
-                        <select
-                            className="rounded-md border border-gray-300 bg-white py-1.5 px-3 text-sm text-gray-700 focus:border-primary focus:outline-none"
-                            value={pagination?.count || 10}
-                            onChange={(e) => handleLimitChange(Number(e.target.value))}
-                        >
-                            <option value="5">5 par page</option>
-                            <option value="10">10 par page</option>
-                            <option value="20">20 par page</option>
-                            <option value="50">50 par page</option>
-                            <option value="100">100 par page</option>
-                        </select>
+
                     </div>
                 </div>
 
@@ -836,46 +1062,52 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                     </div>
                 )}
 
-                <div className="overflow-x-auto relative">
-                    {loading && (
-                        <div className="absolute inset-0 bg-white bg-opacity-70 z-10 flex items-center justify-center">
-                            <div className="flex flex-col items-center">
-                                <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                                <p className="mt-3 text-base font-medium text-gray-700">Chargement en cours...</p>
+                <div className="relative" id="tuto-datatable">
+                    <div>
+                        {loading && (
+                            <div className="absolute inset-0 bg-white bg-opacity-70 z-10 flex items-center justify-center">
+                                <div className="flex flex-col items-center">
+                                    <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                                    <p className="mt-3 text-base font-medium text-gray-700">Chargement en cours...</p>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                    <DataTable
-                        records={normalizedData}
-                        columns={columns}
-                        striped
-                        highlightOnHover
-                        idAccessor="id"
-                        minHeight={400}
-                        totalRecords={pagination?.totalCount || 0}
-                        recordsPerPage={pagination?.count || 10}
-                        page={pagination?.currentPage || 1}
-                        onPageChange={handleChangePage}
-                        fetching={loading}
-                        noRecordsText="Aucun encaissement trouvé"
-                        loadingText="Chargement des données..."
-                        loaderSize="xl"
-                        loaderColor="primary"
-                    />
+                        )}
+                        <DataTable
+                            records={normalizedData}
+                            columns={columns}
+                            striped
+                            highlightOnHover
+                            idAccessor="id"
+                            minHeight={400}
+                            totalRecords={pagination?.totalCount || 0}
+                            recordsPerPage={pagination?.count || 10}
+                            page={pagination?.currentPage || 1}
+                            onPageChange={handleChangePage}
+                            fetching={loading}
+                            noRecordsText="Aucun encaissement trouvé"
+                            loadingText="Chargement des données..."
+                            loaderSize="xl"
+                            loaderColor="primary"
+                            paginationText={({ from, to, totalRecords }) =>
+                                `Affichage de ${from} à ${to} sur ${totalRecords} entrées`
+                            }
+                            paginationSize="md"
+                            recordsPerPageOptions={[5, 10, 20, 50, 100]}
+                            onRecordsPerPageChange={(size) => handleLimitChange(size)}
+                        />
+                    </div>
                 </div>
 
-                {/* Statistiques d'affichage simplifiées */}
-                <div className="mt-3 text-sm text-gray-500">
-                    {normalizedData.length} encaissements affichés sur {pagination?.totalCount || 0}
-                </div>
+
 
                 {/* Modal de détails d'encaissement */}
                 <EncaissementDetailsModal
                     isOpen={detailsModalOpen}
                     onClose={closeDetailsModal}
-                    encaissement={selectedEncaissement}
+                    encaissement={encaissementDetails || selectedEncaissement}
                     formatNumber={formatMontant}
                     formatDate={formatDisplayDate}
+                    loading={detailsLoading}
                 />
 
                 {/* Modal d'erreur */}

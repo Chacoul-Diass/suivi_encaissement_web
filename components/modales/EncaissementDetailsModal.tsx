@@ -13,6 +13,7 @@ interface EncaissementDetailsModalProps {
     encaissement: any;
     formatNumber?: any;
     formatDate?: any;
+    loading?: boolean;
 }
 
 const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
@@ -20,8 +21,9 @@ const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
     onClose,
     encaissement,
     formatNumber,
+    loading = false,
 }) => {
-    if (!isOpen || !encaissement) return null;
+    if (!isOpen) return null;
 
     // Fonction de formatage par défaut si aucune n'est fournie
     const formatNumberSafe = (num: number | undefined): string => {
@@ -30,6 +32,22 @@ const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
         // Formatage par défaut
         if (num === undefined || num === null) return "0";
         return new Intl.NumberFormat('fr-FR').format(num);
+    };
+
+    // Fonction pour obtenir la couleur selon le niveau de validation
+    const getValidationLevelColor = (level: string): string => {
+        switch (level?.toUpperCase()) {
+            case "COMPTABLE":
+                return "text-purple-600 dark:text-purple-400";
+            case "AGC":
+                return "text-blue-600 dark:text-blue-400";
+            case "DR":
+                return "text-green-600 dark:text-green-400";
+            case "DFC":
+                return "text-orange-600 dark:text-orange-400";
+            default:
+                return "text-gray-600 dark:text-gray-400";
+        }
     };
 
     return (
@@ -111,144 +129,392 @@ const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
 
                     {/* Content */}
                     <div className="flex-1 space-y-6 overflow-y-auto p-6">
-                        {/* Montants Section */}
-                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-                            <div className="mb-4">
-                                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                                    Détail des montants
-                                </h3>
-                                <p className="mt-1 text-xs text-gray-500">
-                                    Encaissement du {encaissement.dateEncaissement || encaissement["Date Encais"] || "Non spécifié"}
-                                </p>
-                            </div>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                        {formatNumberSafe(encaissement["Montant caisse (A)"] || encaissement.montantRestitutionCaisse)} F CFA
-                                    </p>
-                                    <p className="text-sm text-gray-500">Montant Caisses</p>
-                                </div>
-                                <div>
-                                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                        {formatNumberSafe(encaissement["Montant bordereau (B)"] || encaissement.montantBordereauBanque)} F CFA
-                                    </p>
-                                    <p className="text-sm text-gray-500">Montant Bordereaux</p>
-                                </div>
-                                <div>
-                                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                        {formatNumberSafe(encaissement["Montant relevé (C)"] || encaissement.montantReleve)} F CFA
-                                    </p>
-                                    <p className="text-sm text-gray-500">Montant Relevé</p>
+                        {loading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <div className="flex flex-col items-center">
+                                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                                    <p className="mt-4 text-sm text-gray-600">Chargement des détails...</p>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Écarts Section */}
-                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-                            <div className="mb-4">
-                                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                                    Écarts
-                                </h3>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className={`text-lg font-semibold ${(encaissement["Ecart(A-B)"] ||
-                                        (encaissement["Montant caisse (A)"] - encaissement["Montant bordereau (B)"])) < 0
-                                        ? "text-red-500" : "text-green-500"}`}
-                                    >
-                                        {formatNumberSafe(encaissement["Ecart(A-B)"] ||
-                                            (encaissement["Montant caisse (A)"] - encaissement["Montant bordereau (B)"]))} F CFA
-                                    </p>
-                                    <p className="text-sm text-gray-500">Écart (A-B)</p>
-                                </div>
-                                <div>
-                                    <p className={`text-lg font-semibold ${(encaissement["Ecart(B-C)"] ||
-                                        (encaissement["Montant bordereau (B)"] - encaissement["Montant relevé (C)"])) < 0
-                                        ? "text-red-500" : "text-green-500"}`}
-                                    >
-                                        {formatNumberSafe(encaissement["Ecart(B-C)"] ||
-                                            (encaissement["Montant bordereau (B)"] - encaissement["Montant relevé (C)"]))} F CFA
-                                    </p>
-                                    <p className="text-sm text-gray-500">Écart (B-C)</p>
+                        ) : !encaissement ? (
+                            <div className="flex items-center justify-center h-64">
+                                <div className="text-center">
+                                    <p className="text-gray-500">Aucune donnée disponible</p>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Observations Section */}
-                        {(encaissement["Observation(A-B)"] || encaissement["Observation(B-C)"]) && (
-                            <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                                <div className="mb-4">
-                                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                                        Observations
-                                    </h3>
-                                </div>
-
-                                {encaissement["Observation(A-B)"] && (
+                        ) : (
+                            <>
+                                {/* Montants Section */}
+                                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
                                     <div className="mb-4">
-                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                            Observation Caisse (A-B)
+                                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Détail des montants
+                                        </h3>
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            Encaissement du {encaissement.dateEncaissement || encaissement["Date Encais"] || "Non spécifié"}
                                         </p>
-                                        <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {encaissement["Observation(A-B)"]}
-                                        </p>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                {formatNumberSafe(encaissement["Montant caisse (A)"] || encaissement.montantRestitutionCaisse)} F CFA
+                                            </p>
+                                            <p className="text-sm text-gray-500">Montant Caisses</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                {formatNumberSafe(encaissement["Montant bordereau (B)"] || encaissement.montantBordereauBanque)} F CFA
+                                            </p>
+                                            <p className="text-sm text-gray-500">Montant Cloturé</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                {formatNumberSafe(encaissement["Montant relevé (C)"] || encaissement.montantReleve || encaissement.currentValidation?.montantReleve || encaissement.validationEncaissement?.montantReleve)} F CFA
+                                            </p>
+                                            <p className="text-sm text-gray-500">Montant Relevé Bancaire</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Écarts Section */}
+                                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+                                    <div className="mb-4">
+                                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Écarts
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className={`text-lg font-semibold ${(() => {
+                                                const ecartCaisseBanque = encaissement.ecartCaisseBanque || 0;
+                                                return ecartCaisseBanque < 0 ? "text-red-500" : "text-green-500";
+                                            })()}`}
+                                            >
+                                                {formatNumberSafe(encaissement.ecartCaisseBanque || 0)} F CFA
+                                            </p>
+                                            <p className="text-sm text-gray-500">Écart (A-B)</p>
+                                        </div>
+                                        <div>
+                                            <p className={`text-lg font-semibold ${(() => {
+                                                const montantCaisse = encaissement["Montant caisse (A)"] || encaissement.montantRestitutionCaisse || 0;
+                                                const montantReleve = encaissement["Montant relevé (C)"] || encaissement.montantReleve || encaissement.currentValidation?.montantReleve || encaissement.validationEncaissement?.montantReleve || 0;
+                                                const ecart = montantCaisse - montantReleve;
+                                                return ecart < 0 ? "text-red-500" : "text-green-500";
+                                            })()}`}
+                                            >
+                                                {formatNumberSafe((() => {
+                                                    const montantCaisse = encaissement["Montant caisse (A)"] || encaissement.montantRestitutionCaisse || 0;
+                                                    const montantReleve = encaissement["Montant relevé (C)"] || encaissement.montantReleve || encaissement.currentValidation?.montantReleve || encaissement.validationEncaissement?.montantReleve || 0;
+                                                    return montantCaisse - montantReleve;
+                                                })())} F CFA
+                                            </p>
+                                            <p className="text-sm text-gray-500">Écart (A-C)</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Observations Section */}
+                                {(encaissement["Observation(A-B)"] || encaissement["Observation(B-C)"]) && (
+                                    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                                        <div className="mb-4">
+                                            <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                                Observations
+                                            </h3>
+                                        </div>
+
+                                        {encaissement["Observation(A-B)"] && (
+                                            <div className="mb-4">
+                                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                    Observation Caisse (A-B)
+                                                </p>
+                                                <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                    {encaissement["Observation(A-B)"]}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {encaissement["Observation(B-C)"] && (
+                                            <div>
+                                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                    Observation Banque (B-C)
+                                                </p>
+                                                <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                    {encaissement["Observation(B-C)"]}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
-                                {encaissement["Observation(B-C)"] && (
-                                    <div>
-                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                            Observation Banque (B-C)
-                                        </p>
-                                        <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {encaissement["Observation(B-C)"]}
-                                        </p>
+                                {/* Informations générales */}
+                                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                                    <div className="mb-4">
+                                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Informations générales
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Direction Régionale
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.directionRegionale || encaissement.DR || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Code Exploitation
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.codeExpl || encaissement.EXP || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Libellé Exploitation
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.libelleExpl || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Produit
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.produit || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Mode de règlement
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.modeReglement || encaissement["Caisse mode"] || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Date d'encaissement
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.dateEncaissement || encaissement["Date Encais"] || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Informations Caissière */}
+                                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                                    <div className="mb-4">
+                                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Informations Caissière
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Matricule Caissière
+                                            </p>
+                                            <p className="mt-1 text-sm font-bold text-red-600 dark:text-red-400">
+                                                {(encaissement as any).matriculeCaissiere || (encaissement as any).matricule || (encaissement as any).caissiere || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Nom complet Caissière
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {(encaissement as any).fullnameCaissiere || (encaissement as any).fullname || (encaissement as any).nomComplet || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Code Caisse
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.codeCaisse || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Numéro Caisse
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.numeroCaisse || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Numéro Journée Caisse
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.numeroJourneeCaisse || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Informations Banque */}
+                                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                                    <div className="mb-4">
+                                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Informations Banque
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Banque
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.banque || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Compte Banque
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.compteBanque || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Code Banque
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.codeBanque || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Numéro Bordereau
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {encaissement.numeroBordereau || "Non spécifié"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Détail des montants par type */}
+                                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                                    <div className="mb-4">
+                                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Détail des montants par type
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Montant Caisse
+                                            </p>
+                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                                                {formatNumberSafe(encaissement.montantEspece)} F CFA
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                Montant Cloturé
+                                            </p>
+                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                                                {formatNumberSafe(encaissement.montantBordereauBanqueEspece)} F CFA
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Validation actuelle */}
+                                {encaissement.currentValidation && (
+                                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-700 dark:bg-emerald-900/20">
+                                        <div className="mb-4">
+                                            <h3 className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                                                Validation actuelle
+                                            </h3>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
+                                                    Niveau de validation
+                                                </p>
+                                                <p className={`mt-1 text-sm font-semibold ${getValidationLevelColor(encaissement.currentValidation.validationLevel)}`}>
+                                                    {encaissement.currentValidation.validationLevel}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
+                                                    Date de validation
+                                                </p>
+                                                <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-200">
+                                                    {encaissement.currentValidation.dateValidation ? new Date(encaissement.currentValidation.dateValidation).toLocaleString('fr-FR') : "Non spécifié"}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
+                                                    Validateur
+                                                </p>
+                                                <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-200">
+                                                    {encaissement.currentValidation.user ? `${encaissement.currentValidation.user.firstname} ${encaissement.currentValidation.user.lastname}` : "Non spécifié"}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
+                                                    Profil validateur
+                                                </p>
+                                                <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-200">
+                                                    {encaissement.currentValidation.user?.profile || "Non spécifié"}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
-                            </div>
+
+                                {/* Historique des validations */}
+                                {encaissement.validationEncaissement && encaissement.validationEncaissement.length > 0 && (
+                                    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                                        <div className="mb-4">
+                                            <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                                Historique des validations
+                                            </h3>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {encaissement.validationEncaissement.map((validation: any, index: number) => (
+                                                <div key={validation.id || index} className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700">
+                                                    <div className="grid grid-cols-3 gap-3">
+                                                        <div>
+                                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                                Niveau
+                                                            </p>
+                                                            <p className={`mt-1 text-sm font-semibold ${getValidationLevelColor(validation.validationLevel)}`}>
+                                                                {validation.validationLevel}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                                Date
+                                                            </p>
+                                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                                {validation.dateValidation ? new Date(validation.dateValidation).toLocaleString('fr-FR') : "Non spécifié"}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                                Validateur
+                                                            </p>
+                                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                                {validation.user ? `${validation.user.firstname} ${validation.user.lastname}` : "Non spécifié"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         )}
-
-                        {/* Détails supplémentaires */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                            <div className="mb-4">
-                                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                                    Autres informations
-                                </h3>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                        Direction Régionale
-                                    </p>
-                                    <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                        {encaissement.directionRegionale || encaissement.DR || "Non spécifié"}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                        Code Exploitation
-                                    </p>
-                                    <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                        {encaissement.codeExpl || encaissement.EXP || "Non spécifié"}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                        Mode de règlement
-                                    </p>
-                                    <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                        {encaissement.modeReglement || encaissement["Caisse mode"] || "Non spécifié"}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                        Date de clôture
-                                    </p>
-                                    <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                        {encaissement["Date cloture"] || "Non spécifié"}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Footer */}

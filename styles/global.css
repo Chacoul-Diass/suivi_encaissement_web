@@ -21,7 +21,7 @@
   .dark body {
     color: rgb(0, 0, 0);
   }
-  
+
   /* Classe utilitaire pour forcer le texte noir */
   .force-text-black {
     color: rgb(0, 0, 0) !important;
@@ -122,4 +122,24 @@ body {
 .slide-exit-active {
   @apply transform opacity-0 transition-all duration-300;
   transform: translateY(-10px);
+}
+
+/* Animation de défilement pour les noms longs */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 8s linear infinite;
+  animation-delay: 2s;
+}
+
+/* Pause l'animation au survol */
+.animate-marquee:hover {
+  animation-play-state: paused;
 }

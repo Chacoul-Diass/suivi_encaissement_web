@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
+import axios from "axios";
 
 import IconCaretDown from "../icon/icon-caret-down";
 import IconX from "../icon/icon-x";
@@ -50,13 +51,31 @@ export default function PreuvePhotoModal({
 
   /** Charger chaque fichier en blob => URL locale **/
   async function fetchImage(doc: DocumentType): Promise<string> {
-    const url = `${API_PHOTO_SUIVI}uploads/${doc?.encaissementId}/${doc?.fileName}`;
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Impossible de récupérer l'image : ${url}`);
+    try {
+      const url = `${API_PHOTO_SUIVI}uploads/${doc?.encaissementId}/${doc?.fileName}`;
+      console.log("Tentative de chargement de l'image:", url);
+
+      // Utiliser axios avec les headers d'authentification
+      const response = await axios.get(url, {
+        responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.status !== 200) {
+        throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'image/jpeg' });
+      const blobUrl = URL.createObjectURL(blob);
+      console.log("Image chargée avec succès:", blobUrl);
+      return blobUrl;
+    } catch (error) {
+      console.error("Erreur lors du chargement de l'image:", error);
+      throw error;
     }
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
   }
 
   useEffect(() => {
@@ -64,9 +83,21 @@ export default function PreuvePhotoModal({
       setLocalImageUrls([]);
       setIsLoading(true);
 
-      Promise.all(documents.map(fetchImage))
+      console.log("Documents à charger:", documents);
+
+      Promise.allSettled(documents.map(fetchImage))
         .then((results) => {
-          setLocalImageUrls(results);
+          const successfulUrls = results
+            .filter((result): result is PromiseFulfilledResult<string> => result.status === 'fulfilled')
+            .map(result => result.value);
+
+          const failedResults = results.filter(result => result.status === 'rejected');
+          if (failedResults.length > 0) {
+            console.error("Certaines images n'ont pas pu être chargées:", failedResults);
+          }
+
+          console.log("Images chargées avec succès:", successfulUrls.length);
+          setLocalImageUrls(successfulUrls);
         })
         .catch((error) => {
           console.error("Erreur lors du fetch des images :", error);
@@ -176,25 +207,36 @@ export default function PreuvePhotoModal({
               <div className="swiper-wrapper">
                 {localImageUrls.length > 0
                   ? localImageUrls.map((blobUrl, index) => (
-                      <SwiperSlide key={index}>
-                        <div className="flex h-[500px] items-center justify-center bg-[#f8f9fa] dark:bg-[#0b1a2b]">
-                          <img
-                            src={blobUrl}
-                            alt={`Preuve photo ${index + 1}`}
-                            className="mx-auto max-h-full max-w-full cursor-pointer object-contain transition-transform duration-200 hover:scale-105"
-                            // Ouvrir l'image en plein écran
-                            onClick={() => handleOpenFullscreen(blobUrl)}
-                          />
+                    <SwiperSlide key={index}>
+                      <div className="flex h-[500px] items-center justify-center bg-[#f8f9fa] dark:bg-[#0b1a2b]">
+                        <img
+                          src={blobUrl}
+                          alt={`Preuve photo ${index + 1}`}
+                          className="mx-auto max-h-full max-w-full cursor-pointer object-contain transition-transform duration-200 hover:scale-105"
+                          // Ouvrir l'image en plein écran
+                          onClick={() => handleOpenFullscreen(blobUrl)}
+                          onError={(e) => {
+                            console.error("Erreur de chargement de l'image:", blobUrl);
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                        <div className="hidden flex items-center justify-center text-center text-gray-500">
+                          <div>
+                            <div className="mb-2 text-4xl">📷</div>
+                            <p>Image non disponible</p>
+                          </div>
                         </div>
-                      </SwiperSlide>
-                    ))
+                      </div>
+                    </SwiperSlide>
+                  ))
                   : !isLoading && (
-                      <SwiperSlide>
-                        <div className="flex h-40 items-center justify-center text-center dark:text-white">
-                          Aucune preuve photo disponible
-                        </div>
-                      </SwiperSlide>
-                    )}
+                    <SwiperSlide>
+                      <div className="flex h-40 items-center justify-center text-center dark:text-white">
+                        Aucune preuve photo disponible
+                      </div>
+                    </SwiperSlide>
+                  )}
               </div>
 
               {/* Bouton "Précédent" */}
@@ -288,8 +330,8 @@ export default function PreuvePhotoModal({
                   cursor: isDragging
                     ? "grabbing"
                     : zoomScale > 1
-                    ? "grab"
-                    : "auto",
+                      ? "grab"
+                      : "auto",
                 }}
                 className="
                   pointer-events-auto

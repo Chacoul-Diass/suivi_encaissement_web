@@ -231,7 +231,7 @@ table tr .mantine-Checkbox-root {
 /* Style pour la colonne Actions */
 .datatables table thead tr th:last-child,
 .datatables table tbody tr td:last-child {
-  background-color: #0E1726 !important;
+  background-color: #0e1726 !important;
   color: white !important;
   font-weight: bold !important;
   text-align: center !important;
@@ -240,7 +240,7 @@ table tr .mantine-Checkbox-root {
 
 .dark .datatables table thead tr th:last-child,
 .dark .datatables table tbody tr td:last-child {
-  background-color: #0E1726 !important;
+  background-color: #0e1726 !important;
   color: white !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
@@ -251,7 +251,12 @@ table tr .mantine-Checkbox-root {
 }
 
 .datatables table tbody tr td:last-child button:hover {
-  background-color: rgba(231, 81, 90, 0.2) !important; /* Couleur primary avec transparence */
+  background-color: rgba(
+    231,
+    81,
+    90,
+    0.2
+  ) !important; /* Couleur primary avec transparence */
   color: #e7515a !important;
 }
 
@@ -263,7 +268,7 @@ table tr .mantine-Checkbox-root {
 }
 
 .datatables table tbody tr.has-observation {
-  background-color: #FEE2E2 !important;
+  background-color: #fee2e2 !important;
 }
 
 .dark .datatables table tbody tr.has-observation {

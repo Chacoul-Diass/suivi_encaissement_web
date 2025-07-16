@@ -242,14 +242,14 @@ const ComponentsDatatablesColumnChooser: React.FC<
       []
     );
 
+    const [recordsData, setRecordsData] = useState<any[]>([]);
+
     useEffect(() => {
       const allData = filterAndMapData(data, statutValidation);
       setRecordsData(allData);
     }, [data, filterAndMapData, statutValidation]);
 
-    const filteredData = filterAndMapData(data, statutValidation);
-
-    const [recordsData, setRecordsData] = useState<any[]>([]);
+    const filteredData = recordsData.length > 0 ? recordsData : filterAndMapData(data, statutValidation);
 
     const unvalidatedRecords = recordsData.filter(
       (record) => record.validated !== EStatutEncaissement.VALIDE
@@ -1640,7 +1640,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             </div>
 
             <div className="relative" id="tuto-datatable">
-              <div className="overflow-x-auto">
+              <div>
                 <DataTable<DataReverse>
                   key={`datatable-${forceRender}`}
                   style={{
@@ -1758,6 +1758,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   paginationText={({ from, to, totalRecords }) =>
                     `Affichage de ${from} à ${to} sur ${totalRecords} entrées`
                   }
+                  paginationSize="md"
                   noRecordsText={
                     fetchLoading
                       ? ((
