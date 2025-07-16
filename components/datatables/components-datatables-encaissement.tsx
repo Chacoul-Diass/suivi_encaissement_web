@@ -856,7 +856,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
       { accessor: "banque", title: "Banque", sortable: true },
       {
         accessor: "compteBanque",
-        title: "Compte banque",
+        title: "Code banque",
         sortable: true,
         render: ({ compteBanque }: DataReverse) => (
           <div className=" text-primary  hover:no-underline">
