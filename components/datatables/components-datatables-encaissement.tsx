@@ -530,6 +530,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
         case EStatutEncaissement.TRAITE:
           payloadStatutValidation = EStatutEncaissement.REJETE;
           break;
+        case EStatutEncaissement.VALIDE:
+          payloadStatutValidation = EStatutEncaissement.REJETE;
+          break;
         case EStatutEncaissement.DFC:
           payloadStatutValidation = EStatutEncaissement.REJETE;
           break;
@@ -541,10 +544,26 @@ const ComponentsDatatablesColumnChooser: React.FC<
           return;
       }
 
+      // Déterminer le message selon le statut actuel
+      const getRejectMessage = () => {
+        switch (statutValidation) {
+          case EStatutEncaissement.VALIDE:
+            return "Cette action rejettera l'encaissement validé et le transmettra vers les encaissements rejetés.";
+          case EStatutEncaissement.TRAITE:
+            return "Cette action mettra l'encaissement dans les encaissements rejetés.";
+          case EStatutEncaissement.DFC:
+            return "Cette action mettra l'encaissement dans les encaissements rejetés.";
+          case EStatutEncaissement.RECLAMATION_TRAITES:
+            return "Cette action mettra l'encaissement dans les encaissements rejetés.";
+          default:
+            return "Cette action mettra l'encaissement dans les encaissements rejetés.";
+        }
+      };
+
       await swalWithBootstrapButtons
         .fire({
           title: "Êtes-vous sûr de rejeter cet encaissement ?",
-          text: "Cette action mettra l'encaissement dans les encaissements rejetés.",
+          text: getRejectMessage(),
           icon: "warning",
           showCancelButton: true,
           confirmButtonText: "Confirmer",
@@ -612,9 +631,19 @@ const ComponentsDatatablesColumnChooser: React.FC<
               .unwrap()
               .then(async (response) => {
                 setObeservationRejete(response?.observationRejete);
+                // Déterminer le message de succès selon le statut précédent
+                const getSuccessMessage = () => {
+                  switch (statutValidation) {
+                    case EStatutEncaissement.VALIDE:
+                      return `L'encaissement validé a été rejeté et transmis vers les encaissements rejetés. Raison : "${userInput}"`;
+                    default:
+                      return `Votre encaissement a été rejeté avec la raison : "${userInput}"`;
+                  }
+                };
+
                 swalWithBootstrapButtons.fire(
                   "Rejeter ✅",
-                  `Votre encaissement a été rejeté avec la raison : "${userInput}"`,
+                  getSuccessMessage(),
                   "success"
                 );
 
@@ -815,13 +844,38 @@ const ComponentsDatatablesColumnChooser: React.FC<
         accessor: "numeroBordereau",
         title: "Numéro Bordereau",
         sortable: true,
-        render: ({ numeroBordereau }: DataReverse) => (
-          <div className="cursor-pointer font-semibold text-primary underline hover:no-underline">
-            {numeroBordereau && numeroBordereau.trim() !== ""
-              ? `#${numeroBordereau}`
-              : "Non renseigné"}
-          </div>
-        ),
+        render: ({ numeroBordereau, validationEncaissement }: DataReverse) => {
+          // Fonction pour déterminer la couleur de bordure selon le validationLevel
+          const getBorderColor = () => {
+            // Si c'est un encaissement rejeté (statutValidation === 1)
+            if (statutValidation === 1) {
+              const validationLevel = validationEncaissement?.validationLevel;
+              if (validationLevel) {
+                switch (validationLevel.toUpperCase()) {
+                  case "AGC":
+                    return "border-l-8 border-l-primary"; // Rouge - plus large
+                  case "DR":
+                    return "border-l-8 border-l-warning"; // Violet - plus large
+                  case "DFC":
+                    return "border-l-8 border-l-success"; // Jaune - plus large
+                  default:
+                    return "border-l-8 border-l-red-500"; // Rouge par défaut - plus large
+                }
+              }
+            }
+            return "";
+          };
+
+          return (
+            <div className={`absolute inset-0 ${getBorderColor()}`}>
+              <div className="cursor-pointer font-semibold text-primary underline hover:no-underline pl-4 h-full flex items-center">
+                {numeroBordereau && numeroBordereau.trim() !== ""
+                  ? `#${numeroBordereau}`
+                  : "Non renseigné"}
+              </div>
+            </div>
+          );
+        },
       },
       {
         accessor: "journeeCaisse",
@@ -1647,11 +1701,12 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     position: "relative",
                     width: "100%",
                   }}
-                  rowStyle={(row: DataReverse) =>
-                    row.observationRejete || row.observationReclamation
-                      ? { backgroundColor: "#fee2e2" }
-                      : {}
-                  }
+                  rowStyle={(row: DataReverse) => {
+                    // Position relative pour permettre l'absolute positioning de la bordure
+                    return {
+                      position: 'relative'
+                    };
+                  }}
                   className="table-hover whitespace-nowrap"
                   records={
                     !fetchLoading && filteredData?.length > 0 ? filteredData : []
@@ -1781,6 +1836,45 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 />
               </div>
             </div>
+
+            {/* Légende des bordures colorées */}
+            {statutValidation === 1 && (
+              <div className="mt-6 p-5 bg-white rounded-xl border border-gray-200 shadow-sm dark:bg-[#1b2e4b] dark:border-[#253b5c]">
+                <div className="text-center mb-4">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <svg className="w-5 h-5 text-danger" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <h6 className="text-sm font-semibold text-gray-800 dark:text-white-dark">
+                      Acteurs ayant rejeté l'encaissement
+                    </h6>
+                  </div>
+                </div>
+                <div className="flex justify-center gap-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-8 bg-primary border-l-6 border-l-primary rounded-sm shadow-sm"></div>
+                    <div>
+                      <span className="text-sm font-semibold text-gray-800 dark:text-white-dark">AGC</span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Agence Générale Comptable</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-8 bg-warning border-l-6 border-l-warning rounded-sm shadow-sm"></div>
+                    <div>
+                      <span className="text-sm font-semibold text-gray-800 dark:text-white-dark">DR</span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Direction Régionale</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-8 bg-success border-l-6 border-l-success rounded-sm shadow-sm"></div>
+                    <div>
+                      <span className="text-sm font-semibold text-gray-800 dark:text-white-dark">DFC</span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Direction Financière</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {modalOpen && selectedRow && (
               <div>

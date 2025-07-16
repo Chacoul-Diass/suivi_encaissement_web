@@ -129,7 +129,7 @@ export default function ViewModal({
         {
           label: "Rejeter",
           className: "btn btn-danger w-full",
-          onClick: () => showAlertReclamation(selectedRow.id),
+          onClick: () => showAlertRejete(selectedRow.id),
         },
         {
           label: "Valider",
