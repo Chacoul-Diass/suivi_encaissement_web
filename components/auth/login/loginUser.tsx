@@ -31,6 +31,9 @@ const ComponentsAuthLoginForm = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [credential, setCredential] = useState("");
   const [password, setPassword] = useState("");
+  const [emailDomain, setEmailDomain] = useState("cie.ci");
+  const [emailPrefix, setEmailPrefix] = useState("");
+  const [showDomainSelector, setShowDomainSelector] = useState(false);
   const [showFirstLoginModal, setShowFirstLoginModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     password: "",
@@ -58,23 +61,23 @@ const ComponentsAuthLoginForm = () => {
     if (savedBackground) {
       setBackground(savedBackground);
       setIsCustomBackground(true);
-      
+
       // Analyser la luminosité de l'image sauvegardée
       const img = document.createElement('img');
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
-        
+
         canvas.width = img.width;
         canvas.height = img.height;
         ctx.drawImage(img, 0, 0, img.width, img.height);
-        
+
         try {
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           let totalBrightness = 0;
           const pixels = imageData.data.length / 4;
-          
+
           for (let i = 0; i < imageData.data.length; i += 4) {
             const r = imageData.data[i];
             const g = imageData.data[i + 1];
@@ -82,7 +85,7 @@ const ComponentsAuthLoginForm = () => {
             const brightness = (0.299 * r + 0.587 * g + 0.114 * b);
             totalBrightness += brightness;
           }
-          
+
           const averageBrightness = totalBrightness / pixels;
           setIsDarkBackground(averageBrightness < 128);
         } catch (error) {
@@ -115,24 +118,24 @@ const ComponentsAuthLoginForm = () => {
           setBackground(reader.result);
           setIsCustomBackground(true);
           localStorage.setItem("userBackground", reader.result);
-          
+
           // Déterminer si l'image est sombre ou claire
           const img = document.createElement('img');
           img.onload = () => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             if (!ctx) return; // S'assurer que le contexte est disponible
-            
+
             canvas.width = img.width;
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0, img.width, img.height);
-            
+
             // Analyser les pixels pour déterminer la luminosité moyenne
             try {
               const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
               let totalBrightness = 0;
               const pixels = imageData.data.length / 4; // RGB + alpha
-              
+
               // Calculer la luminosité moyenne (0.299R + 0.587G + 0.114B)
               for (let i = 0; i < imageData.data.length; i += 4) {
                 const r = imageData.data[i];
@@ -141,7 +144,7 @@ const ComponentsAuthLoginForm = () => {
                 const brightness = (0.299 * r + 0.587 * g + 0.114 * b);
                 totalBrightness += brightness;
               }
-              
+
               const averageBrightness = totalBrightness / pixels;
               // Seuil de 128 (sur 255) pour déterminer si sombre ou clair
               setIsDarkBackground(averageBrightness < 128);
@@ -183,6 +186,41 @@ const ComponentsAuthLoginForm = () => {
   const { firstname = "", lastname = "" } = user || {};
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
+
+  const buildFullEmail = () => {
+    // Si l'utilisateur a saisi un email complet (contient @ et un domaine)
+    if (credential.includes('@') && credential.split('@')[1] && credential.split('@')[1].includes('.')) {
+      return credential;
+    }
+    // Si c'est un matricule (pas d'@), le retourner tel quel
+    if (credential.trim()) {
+      return credential.trim();
+    }
+    return credential; // Fallback to original credential if empty
+  };
+
+  const handleCredentialChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    // Si l'utilisateur essaie de saisir après @, ne pas permettre
+    if (value.includes('@') && value.split('@').length > 2) {
+      return; // Empêcher la saisie de texte après @
+    }
+
+    // Si l'utilisateur saisit @, afficher le sélecteur et ajouter le domaine par défaut
+    if (value.endsWith('@')) {
+      setCredential(value + emailDomain);
+      setShowDomainSelector(true);
+      return;
+    }
+
+    // Si l'utilisateur supprime le @, cacher le sélecteur
+    if (!value.includes('@')) {
+      setShowDomainSelector(false);
+    }
+
+    setCredential(value);
+  };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -252,7 +290,7 @@ const ComponentsAuthLoginForm = () => {
       const response = await axiosInstance.post(
         `${API_AUTH_SUIVI}/auth/change-password`,
         {
-          email: credential,
+          email: buildFullEmail(),
           password: passwordForm.password,
           confirmPassword: passwordForm.confirmPassword,
         }
@@ -312,7 +350,7 @@ const ComponentsAuthLoginForm = () => {
     setIsAnimating(true);
 
     try {
-      const result = await dispatch(login({ credential, password }));
+      const result = await dispatch(login({ credential: buildFullEmail(), password }));
 
       if (login.fulfilled.match(result)) {
         // Stocker le token dans les cookies avec le bon path
@@ -478,9 +516,8 @@ const ComponentsAuthLoginForm = () => {
       </div>
 
       <div
-        className={`right-50 absolute top-0 z-10 transition-all duration-1000 ${
-          isAnimating ? "translate-y-[35vh] scale-110 opacity-0" : ""
-        }`}
+        className={`right-50 absolute top-0 z-10 transition-all duration-1000 ${isAnimating ? "translate-y-[35vh] scale-110 opacity-0" : ""
+          }`}
       >
         <Image
           src="/assets/images/auth/light-vertical.png"
@@ -492,9 +529,8 @@ const ComponentsAuthLoginForm = () => {
       </div>
 
       <div
-        className={`relative z-20 w-full max-w-lg overflow-hidden rounded-[30px] bg-white/95 p-8 shadow-2xl backdrop-blur-sm transition-all duration-500 ${
-          isAnimating ? "scale-95 opacity-0" : "scale-100 opacity-100"
-        } ${isSmallScreen ? "mx-4" : ""}`}
+        className={`relative z-20 w-full max-w-lg overflow-hidden rounded-[30px] bg-white/95 p-8 shadow-2xl backdrop-blur-sm transition-all duration-500 ${isAnimating ? "scale-95 opacity-0" : "scale-100 opacity-100"
+          } ${isSmallScreen ? "mx-4" : ""}`}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/20" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
@@ -531,21 +567,48 @@ const ComponentsAuthLoginForm = () => {
                 htmlFor="Credential"
                 className="block text-base font-semibold text-gray-800"
               >
-                Email ou Matricule
+                Matricule ou Email
               </label>
               <div className="group relative transform transition-all duration-300 hover:scale-[1.01]">
                 <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/50 to-primary/30 opacity-0 blur transition-opacity duration-300 group-hover:opacity-100" />
-                <div className="relative">
+                <div className="relative flex">
                   <input
                     id="Credential"
                     type="text"
-                    placeholder="Entrez votre email ou matricule"
-                    className="relative w-full rounded-xl border-2 border-gray-200 bg-white/90 px-5 py-4 text-black transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60"
+                    placeholder="Entrez votre matricule ou email"
+                    className={`relative ${showDomainSelector ? 'flex-1 rounded-l-xl border-2 border-r-0 pr-12' : 'w-full rounded-xl border-2 pr-12'} border-gray-200 bg-white/90 px-5 py-4 text-black transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60`}
                     value={credential}
-                    onChange={(e) => setCredential(e.target.value)}
+                    onChange={handleCredentialChange}
                     required
                   />
-                  <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
+                  {showDomainSelector && (
+                    <div className="flex items-center animate-in slide-in-from-right-2 duration-300">
+                      <div className="relative group/select">
+                        <div className="absolute -inset-0.5 rounded-r-xl bg-gradient-to-r from-primary/40 to-primary/20 opacity-0 blur transition-opacity duration-300 group-hover/select:opacity-100" />
+                        <div className="relative rounded-r-xl border-2 border-l-0 border-gray-200 bg-gradient-to-br from-white to-gray-50/50 px-4 py-4 pr-12 transition-all duration-300 focus-within:border-primary focus-within:bg-white focus-within:shadow-lg group-hover/select:border-primary/60 group-hover/select:shadow-md backdrop-blur-sm cursor-pointer">
+                          <select
+                            value={emailDomain}
+                            onChange={(e) => {
+                              setEmailDomain(e.target.value);
+                              const prefix = credential.split('@')[0];
+                              setCredential(`${prefix}@${e.target.value}`);
+                            }}
+                            className="w-full h-full absolute inset-0 bg-transparent text-black font-bold focus:outline-none cursor-pointer appearance-none opacity-0"
+                          >
+                            <option value="cie.ci" className="font-bold bg-white text-black">cie.ci</option>
+                            <option value="gs2e.ci" className="font-bold bg-white text-black">gs2e.ci</option>
+                          </select>
+                          <div className="w-full h-full flex items-center justify-between">
+                            <span className="text-black font-bold text-sm">{emailDomain || "cie.ci"}</span>
+                            <svg className="w-4 h-4 text-gray-500 transition-transform duration-200 group-hover/select:text-primary group-focus-within/select:text-primary ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className={`pointer-events-none absolute ${showDomainSelector ? 'right-[140px]' : 'right-4'} top-1/2 -translate-y-1/2 transition-all duration-300`}>
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-all duration-300 group-focus-within:bg-primary/10 group-focus-within:text-primary group-hover:bg-primary/10 group-hover:text-primary">
                       <IconUserCheck className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                     </div>
@@ -654,11 +717,10 @@ const ComponentsAuthLoginForm = () => {
                     name="password"
                     value={passwordForm.password}
                     onChange={handlePasswordChange}
-                    className={`w-full rounded-xl border-2 bg-white/80 px-5 py-4 text-base text-gray-700 transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60 ${
-                      passwordErrors.password
-                        ? "border-red-300"
-                        : "border-gray-200"
-                    }`}
+                    className={`w-full rounded-xl border-2 bg-white/80 px-5 py-4 text-base text-gray-700 transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60 ${passwordErrors.password
+                      ? "border-red-300"
+                      : "border-gray-200"
+                      }`}
                     placeholder="Votre nouveau mot de passe"
                   />
                   <button
@@ -686,13 +748,12 @@ const ComponentsAuthLoginForm = () => {
                     name="confirmPassword"
                     value={passwordForm.confirmPassword}
                     onChange={handlePasswordChange}
-                    className={`w-full rounded-xl border-2 bg-white/80 px-5 py-4 text-base text-gray-700 transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60 ${
-                      passwordErrors.confirmPassword
-                        ? "border-red-300"
-                        : passwordStrength.matches
+                    className={`w-full rounded-xl border-2 bg-white/80 px-5 py-4 text-base text-gray-700 transition-all duration-300 placeholder:text-gray-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 group-hover:border-primary/60 ${passwordErrors.confirmPassword
+                      ? "border-red-300"
+                      : passwordStrength.matches
                         ? "border-green-300"
                         : "border-gray-200"
-                    }`}
+                      }`}
                     placeholder="Confirmez votre nouveau mot de passe"
                   />
                 </div>

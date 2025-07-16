@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import { DataReverse } from '@/components/datatables/types';
-import { EStatutEncaissement } from '@/utils/enums';
+import { useState, useCallback, useEffect } from "react";
+import { DataReverse } from "@/components/datatables/types";
+import { EStatutEncaissement } from "@/utils/enums";
 
 export const useTableData = (initialData: any[], statutValidation: number) => {
   const [recordsData, setRecordsData] = useState<DataReverse[]>([]);
@@ -28,46 +28,52 @@ export const useTableData = (initialData: any[], statutValidation: number) => {
     }
   };
 
-  const filterAndMapData = useCallback(
-    (data: any[]): DataReverse[] => {
-      if (!Array.isArray(data) || data.length === 0) {
-        return [];
-      }
+  const filterAndMapData = useCallback((data: any[]): DataReverse[] => {
+    if (!Array.isArray(data) || data.length === 0) {
+      return [];
+    }
 
-      return data.map((item) => ({
-        id: item.id,
-        DR: item.directionRegionale,
-        EXP: item.codeExpl,
-        Produit: item.produit,
-        banque: item.banque,
-        compteBanque: item.compteBanque,
-        "Date Encais": formatDateData(item.dateEncaissement),
-        "Montant caisse (A)": item.montantRestitutionCaisse || 0,
-        "Montant bordereau (B)": item.montantBordereauBanque || 0,
-        "Montant revelé (C)": item.validationEncaissement?.montantReleve || 0,
-        "Date cloture": formatDateData(item.dateRemiseBanque) || "",
-        Bordereau: item.numeroBordereau || "",
-        caisse: item.caisse || "",
-        statutValidation: item.validationEncaissement?.statutValidation,
-        "Ecart(A-B)": item.montantRestitutionCaisse - item.montantBordereauBanque,
-        "Ecart(B-C)": item.validationEncaissement?.ecartReleve || 0,
-        "Observation(A-B)": item.validationEncaissement?.observationCaisse || "RAS",
-        "Observation(B-C)": item.validationEncaissement?.observationReleve || "RAS",
-        "Date Validation": item.validationEncaissement?.dateValidation || "N/A",
-        "Observation caisse": item.validationEncaissement?.observationCaisse || "N/A",
-        "Observation réclamation": item.validationEncaissement?.observationReclamation || "N/A",
-        "Observation relevé": item.validationEncaissement?.observationReleve || "N/A",
-        "Ecart relevé": item.validationEncaissement?.ecartReleve || "0",
-        "Montant relevé": item.validationEncaissement?.montantReleve || "0",
-        observationReclamation: item.validationEncaissement?.observationReclamation || "N/A",
-        observationRejete: item.validationEncaissement?.observationRejete || "N/A",
-        documents: item.documents,
-        "Caisse mode": item.modeReglement || "",
-        numeroBordereau: item.numeroBordereau || "",
-      }));
-    },
-    []
-  );
+    return data.map((item) => ({
+      id: item.id,
+      DR: item.directionRegionale,
+      EXP: item.codeExpl,
+      libelleExpl: item.libelleExpl,
+      matriculeCaissiere: item.matriculeCaissiere,
+      Produit: item.produit,
+      banque: item.banque,
+      compteBanque: item.compteBanque,
+      "Date Encais": item.dateEncaissemen,
+      "Montant caisse (A)": item.montantRestitutionCaisse || 0,
+      "Montant bordereau (B)": item.montantBordereauBanque || 0,
+      "Montant revelé (C)": item.validationEncaissement?.montantReleve || 0,
+      "Date cloture": item.dateRemiseBanque || "",
+      Bordereau: item.numeroBordereau || "",
+      caisse: item.caisse || "",
+      statutValidation: item.validationEncaissement?.statutValidation,
+      "Ecart(A-B)": item.montantRestitutionCaisse - item.montantBordereauBanque,
+      "Ecart(B-C)": item.validationEncaissement?.ecartReleve || 0,
+      "Observation(A-B)":
+        item.validationEncaissement?.observationCaisse || "RAS",
+      "Observation(B-C)":
+        item.validationEncaissement?.observationReleve || "RAS",
+      "Date Validation": item.validationEncaissement?.dateValidation || "N/A",
+      "Observation caisse":
+        item.validationEncaissement?.observationCaisse || "N/A",
+      "Observation réclamation":
+        item.validationEncaissement?.observationReclamation || "N/A",
+      "Observation relevé":
+        item.validationEncaissement?.observationReleve || "N/A",
+      "Ecart relevé": item.validationEncaissement?.ecartReleve || "0",
+      "Montant relevé": item.validationEncaissement?.montantReleve || "0",
+      observationReclamation:
+        item.validationEncaissement?.observationReclamation || "N/A",
+      observationRejete:
+        item.validationEncaissement?.observationRejete || "N/A",
+      documents: item.documents,
+      "Caisse mode": item.modeReglement || "",
+      numeroBordereau: item.numeroBordereau || "",
+    }));
+  }, []);
 
   const getFilteredData = useCallback(() => {
     const filteredData = filterAndMapData(initialData);
@@ -75,8 +81,7 @@ export const useTableData = (initialData: any[], statutValidation: number) => {
       return filteredData.filter((item) =>
         Object.values(item).some(
           (val) =>
-            val &&
-            val.toString().toLowerCase().includes(search.toLowerCase())
+            val && val.toString().toLowerCase().includes(search.toLowerCase())
         )
       );
     }

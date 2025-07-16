@@ -407,8 +407,7 @@ const ComponentsAppsUsers: React.FC = () => {
       if (!response.data.error) {
         Toastify(
           "success",
-          `Utilisateur ${
-            currentStatus === 1 ? "désactivé" : "activé"
+          `Utilisateur ${currentStatus === 1 ? "désactivé" : "activé"
           } avec succès`
         );
 
@@ -668,11 +667,10 @@ const ComponentsAppsUsers: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleProfileChange(null)}
-                  className={`relative rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
-                    !selectedProfile
-                      ? "bg-primary text-white shadow-md hover:shadow-lg"
-                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                  }`}
+                  className={`relative rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ${!selectedProfile
+                    ? "bg-primary text-white shadow-md hover:shadow-lg"
+                    : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                    }`}
                 >
                   Tous les profils
                   {!selectedProfile && (
@@ -686,11 +684,10 @@ const ComponentsAppsUsers: React.FC = () => {
                     key={profile.id}
                     type="button"
                     onClick={() => handleProfileChange(profile.id.toString())}
-                    className={`relative rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
-                      selectedProfile === profile.id.toString()
-                        ? "bg-primary text-white shadow-md hover:shadow-lg"
-                        : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                    }`}
+                    className={`relative rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ${selectedProfile === profile.id.toString()
+                      ? "bg-primary text-white shadow-md hover:shadow-lg"
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                      }`}
                   >
                     {profile.name}
                     {selectedProfile === profile.id.toString() && (
@@ -802,11 +799,10 @@ const ComponentsAppsUsers: React.FC = () => {
                       {filteredItems.map((user, index) => (
                         <tr
                           key={user.id}
-                          className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                            index % 2 === 0
-                              ? "bg-white dark:bg-gray-900"
-                              : "bg-gray-50 dark:bg-gray-800"
-                          }`}
+                          className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${index % 2 === 0
+                            ? "bg-white dark:bg-gray-900"
+                            : "bg-gray-50 dark:bg-gray-800"
+                            }`}
                         >
                           <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
                             {user.matricule}
@@ -882,11 +878,10 @@ const ComponentsAppsUsers: React.FC = () => {
                                     )}
                                   </div>
                                   <div className="absolute -top-1 -right-1">
-                                    <div className={`flex h-4 w-4 items-center justify-center rounded-full ${
-                                      user.isActif === 1
-                                        ? 'bg-red-500'
-                                        : 'bg-emerald-500'
-                                    } text-[10px] font-bold text-white`}>
+                                    <div className={`flex h-4 w-4 items-center justify-center rounded-full ${user.isActif === 1
+                                      ? 'bg-red-500'
+                                      : 'bg-emerald-500'
+                                      } text-[10px] font-bold text-white`}>
                                       {user.isActif === 1 ? '✕' : '✓'}
                                     </div>
                                   </div>
@@ -1039,11 +1034,10 @@ const ComponentsAppsUsers: React.FC = () => {
                             )}
                           </div>
                           <div className="absolute -top-1 -right-1">
-                            <div className={`flex h-4 w-4 items-center justify-center rounded-full ${
-                              user.isActif === 1
-                                ? 'bg-red-500'
-                                : 'bg-emerald-500'
-                            } text-[10px] font-bold text-white`}>
+                            <div className={`flex h-4 w-4 items-center justify-center rounded-full ${user.isActif === 1
+                              ? 'bg-red-500'
+                              : 'bg-emerald-500'
+                              } text-[10px] font-bold text-white`}>
                               {user.isActif === 1 ? '✕' : '✓'}
                             </div>
                           </div>
@@ -1094,9 +1088,8 @@ const ComponentsAppsUsers: React.FC = () => {
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
-                        currentPage === 1 ? "cursor-not-allowed" : ""
-                      }`}
+                      className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${currentPage === 1 ? "cursor-not-allowed" : ""
+                        }`}
                     >
                       <span className="sr-only">Précédent</span>
                       <svg
@@ -1126,9 +1119,9 @@ const ComponentsAppsUsers: React.FC = () => {
                         (pageNum) =>
                           pageNum === 1 ||
                           pageNum ===
-                            Math.ceil(
-                              (pagination?.totalCount || 0) / itemsPerPage
-                            ) ||
+                          Math.ceil(
+                            (pagination?.totalCount || 0) / itemsPerPage
+                          ) ||
                           (pageNum >= currentPage - 1 &&
                             pageNum <= currentPage + 1)
                       )
@@ -1141,11 +1134,10 @@ const ComponentsAppsUsers: React.FC = () => {
                           )}
                           <button
                             onClick={() => handlePageChange(pageNum)}
-                            className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                              currentPage === pageNum
-                                ? "z-10 bg-primary text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                                : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
-                            }`}
+                            className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${currentPage === pageNum
+                              ? "z-10 bg-primary text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                              : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
+                              }`}
                           >
                             {pageNum}
                           </button>
@@ -1158,12 +1150,11 @@ const ComponentsAppsUsers: React.FC = () => {
                         currentPage ===
                         Math.ceil((pagination?.totalCount || 0) / itemsPerPage)
                       }
-                      className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
-                        currentPage ===
+                      className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${currentPage ===
                         Math.ceil((pagination?.totalCount || 0) / itemsPerPage)
-                          ? "cursor-not-allowed"
-                          : ""
-                      }`}
+                        ? "cursor-not-allowed"
+                        : ""
+                        }`}
                     >
                       <span className="sr-only">Suivant</span>
                       <svg
@@ -1454,19 +1445,58 @@ const ComponentsAppsUsers: React.FC = () => {
                                   Email <span className="text-red-500">*</span>
                                 </div>
                               </label>
-                              <input
-                                id="email"
-                                type="email"
-                                placeholder="exemple@cie.ci"
-                                className="form-input w-full rounded-lg border-gray-300 bg-white px-3 py-2 text-sm transition-all focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800"
-                                value={editUserData?.email || ""}
-                                onChange={(e) =>
-                                  setEditUserData({
-                                    ...editUserData,
-                                    email: e.target.value,
-                                  })
-                                }
-                              />
+                              <div className="relative">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                  <IconMail className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <div className="flex">
+                                  <input
+                                    id="email"
+                                    type="text"
+                                    className={`form-input ${(editUserData?.email || "").includes('@') ? 'flex-1 rounded-l-lg border-r-0' : 'w-full rounded-lg'} border-gray-300 bg-white pl-10 text-sm transition-all focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800`}
+                                    placeholder="exemple@cie.ci"
+                                    value={editUserData?.email || ""}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+
+                                      // Si l'utilisateur essaie de saisir après @, ne pas permettre
+                                      if (value.includes('@') && value.split('@').length > 2) {
+                                        return;
+                                      }
+
+                                      // Si l'utilisateur saisit @, ajouter automatiquement le domaine par défaut
+                                      if (value.endsWith('@')) {
+                                        setEditUserData({
+                                          ...editUserData,
+                                          email: value + "cie.ci"
+                                        });
+                                        return;
+                                      }
+
+                                      setEditUserData({
+                                        ...editUserData,
+                                        email: value,
+                                      });
+                                    }}
+                                  />
+                                  {(editUserData?.email || "").includes('@') && (
+                                    <select
+                                      value={(editUserData?.email || "").includes('@') ? (editUserData?.email || "").split('@')[1] : "cie.ci"}
+                                      onChange={(e) => {
+                                        const prefix = (editUserData?.email || "").split('@')[0];
+                                        setEditUserData({
+                                          ...editUserData,
+                                          email: `${prefix}@${e.target.value}`
+                                        });
+                                      }}
+                                      className="rounded-r-lg border-l-0 border-gray-300 bg-white text-sm transition-all focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800"
+                                    >
+                                      <option value="cie.ci">cie.ci</option>
+                                      <option value="gs2e.ci">gs2e.ci</option>
+                                    </select>
+                                  )}
+                                </div>
+                              </div>
                             </div>
 
                             <div>
@@ -1576,166 +1606,168 @@ const ComponentsAppsUsers: React.FC = () => {
                         </div>
 
                         {/* Affectations */}
-                        <div className="space-y-4 rounded-xl bg-gray-50 p-4 dark:bg-gray-800/50">
-                          <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-700 dark:text-gray-300">
-                            <IconBuilding className="h-5 w-5 text-primary" />
-                            Affectations
-                          </h3>
+                        {editUserData?.profile?.name !== "ADMIN" && (
+                          <div className="space-y-4 rounded-xl bg-gray-50 p-4 dark:bg-gray-800/50">
+                            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-700 dark:text-gray-300">
+                              <IconBuilding className="h-5 w-5 text-primary" />
+                              Affectations
+                            </h3>
 
-                          <div className="space-y-3">
-                            <div>
-                              <label
-                                htmlFor="directions"
-                                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                              >
-                                <div className="flex items-center gap-1">
-                                  <IconBuildingSkyscraper className="h-4 w-4 text-gray-400" />
-                                  Directions Régionales{" "}
-                                  <span className="text-red-500">*</span>
-                                </div>
-                              </label>
-                              <div className="relative">
-                                <Select
-                                  id="directions"
-                                  placeholder="Choisir une direction régionale"
-                                  options={[
-                                    {
-                                      value: "all",
-                                      label:
-                                        editUserData?.directionRegionales
-                                          ?.length === drData.length
-                                          ? "Tout désélectionner"
-                                          : "Tout sélectionner",
-                                    },
-                                    ...availableDirections.filter(
-                                      (option) => option.value !== "all"
-                                    ),
-                                  ]}
-                                  value={editUserData?.directionRegionales.map(
-                                    (dr: any) => ({
-                                      value: dr.id,
-                                      label: `${dr.code} - ${dr.name}`,
-                                    })
-                                  )}
-                                  isMulti
-                                  onChange={(selectedOptions) => {
-                                    if (
-                                      selectedOptions.some(
-                                        (option) => option.value === "all"
-                                      )
-                                    ) {
-                                      handleSelectAllDR();
-                                    } else {
-                                      const selectedDRs = selectedOptions.map(
-                                        (option: any) => ({
-                                          id: option.value,
-                                          code: option.label.split(" - ")[0],
-                                          name: option.label.split(" - ")[1],
-                                        })
-                                      );
-
-                                      setEditUserData({
-                                        ...editUserData,
-                                        directionRegionales: selectedDRs,
-                                        secteurs:
-                                          selectedDRs.length === 0
-                                            ? []
-                                            : editUserData.secteurs,
-                                      });
-
-                                      if (selectedDRs.length > 0) {
-                                        const drIds = selectedDRs.map(
-                                          (dr) => dr.id
-                                        );
-                                        dispatch(fetchSecteurs(drIds))
-                                          .unwrap()
-                                          .then((secteurs) => {
-                                            const secteurOptions = secteurs.map(
-                                              (secteur: any) => ({
-                                                value: secteur.id,
-                                                label: secteur.name,
-                                              })
-                                            );
-                                            setAvailableSecteurs(
-                                              secteurOptions
-                                            );
-                                          })
-                                          .catch((error) =>
-                                            console.error(
-                                              "Erreur lors du chargement des secteurs :",
-                                              error
-                                            )
-                                          );
+                            <div className="space-y-3">
+                              <div>
+                                <label
+                                  htmlFor="directions"
+                                  className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                >
+                                  <div className="flex items-center gap-1">
+                                    <IconBuildingSkyscraper className="h-4 w-4 text-gray-400" />
+                                    Directions Régionales{" "}
+                                    <span className="text-red-500">*</span>
+                                  </div>
+                                </label>
+                                <div className="relative">
+                                  <Select
+                                    id="directions"
+                                    placeholder="Choisir une direction régionale"
+                                    options={[
+                                      {
+                                        value: "all",
+                                        label:
+                                          editUserData?.directionRegionales
+                                            ?.length === drData.length
+                                            ? "Tout désélectionner"
+                                            : "Tout sélectionner",
+                                      },
+                                      ...availableDirections.filter(
+                                        (option) => option.value !== "all"
+                                      ),
+                                    ]}
+                                    value={editUserData?.directionRegionales.map(
+                                      (dr: any) => ({
+                                        value: dr.id,
+                                        label: `${dr.code} - ${dr.name}`,
+                                      })
+                                    )}
+                                    isMulti
+                                    onChange={(selectedOptions) => {
+                                      if (
+                                        selectedOptions.some(
+                                          (option) => option.value === "all"
+                                        )
+                                      ) {
+                                        handleSelectAllDR();
                                       } else {
-                                        setAvailableSecteurs([]);
-                                      }
-                                    }
-                                  }}
-                                  className="text-sm"
-                                />
-                              </div>
-                            </div>
-
-                            <div>
-                              <label
-                                htmlFor="secteurs"
-                                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                              >
-                                <div className="flex items-center gap-1">
-                                  <IconBuildingCommunity className="h-4 w-4 text-gray-400" />
-                                  Secteurs{" "}
-                                  <span className="text-red-500">*</span>
-                                </div>
-                              </label>
-                              <div className="relative">
-                                <Select
-                                  id="secteurs"
-                                  placeholder="Choisir un secteur"
-                                  options={[
-                                    {
-                                      value: "all",
-                                      label:
-                                        editUserData?.secteurs?.length ===
-                                        availableSecteurs.length
-                                          ? "Tout désélectionner"
-                                          : "Tout sélectionner",
-                                    },
-                                    ...availableSecteurs.filter(
-                                      (option) => option.value !== "all"
-                                    ),
-                                  ]}
-                                  value={editUserData?.secteurs.map(
-                                    (secteur: any) => ({
-                                      value: secteur.id,
-                                      label: secteur.name,
-                                    })
-                                  )}
-                                  isMulti
-                                  onChange={(selectedOptions) => {
-                                    if (
-                                      selectedOptions.some(
-                                        (option) => option.value === "all"
-                                      )
-                                    ) {
-                                      handleSelectAllSecteurs();
-                                    } else {
-                                      setEditUserData({
-                                        ...editUserData,
-                                        secteurs: selectedOptions.map(
+                                        const selectedDRs = selectedOptions.map(
                                           (option: any) => ({
                                             id: option.value,
-                                            name: option.label,
+                                            code: option.label.split(" - ")[0],
+                                            name: option.label.split(" - ")[1],
                                           })
-                                        ),
-                                      });
-                                    }
-                                  }}
-                                  className="text-sm"
-                                />
+                                        );
+
+                                        setEditUserData({
+                                          ...editUserData,
+                                          directionRegionales: selectedDRs,
+                                          secteurs:
+                                            selectedDRs.length === 0
+                                              ? []
+                                              : editUserData.secteurs,
+                                        });
+
+                                        if (selectedDRs.length > 0) {
+                                          const drIds = selectedDRs.map(
+                                            (dr) => dr.id
+                                          );
+                                          dispatch(fetchSecteurs(drIds))
+                                            .unwrap()
+                                            .then((secteurs) => {
+                                              const secteurOptions = secteurs.map(
+                                                (secteur: any) => ({
+                                                  value: secteur.id,
+                                                  label: secteur.name,
+                                                })
+                                              );
+                                              setAvailableSecteurs(
+                                                secteurOptions
+                                              );
+                                            })
+                                            .catch((error) =>
+                                              console.error(
+                                                "Erreur lors du chargement des secteurs :",
+                                                error
+                                              )
+                                            );
+                                        } else {
+                                          setAvailableSecteurs([]);
+                                        }
+                                      }
+                                    }}
+                                    className="text-sm"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <label
+                                  htmlFor="secteurs"
+                                  className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                >
+                                  <div className="flex items-center gap-1">
+                                    <IconBuildingCommunity className="h-4 w-4 text-gray-400" />
+                                    Secteurs{" "}
+                                    <span className="text-red-500">*</span>
+                                  </div>
+                                </label>
+                                <div className="relative">
+                                  <Select
+                                    id="secteurs"
+                                    placeholder="Choisir un secteur"
+                                    options={[
+                                      {
+                                        value: "all",
+                                        label:
+                                          editUserData?.secteurs?.length ===
+                                            availableSecteurs.length
+                                            ? "Tout désélectionner"
+                                            : "Tout sélectionner",
+                                      },
+                                      ...availableSecteurs.filter(
+                                        (option) => option.value !== "all"
+                                      ),
+                                    ]}
+                                    value={editUserData?.secteurs.map(
+                                      (secteur: any) => ({
+                                        value: secteur.id,
+                                        label: secteur.name,
+                                      })
+                                    )}
+                                    isMulti
+                                    onChange={(selectedOptions) => {
+                                      if (
+                                        selectedOptions.some(
+                                          (option) => option.value === "all"
+                                        )
+                                      ) {
+                                        handleSelectAllSecteurs();
+                                      } else {
+                                        setEditUserData({
+                                          ...editUserData,
+                                          secteurs: selectedOptions.map(
+                                            (option: any) => ({
+                                              id: option.value,
+                                              name: option.label,
+                                            })
+                                          ),
+                                        });
+                                      }
+                                    }}
+                                    className="text-sm"
+                                  />
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     </form>
 

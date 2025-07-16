@@ -42,6 +42,8 @@ interface Encaissement {
     id: number;
     directionRegionale: string;
     codeExpl: string;
+    libelleExpl?: string;
+    matriculeCaissiere?: string;
     dateEncaissement: string;
     banque: string;
     produit: string;
@@ -153,6 +155,8 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
             id: item.id || 0,
             directionRegionale: item.directionRegionale || '',
             codeExpl: item.codeExpl || '',
+            libelleExpl: item.libelleExpl || '',
+            matriculeCaissiere: item.matriculeCaissiere || '',
             dateEncaissement: item.dateEncaissement || '',
             banque: item.banque || '',
             produit: item.produit || '',
@@ -175,6 +179,18 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
     // Configuration des colonnes du tableau
     const columns: DataTableColumn<Encaissement>[] = [
         {
+            accessor: "matriculeCaissiere",
+            title: "Matricule Caissière",
+            sortable: true,
+            width: 120,
+            render: ({ matriculeCaissiere }: Encaissement) => (
+                <div className="cursor-pointer font-semibold text-secondary ">
+
+                    {matriculeCaissiere || "N/A"}
+                </div>
+            ),
+        },
+        {
             accessor: "directionRegionale",
             title: "Direction",
             sortable: true,
@@ -182,17 +198,24 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
         },
         {
             accessor: "codeExpl",
-            title: "Code Expl",
+            title: "Exploitation",
             sortable: true,
-            width: 100,
+            width: 120,
+            render: ({ libelleExpl }: Encaissement) => (
+                <div>
+                    <div className="font-medium">{libelleExpl}</div>
+
+                </div>
+            ),
         },
+
         {
             accessor: "dateEncaissement",
             title: "Date",
             sortable: true,
             width: 120,
             render: ({ dateEncaissement }: { dateEncaissement: string }) => (
-                <span>{formatDisplayDate(dateEncaissement)}</span>
+                <span>{dateEncaissement}</span>
             ),
         },
         {
@@ -436,7 +459,7 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
             const body = [[
                 record.directionRegionale || "N/A",
                 record.codeExpl || "N/A",
-                record.dateEncaissement ? formatDisplayDate(record.dateEncaissement) : "N/A",
+                record.dateEncaissement || "N/A",
                 record.banque || "N/A",
                 record.produit || "N/A",
                 record.modeReglement || "N/A",
@@ -659,7 +682,7 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
             const body = normalizedData.map(item => [
                 item.directionRegionale || "N/A",
                 item.codeExpl || "N/A",
-                item.dateEncaissement ? formatDisplayDate(item.dateEncaissement) : "N/A",
+                item.dateEncaissement || "N/A",
                 item.banque || "N/A",
                 item.produit || "N/A",
                 item.modeReglement || "N/A",

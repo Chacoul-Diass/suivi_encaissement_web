@@ -2,6 +2,8 @@ export type Encaissement = {
   id?: number;
   directionRegionale: string;
   codeExpl: string;
+  libelleExpl?: string;
+  matriculeCaissiere?: string;
   dateEncaissement: string;
   caisse: string;
   banque: string;

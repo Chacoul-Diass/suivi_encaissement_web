@@ -40,6 +40,8 @@ export interface DataReverse {
   id: number;
   directionRegionale: string;
   codeExpl: string;
+  libelleExpl?: string;
+  matriculeCaissiere?: string;
   dateEncaissement: string;
   banque: string;
   produit: string;
@@ -178,12 +180,14 @@ const ComponentsDatatablesColumnChooser: React.FC<
           id: item.id,
           DR: item.directionRegionale,
           EXP: item.codeExpl,
+          libelleExpl: item.libelleExpl,
+          matriculeCaissiere: item.matriculeCaissiere,
           Produit: item.produit,
           banque: item.banque,
           compteBanque: item.compteBanque,
           journeeCaisse: item.journeeCaisse,
           modeReglement: item.modeReglement,
-          "Date Encais": formatDateData(item.dateEncaissement),
+          "Date Encais": item.dateEncaissement,
           "Montant caisse (A)": item.montantRestitutionCaisse || 0,
           "Montant bordereau (B)": item.montantBordereauBanque || 0,
           "Montant relevé (C)":
@@ -191,7 +195,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
               ? item.montantReleve || 0
               : item.validationEncaissement?.montantReleve || 0,
           isCorrect: item?.isCorrect || 0,
-          "Date cloture": formatDateData(item.dateRemiseBanque) || "",
+          "Date cloture": item.dateRemiseBanque || "",
           Bordereau: item.numeroBordereau || "",
           caisse: item.caisse || "",
           statutValidation: item.validationEncaissement?.statutValidation,
@@ -830,6 +834,16 @@ const ComponentsDatatablesColumnChooser: React.FC<
         ),
       },
       {
+        accessor: "matriculeCaissiere",
+        title: "Matricule Caissière",
+        sortable: true,
+        render: ({ matriculeCaissiere }: DataReverse) => (
+          <div className="cursor-pointer font-semibold text-secondary ">
+            {matriculeCaissiere || "N/A"}
+          </div>
+        ),
+      },
+      {
         accessor: "modeReglement",
         title: "Mode de réglement ",
         sortable: true,
@@ -852,7 +866,17 @@ const ComponentsDatatablesColumnChooser: React.FC<
       },
 
       { accessor: "DR", title: "DR", sortable: true },
-      { accessor: "EXP", title: "Code Exp", sortable: true },
+      {
+        accessor: "EXP",
+        title: "Exploitation",
+        sortable: true,
+        render: ({ libelleExpl }: DataReverse) => (
+          <div>
+            <div className="font-medium">{libelleExpl} </div>
+          </div>
+        ),
+      },
+
       { accessor: "Produit", title: "Produit", sortable: true },
       { accessor: "Date Encais", title: "Date Encaissement", sortable: true },
 

@@ -316,7 +316,7 @@ const Sidebar = () => {
             }`}
         >
           <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/20 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-          <div className="relative flex items-center gap-3">
+          <div className="relative flex items-center gap-3 min-w-0 flex-1">
             <div
               className={`relative flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-500 ${pathname === menu.path
                 ? "bg-primary/20 text-primary"
@@ -328,7 +328,7 @@ const Sidebar = () => {
                 <span className="absolute -inset-1 rounded-xl bg-primary/20 animate-pulse opacity-75"></span>
               )}
             </div>
-            <span className="font-medium tracking-wide text-white transition-all duration-500 group-hover:translate-x-1">
+            <span className="font-medium tracking-wide text-white transition-all duration-500 group-hover:translate-x-1 min-w-0 flex-1 truncate">
               {translateMenuName(menu.name)}
             </span>
           </div>

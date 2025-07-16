@@ -33,7 +33,9 @@ const FloatingButton = () => {
       // Définir les colonnes
       const baseColumns = [
         { header: "Direction Régionale", key: "directionRegionale", width: 20 },
-        { header: "Code Expl", key: "codeExpl", width: 15 },
+        { header: "Exploitation", key: "codeExpl", width: 15 },
+        { header: "Libellé Expl", key: "libelleExpl", width: 20 },
+        { header: "Matricule Caissière", key: "matriculeCaissiere", width: 20 },
         { header: "Date Encaissement", key: "dateEncaissement", width: 20 },
         { header: "Banque", key: "banque", width: 30 },
         { header: "Produit", key: "produit", width: 15 },
@@ -57,30 +59,30 @@ const FloatingButton = () => {
       const rejectedColumns =
         status === 1
           ? [
-              { header: "Date Validation", key: "dateValidation", width: 20 },
-              {
-                header: "Observation Rejeté",
-                key: "observationRejete",
-                width: 30,
-              },
-              { header: "Montant Relevé", key: "montantReleve", width: 20 },
-              { header: "Écart Relevé", key: "ecartReleve", width: 20 },
-              {
-                header: "Observation Caisse",
-                key: "observationCaisse",
-                width: 30,
-              },
-              {
-                header: "Observation Relevé",
-                key: "observationReleve",
-                width: 30,
-              },
-              {
-                header: "Observation Réclamation",
-                key: "observationReclamation",
-                width: 30,
-              },
-            ]
+            { header: "Date Validation", key: "dateValidation", width: 20 },
+            {
+              header: "Observation Rejeté",
+              key: "observationRejete",
+              width: 30,
+            },
+            { header: "Montant Relevé", key: "montantReleve", width: 20 },
+            { header: "Écart Relevé", key: "ecartReleve", width: 20 },
+            {
+              header: "Observation Caisse",
+              key: "observationCaisse",
+              width: 30,
+            },
+            {
+              header: "Observation Relevé",
+              key: "observationReleve",
+              width: 30,
+            },
+            {
+              header: "Observation Réclamation",
+              key: "observationReclamation",
+              width: 30,
+            },
+          ]
           : [];
 
       worksheet.columns = [...baseColumns, ...rejectedColumns];
@@ -114,19 +116,19 @@ const FloatingButton = () => {
         const rejectedData =
           status === 1
             ? {
-                dateValidation:
-                  item.validationEncaissement?.dateValidation || "",
-                observationRejete:
-                  item.validationEncaissement?.observationRejete || "",
-                montantReleve: item.validationEncaissement?.montantReleve || 0,
-                ecartReleve: item.validationEncaissement?.ecartReleve || 0,
-                observationCaisse:
-                  item.validationEncaissement?.observationCaisse || "",
-                observationReleve:
-                  item.validationEncaissement?.observationReleve || "",
-                observationReclamation:
-                  item.validationEncaissement?.observationReclamation || "",
-              }
+              dateValidation:
+                item.validationEncaissement?.dateValidation || "",
+              observationRejete:
+                item.validationEncaissement?.observationRejete || "",
+              montantReleve: item.validationEncaissement?.montantReleve || 0,
+              ecartReleve: item.validationEncaissement?.ecartReleve || 0,
+              observationCaisse:
+                item.validationEncaissement?.observationCaisse || "",
+              observationReleve:
+                item.validationEncaissement?.observationReleve || "",
+              observationReclamation:
+                item.validationEncaissement?.observationReclamation || "",
+            }
             : {};
 
         worksheet.addRow({ ...baseData, ...rejectedData });
@@ -224,9 +226,8 @@ const FloatingButton = () => {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {/* Carte pour les encaissements non traités */}
               <div
-                className={`relative cursor-pointer rounded-xl border border-gray-200 bg-white p-6 transition-all duration-300 hover:border-primary ${
-                  isLoading === "nontraite" ? "opacity-75" : ""
-                }`}
+                className={`relative cursor-pointer rounded-xl border border-gray-200 bg-white p-6 transition-all duration-300 hover:border-primary ${isLoading === "nontraite" ? "opacity-75" : ""
+                  }`}
                 onClick={() => !isLoading && handleDownload("nontraite")}
               >
                 <div className="mb-4 flex items-center justify-between">
@@ -277,9 +278,8 @@ const FloatingButton = () => {
 
               {/* Carte pour les encaissements rejetés */}
               <div
-                className={`relative cursor-pointer rounded-xl border border-gray-200 bg-white p-6 transition-all duration-300 hover:border-primary ${
-                  isLoading === "rejete" ? "opacity-75" : ""
-                }`}
+                className={`relative cursor-pointer rounded-xl border border-gray-200 bg-white p-6 transition-all duration-300 hover:border-primary ${isLoading === "rejete" ? "opacity-75" : ""
+                  }`}
                 onClick={() => !isLoading && handleDownload("rejete")}
               >
                 <div className="mb-4 flex items-center justify-between">

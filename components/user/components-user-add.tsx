@@ -234,6 +234,7 @@ const ComponentsAppsInvoiceAdd = () => {
       newErrors.profil = "";
     }
 
+    // Si le profil n'est pas ADMIN, alors DR et secteur sont obligatoires pour Comptable et AGC
     if (["Comptable", "AGC"].includes(accountInfo.profil)) {
       if (accountInfo.dr.length === 0) {
         newErrors.dr = "La direction régionale est obligatoire";
@@ -463,19 +464,53 @@ const ComponentsAppsInvoiceAdd = () => {
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                       <IconMail className="h-4 w-4 text-gray-400" />
                     </div>
-                    <input
-                      id="email"
-                      type="email"
-                      className="form-input w-full rounded-lg border-gray-300 bg-white pl-10 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
-                      placeholder="exemple@cie.ci"
-                      value={personalInfo.email}
-                      onChange={(e) =>
-                        setPersonalInfo({
-                          ...personalInfo,
-                          email: e.target.value,
-                        })
-                      }
-                    />
+                    <div className="flex">
+                      <input
+                        id="email"
+                        type="text"
+                        className={`form-input ${personalInfo.email.includes('@') ? 'flex-1 rounded-l-lg border-r-0' : 'w-full rounded-lg'} border-gray-300 bg-white pl-10 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700`}
+                        placeholder="exemple@cie.ci"
+                        value={personalInfo.email}
+                        onChange={(e) => {
+                          const value = e.target.value;
+
+                          // Si l'utilisateur essaie de saisir après @, ne pas permettre
+                          if (value.includes('@') && value.split('@').length > 2) {
+                            return;
+                          }
+
+                          // Si l'utilisateur saisit @, ajouter automatiquement le domaine par défaut
+                          if (value.endsWith('@')) {
+                            setPersonalInfo({
+                              ...personalInfo,
+                              email: value + "cie.ci"
+                            });
+                            return;
+                          }
+
+                          setPersonalInfo({
+                            ...personalInfo,
+                            email: value,
+                          });
+                        }}
+                      />
+                      {personalInfo.email.includes('@') && (
+                        <select
+                          value={personalInfo.email.includes('@') ? personalInfo.email.split('@')[1] : "cie.ci"}
+                          onChange={(e) => {
+                            const prefix = personalInfo.email.split('@')[0];
+                            setPersonalInfo({
+                              ...personalInfo,
+                              email: `${prefix}@${e.target.value}`
+                            });
+                          }}
+                          className="rounded-r-lg border-l-0 border-gray-300 bg-white text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                        >
+                          <option value="cie.ci">cie.ci</option>
+                          <option value="gs2e.ci">gs2e.ci</option>
+                        </select>
+                      )}
+                    </div>
                   </div>
                   {errors.email && (
                     <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
@@ -629,258 +664,264 @@ const ComponentsAppsInvoiceAdd = () => {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <label
-                    htmlFor="dr"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    <div className="flex items-center gap-1">
-                      <IconBuildingSkyscraper className="h-4 w-4 text-gray-400" />
-                      Direction régionale{" "}
-                      <span className="text-red-500">*</span>
-                    </div>
-                  </label>
-                  <Select
-                    id="dr"
-                    placeholder="Choisir une direction régionale"
-                    options={availableDirections}
-                    value={accountInfo.dr}
-                    isMulti
-                    isSearchable
-                    isClearable
-                    onChange={(selectedOptions: any) => {
-                      // Gestion de "Tout sélectionner/désélectionner"
-                      if (
-                        selectedOptions?.some((opt: any) => opt.value === "all")
-                      ) {
-                        if (
-                          accountInfo.dr.length ===
-                          availableDirections.length - 1
-                        ) {
-                          // Tout désélectionner
-                          setAccountInfo((prev) => ({
-                            ...prev,
-                            dr: [],
-                            secteur: [],
-                          }));
-                          setAvailableSecteurs([]);
-                        } else {
-                          // Tout sélectionner
-                          const allDRs = availableDirections
-                            .filter((dir) => dir.value !== "all")
-                            .map((dir) => ({
-                              value: dir.value,
-                              label: dir.label,
-                            }));
-                          setAccountInfo((prev) => ({
-                            ...prev,
-                            dr: allDRs,
-                          }));
-                          const drIds = allDRs
-                            .map((dr: any) => Number(dr.value))
-                            .filter((id: number) => !isNaN(id) && id > 0);
-                          if (drIds.length > 0) {
-                            dispatch(fetchSecteurs(drIds));
+                {accountInfo.profil !== "ADMIN" && (
+                  <>
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="dr"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >
+                        <div className="flex items-center gap-1">
+                          <IconBuildingSkyscraper className="h-4 w-4 text-gray-400" />
+                          Direction régionale{" "}
+                          <span className="text-red-500">*</span>
+                        </div>
+                      </label>
+                      <Select
+                        id="dr"
+                        placeholder="Choisir une direction régionale"
+                        options={availableDirections}
+                        value={accountInfo.dr}
+                        isMulti
+                        isSearchable
+                        isClearable
+                        onChange={(selectedOptions: any) => {
+                          // Gestion de "Tout sélectionner/désélectionner"
+                          if (
+                            selectedOptions?.some((opt: any) => opt.value === "all")
+                          ) {
+                            if (
+                              accountInfo.dr.length ===
+                              availableDirections.length - 1
+                            ) {
+                              // Tout désélectionner
+                              setAccountInfo((prev) => ({
+                                ...prev,
+                                dr: [],
+                                secteur: [],
+                              }));
+                              setAvailableSecteurs([]);
+                            } else {
+                              // Tout sélectionner
+                              const allDRs = availableDirections
+                                .filter((dir) => dir.value !== "all")
+                                .map((dir) => ({
+                                  value: dir.value,
+                                  label: dir.label,
+                                }));
+                              setAccountInfo((prev) => ({
+                                ...prev,
+                                dr: allDRs,
+                              }));
+                              const drIds = allDRs
+                                .map((dr: any) => Number(dr.value))
+                                .filter((id: number) => !isNaN(id) && id > 0);
+                              if (drIds.length > 0) {
+                                dispatch(fetchSecteurs(drIds));
+                              }
+                            }
+                            return;
                           }
-                        }
-                        return;
-                      }
 
-                      // Gestion normale des sélections
-                      const newDRs = selectedOptions || [];
-                      const oldDRIds = new Set(
-                        accountInfo.dr.map((dr) => dr.value)
-                      );
-                      const newDRIds = new Set(
-                        newDRs.map((dr: any) => dr.value)
-                      );
-                      const removedDRIds = [...oldDRIds].filter(
-                        (id) => !newDRIds.has(id)
-                      );
+                          // Gestion normale des sélections
+                          const newDRs = selectedOptions || [];
+                          const oldDRIds = new Set(
+                            accountInfo.dr.map((dr) => dr.value)
+                          );
+                          const newDRIds = new Set(
+                            newDRs.map((dr: any) => dr.value)
+                          );
+                          const removedDRIds = [...oldDRIds].filter(
+                            (id) => !newDRIds.has(id)
+                          );
 
-                      const updatedSecteurs =
-                        removedDRIds.length > 0
-                          ? accountInfo.secteur.filter((secteur) => {
-                              const sectorInfo = secteurData?.find(
-                                (s: { id: number }) =>
-                                  s.id === Number(secteur.value)
-                              );
-                              return (
-                                sectorInfo &&
-                                newDRs.some(
-                                  (dr: any) =>
-                                    Number(dr.value) ===
-                                    sectorInfo.directionRegionaleId
-                                )
-                              );
-                            })
-                          : accountInfo.secteur;
+                          const updatedSecteurs =
+                            removedDRIds.length > 0
+                              ? accountInfo.secteur.filter((secteur) => {
+                                const sectorInfo = secteurData?.find(
+                                  (s: { id: number }) =>
+                                    s.id === Number(secteur.value)
+                                );
+                                return (
+                                  sectorInfo &&
+                                  newDRs.some(
+                                    (dr: any) =>
+                                      Number(dr.value) ===
+                                      sectorInfo.directionRegionaleId
+                                  )
+                                );
+                              })
+                              : accountInfo.secteur;
 
-                      setAccountInfo((prev) => ({
-                        ...prev,
-                        dr: newDRs,
-                        secteur: updatedSecteurs,
-                      }));
+                          setAccountInfo((prev) => ({
+                            ...prev,
+                            dr: newDRs,
+                            secteur: updatedSecteurs,
+                          }));
 
-                      if (newDRs.length > 0) {
-                        const drIds = newDRs
-                          .map((dr: any) => Number(dr.value))
-                          .filter((id: number) => !isNaN(id) && id > 0);
-                        if (drIds.length > 0) {
-                          dispatch(fetchSecteurs(drIds));
-                        }
-                      } else {
-                        setAvailableSecteurs([]);
-                      }
-                    }}
-                    className="text-sm"
-                    classNamePrefix="select"
-                    styles={{
-                      control: (base) => ({
-                        ...base,
-                        borderColor: "#E5E7EB",
-                        borderRadius: "0.5rem",
-                        minHeight: "2.5rem",
-                        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-                      }),
-                      valueContainer: (base) => ({
-                        ...base,
-                        maxHeight: "100px",
-                        overflowY: "auto",
-                        flexWrap: "wrap",
-                        padding: "2px 8px",
-                      }),
-                      menuList: (base) => ({
-                        ...base,
-                        maxHeight: "200px",
-                      }),
-                      option: (base, state) => ({
-                        ...base,
-                        backgroundColor:
-                          state.data.value === "all"
-                            ? "#F3F4F6"
-                            : base.backgroundColor,
-                        fontWeight:
-                          state.data.value === "all" ? "600" : "normal",
-                        color:
-                          state.data.value === "all" ? "#374151" : base.color,
-                      }),
-                    }}
-                  />
-
-                  <label
-                    htmlFor="secteur"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    <div className="flex items-center gap-1">
-                      <IconBuildingCommunity className="h-4 w-4 text-gray-400" />
-                      Exploitation <span className="text-red-500">*</span>
+                          if (newDRs.length > 0) {
+                            const drIds = newDRs
+                              .map((dr: any) => Number(dr.value))
+                              .filter((id: number) => !isNaN(id) && id > 0);
+                            if (drIds.length > 0) {
+                              dispatch(fetchSecteurs(drIds));
+                            }
+                          } else {
+                            setAvailableSecteurs([]);
+                          }
+                        }}
+                        className="text-sm"
+                        classNamePrefix="select"
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            borderColor: "#E5E7EB",
+                            borderRadius: "0.5rem",
+                            minHeight: "2.5rem",
+                            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+                          }),
+                          valueContainer: (base) => ({
+                            ...base,
+                            maxHeight: "100px",
+                            overflowY: "auto",
+                            flexWrap: "wrap",
+                            padding: "2px 8px",
+                          }),
+                          menuList: (base) => ({
+                            ...base,
+                            maxHeight: "200px",
+                          }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor:
+                              state.data.value === "all"
+                                ? "#F3F4F6"
+                                : base.backgroundColor,
+                            fontWeight:
+                              state.data.value === "all" ? "600" : "normal",
+                            color:
+                              state.data.value === "all" ? "#374151" : base.color,
+                          }),
+                        }}
+                      />
                     </div>
-                  </label>
 
-                  <Select
-                    id="secteur"
-                    placeholder={
-                      accountInfo.dr.length === 0
-                        ? "Sélectionnez d'abord une direction régionale"
-                        : "Choisir un secteur"
-                    }
-                    options={availableSecteurs}
-                    value={accountInfo.secteur}
-                    classNamePrefix="select"
-                    isMulti
-                    isSearchable
-                    isClearable
-                    isDisabled={accountInfo.dr.length === 0}
-                    onChange={(selectedOptions: any) => {
-                      // Gestion de "Tout sélectionner/désélectionner"
-                      if (
-                        selectedOptions?.some((opt: any) => opt.value === "all")
-                      ) {
-                        if (accountInfo.secteur.length === secteurData.length) {
-                          // Tout désélectionner
-                          setAccountInfo((prev) => ({
-                            ...prev,
-                            secteur: [],
-                          }));
-                        } else {
-                          // Tout sélectionner
-                          const allSecteurs = availableSecteurs
-                            .filter((sect) => sect.value !== "all")
-                            .map((sect) => ({
-                              value: sect.value,
-                              label: sect.label,
-                            }));
-                          setAccountInfo((prev) => ({
-                            ...prev,
-                            secteur: allSecteurs,
-                          }));
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="secteur"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >
+                        <div className="flex items-center gap-1">
+                          <IconBuildingCommunity className="h-4 w-4 text-gray-400" />
+                          Exploitation <span className="text-red-500">*</span>
+                        </div>
+                      </label>
+
+                      <Select
+                        id="secteur"
+                        placeholder={
+                          accountInfo.dr.length === 0
+                            ? "Sélectionnez d'abord une direction régionale"
+                            : "Choisir un secteur"
                         }
-                        return;
-                      }
+                        options={availableSecteurs}
+                        value={accountInfo.secteur}
+                        classNamePrefix="select"
+                        isMulti
+                        isSearchable
+                        isClearable
+                        isDisabled={accountInfo.dr.length === 0}
+                        onChange={(selectedOptions: any) => {
+                          // Gestion de "Tout sélectionner/désélectionner"
+                          if (
+                            selectedOptions?.some((opt: any) => opt.value === "all")
+                          ) {
+                            if (accountInfo.secteur.length === secteurData.length) {
+                              // Tout désélectionner
+                              setAccountInfo((prev) => ({
+                                ...prev,
+                                secteur: [],
+                              }));
+                            } else {
+                              // Tout sélectionner
+                              const allSecteurs = availableSecteurs
+                                .filter((sect) => sect.value !== "all")
+                                .map((sect) => ({
+                                  value: sect.value,
+                                  label: sect.label,
+                                }));
+                              setAccountInfo((prev) => ({
+                                ...prev,
+                                secteur: allSecteurs,
+                              }));
+                            }
+                            return;
+                          }
 
-                      // Gestion normale des sélections
-                      const newSecteurs = selectedOptions || [];
-                      setAccountInfo((prev) => ({
-                        ...prev,
-                        secteur: newSecteurs,
-                      }));
-                    }}
-                    className="text-sm"
-                    styles={{
-                      control: (base) => ({
-                        ...base,
-                        borderColor: "#E5E7EB",
-                        borderRadius: "0.5rem",
-                        minHeight: "2.5rem",
-                        maxHeight: "100px",
-                        overflowY: "auto",
-                        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-                      }),
-                      menu: (base) => ({
-                        ...base,
-                        position: "absolute",
-                        width: "100%",
-                        zIndex: 1000,
-                      }),
-                      menuList: (base) => ({
-                        ...base,
-                        maxHeight: "150px",
-                        overflowY: "auto",
-                      }),
-                      option: (base, state) => ({
-                        ...base,
-                        backgroundColor:
-                          state.data.value === "all"
-                            ? "#F3F4F6"
-                            : base.backgroundColor,
-                        fontWeight:
-                          state.data.value === "all" ? "600" : "normal",
-                        color:
-                          state.data.value === "all" ? "#374151" : base.color,
-                        padding: "8px 12px",
-                      }),
-                      multiValue: (base) => ({
-                        ...base,
-                        backgroundColor: "#EFF6FF",
-                        borderRadius: "4px",
-                      }),
-                      multiValueLabel: (base) => ({
-                        ...base,
-                        color: "#2563EB",
-                        padding: "2px 6px",
-                      }),
-                      multiValueRemove: (base) => ({
-                        ...base,
-                        color: "#2563EB",
-                        ":hover": {
-                          backgroundColor: "#DBEAFE",
-                          color: "#1D4ED8",
-                        },
-                      }),
-                    }}
-                  />
-                </div>
+                          // Gestion normale des sélections
+                          const newSecteurs = selectedOptions || [];
+                          setAccountInfo((prev) => ({
+                            ...prev,
+                            secteur: newSecteurs,
+                          }));
+                        }}
+                        className="text-sm"
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            borderColor: "#E5E7EB",
+                            borderRadius: "0.5rem",
+                            minHeight: "2.5rem",
+                            maxHeight: "100px",
+                            overflowY: "auto",
+                            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+                          }),
+                          menu: (base) => ({
+                            ...base,
+                            position: "absolute",
+                            width: "100%",
+                            zIndex: 1000,
+                          }),
+                          menuList: (base) => ({
+                            ...base,
+                            maxHeight: "150px",
+                            overflowY: "auto",
+                          }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor:
+                              state.data.value === "all"
+                                ? "#F3F4F6"
+                                : base.backgroundColor,
+                            fontWeight:
+                              state.data.value === "all" ? "600" : "normal",
+                            color:
+                              state.data.value === "all" ? "#374151" : base.color,
+                            padding: "8px 12px",
+                          }),
+                          multiValue: (base) => ({
+                            ...base,
+                            backgroundColor: "#EFF6FF",
+                            borderRadius: "4px",
+                          }),
+                          multiValueLabel: (base) => ({
+                            ...base,
+                            color: "#2563EB",
+                            padding: "2px 6px",
+                          }),
+                          multiValueRemove: (base) => ({
+                            ...base,
+                            color: "#2563EB",
+                            ":hover": {
+                              backgroundColor: "#DBEAFE",
+                              color: "#1D4ED8",
+                            },
+                          }),
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

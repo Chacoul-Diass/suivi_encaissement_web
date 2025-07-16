@@ -380,15 +380,13 @@ export default function ViewModal({
       {" "}
       <div>
         <div
-          className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${
-            modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
+          className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${modalOpen ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
           onClick={handleOpenConfirmationModal}
         />
         <div
-          className={`fixed bottom-0 right-0 top-0 z-[51] w-full max-w-[600px] transform bg-white shadow-xl transition-transform duration-300 dark:bg-gray-800 ${
-            modalOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`fixed bottom-0 right-0 top-0 z-[51] w-full max-w-[600px] transform bg-white shadow-xl transition-transform duration-300 dark:bg-gray-800 ${modalOpen ? "translate-x-0" : "translate-x-full"
+            }`}
         >
           <div className="flex h-full flex-col">
             {/* Header */}
@@ -489,9 +487,9 @@ export default function ViewModal({
             {/* Content */}
             <div className="flex-1 space-y-6 overflow-y-auto p-6">
               {statutValidation === EStatutEncaissement.REJETE ||
-              statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
-              (selectedRow["Observation rejet"] &&
-                selectedRow["Observation rejet"].trim() !== "") ? (
+                statutValidation === EStatutEncaissement.RECLAMATION_REVERSES ||
+                (selectedRow["Observation rejet"] &&
+                  selectedRow["Observation rejet"].trim() !== "") ? (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/50">
                   <div className="flex flex-col gap-2">
                     <h3 className="font-semibold text-red-900 dark:text-red-200">
@@ -509,9 +507,9 @@ export default function ViewModal({
 
               {(statutValidation === EStatutEncaissement.RECLAMATION_TRAITES ||
                 statutValidation ===
-                  EStatutEncaissement.RECLAMATION_REVERSES) &&
-              selectedRow.observationReclamation &&
-              selectedRow.observationReclamation.trim() !== "" ? (
+                EStatutEncaissement.RECLAMATION_REVERSES) &&
+                selectedRow.observationReclamation &&
+                selectedRow.observationReclamation.trim() !== "" ? (
                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/50">
                   <div className="flex flex-col gap-2">
                     <h3 className="font-semibold text-blue-900 dark:text-blue-200">
@@ -549,21 +547,20 @@ export default function ViewModal({
                   </div>
                   <div>
                     <p
-                      className={`text-lg font-semibold ${
-                        selectedRow["Montant caisse (A)"] -
-                          selectedRow["Montant bordereau (B)"] <
+                      className={`text-lg font-semibold ${selectedRow["Montant caisse (A)"] -
+                        selectedRow["Montant bordereau (B)"] <
                         0
+                        ? "text-green-500"
+                        : selectedRow["Montant caisse (A)"] -
+                          selectedRow["Montant bordereau (B)"] >
+                          0
                           ? "text-red-500"
-                          : selectedRow["Montant caisse (A)"] -
-                              selectedRow["Montant bordereau (B)"] >
-                            0
-                          ? "text-green-500"
                           : "text-gray-900 dark:text-white"
-                      }`}
+                        }`}
                     >
                       {formatNumber(
                         selectedRow["Montant caisse (A)"] -
-                          selectedRow["Montant bordereau (B)"]
+                        selectedRow["Montant bordereau (B)"]
                       )}{" "}
                       F CFA
                     </p>
@@ -574,7 +571,7 @@ export default function ViewModal({
 
               {/* Observation Caisse */}
               {statutValidation ===
-              EStatutEncaissement.RECLAMATION_REVERSES ? null : (
+                EStatutEncaissement.RECLAMATION_REVERSES ? null : (
                 <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
@@ -637,9 +634,8 @@ export default function ViewModal({
                         <button
                           type="button"
                           onClick={onImageUpload}
-                          className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-primary dark:border-gray-600 dark:hover:border-primary ${
-                            isDragging ? "border-primary" : ""
-                          }`}
+                          className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-primary dark:border-gray-600 dark:hover:border-primary ${isDragging ? "border-primary" : ""
+                            }`}
                           {...dragProps}
                         >
                           <IconPaperclip className="h-5 w-5 text-gray-400" />
@@ -692,8 +688,8 @@ export default function ViewModal({
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       {formatNumber(
                         selectedRow["Montant bordereau (B)"] ||
-                          selectedRow.montantBordereauBanque ||
-                          0
+                        selectedRow.montantBordereauBanque ||
+                        0
                       )}{" "}
                       F CFA
                     </p>
@@ -706,9 +702,9 @@ export default function ViewModal({
                           <p className="text-lg font-semibold text-gray-900 dark:text-white">
                             {formatNumber(
                               selectedRow["Montant relevé (C)"] ||
-                                selectedRow.montantReleve ||
-                                selectedRow.validationEncaissement?.montantReleve ||
-                                0
+                              selectedRow.montantReleve ||
+                              selectedRow.validationEncaissement?.montantReleve ||
+                              0
                             )}{" "}
                             F CFA
                           </p>
@@ -738,13 +734,12 @@ export default function ViewModal({
                   </div>
                   <div>
                     <p
-                      className={`text-lg font-semibold ${
-                        calculateEcart() < 0
+                      className={`text-lg font-semibold ${calculateEcart() < 0
+                        ? "text-green-500"
+                        : calculateEcart() > 0
                           ? "text-red-500"
-                          : calculateEcart() > 0
-                          ? "text-green-500"
                           : "text-gray-900 dark:text-white"
-                      }`}
+                        }`}
                     >
                       {formatNumber(calculateEcart())} F CFA
                     </p>
@@ -795,7 +790,7 @@ export default function ViewModal({
 
               {/* Observation Banque */}
               {statutValidation ===
-              EStatutEncaissement.RECLAMATION_REVERSES ? null : (
+                EStatutEncaissement.RECLAMATION_REVERSES ? null : (
                 <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
@@ -818,7 +813,7 @@ export default function ViewModal({
                 </div>
               )}
 
-              
+
             </div>
 
             {/* Footer avec boutons fixes */}

@@ -589,11 +589,11 @@ export default function EditModal({
                     className={`text-lg font-semibold ${selectedRow["Montant caisse (A)"] -
                       selectedRow["Montant bordereau (B)"] <
                       0
-                      ? "text-red-500"
+                      ? "text-green-500"
                       : selectedRow["Montant caisse (A)"] -
                         selectedRow["Montant bordereau (B)"] >
                         0
-                        ? "text-green-500"
+                        ? "text-red-500"
                         : "text-gray-900 dark:text-white"
                       }`}
                   >
@@ -813,8 +813,8 @@ export default function EditModal({
                         montantBancaire = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
                       }
                       const ecart = selectedRow["Montant bordereau (B)"] - montantBancaire;
-                      if (ecart < 0) return "text-red-500";
-                      if (ecart > 0) return "text-green-500";
+                      if (ecart < 0) return "text-green-500";
+                      if (ecart > 0) return "text-red-500";
                       return "text-gray-900";
                     })()}`}
                   >

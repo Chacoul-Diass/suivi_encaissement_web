@@ -382,7 +382,7 @@ export default function GlobalFiltre({
                   const secteur = secteurs.find(
                     (secteur: any) => secteur.id === item
                   );
-                  name = secteur ? secteur.name : "Inconnu";
+                  name = secteur ? `${secteur.name} - ${secteur.code}` : "Inconnu";
                 } else {
                   name = item.libelle ? item.libelle : "Inconnu";
                 }
@@ -478,7 +478,10 @@ export default function GlobalFiltre({
             ) : (
               items
                 .filter((item: any) => {
-                  const val = item.libelle || item.name || "";
+                  let val = item.libelle || item.name || "";
+                  if (type === "secteurs") {
+                    val = `${item.name} - ${item.code}`;
+                  }
                   const searchValue =
                     searchQueries[type as keyof typeof searchQueries];
                   return val.toLowerCase().includes(searchValue.toLowerCase());
@@ -506,7 +509,10 @@ export default function GlobalFiltre({
                       disabled={(type === "caisses" || type === "banques" || type === "journeeCaisse") && selectedDRIds.length === 0 && selectedSecteurIds.length === 0}
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
-                      {item.libelle || item.name}
+                      {type === "secteurs"
+                        ? `${item.name} - ${item.code}`
+                        : item.libelle || item.name
+                      }
                     </span>
                   </label>
                 ))
