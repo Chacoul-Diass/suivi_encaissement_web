@@ -576,7 +576,7 @@ export default function EditModal({
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
                     {formatNumber(selectedRow["Montant caisse (A)"])} F CFA
                   </p>
-                  <p className="text-sm text-gray-500">Montant Caisses</p>
+                  <p className="text-sm text-gray-500">Montant Caisse</p>
                 </div>
                 <div>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -790,9 +790,9 @@ export default function EditModal({
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {formatNumber(selectedRow["Montant bordereau (B)"])} F CFA
+                    {formatNumber(selectedRow["Montant caisse (A)"])} F CFA
                   </p>
-                  <p className="text-sm text-gray-500">Montant Bordereaux</p>
+                  <p className="text-sm text-gray-500">Montant caisse</p>
                 </div>
                 <div>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -812,7 +812,7 @@ export default function EditModal({
                       } else {
                         montantBancaire = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
                       }
-                      const ecart = selectedRow["Montant bordereau (B)"] - montantBancaire;
+                      const ecart = selectedRow["Montant caisse (A)"] - montantBancaire;
                       if (ecart < 0) return "text-green-500";
                       if (ecart > 0) return "text-red-500";
                       return "text-gray-900";
@@ -825,7 +825,7 @@ export default function EditModal({
                       } else {
                         montantBancaire = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
                       }
-                      return formatNumber(selectedRow["Montant bordereau (B)"] - montantBancaire);
+                      return formatNumber(selectedRow["Montant caisse (A)"] - montantBancaire);
                     })()} F CFA
                   </p>
                   <p className="text-sm text-gray-500">Écart (B-C)</p>

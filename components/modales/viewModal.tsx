@@ -310,8 +310,8 @@ export default function ViewModal({
 
   const calculateEcart = () => {
     const montantB =
-      selectedRow["Montant bordereau (B)"] ||
-      selectedRow.montantBordereauBanque ||
+      selectedRow["Montant caisse (A)"] ||
+      selectedRow.montantRestitutionCaisse ||
       0;
     const montantC =
       selectedRow["Montant relevé (C)"] ||
@@ -687,13 +687,13 @@ export default function ViewModal({
                   <div>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       {formatNumber(
-                        selectedRow["Montant bordereau (B)"] ||
-                        selectedRow.montantBordereauBanque ||
+                        selectedRow["Montant caisse (A)"] ||
+                        selectedRow.montantRestitutionCaisse ||
                         0
                       )}{" "}
                       F CFA
                     </p>
-                    <p className="text-sm text-gray-500">Montant Bordereaux</p>
+                    <p className="text-sm text-gray-500">Montant caisse</p>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
