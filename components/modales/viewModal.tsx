@@ -576,7 +576,7 @@ export default function ViewModal({
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
                 <div className="mb-4">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                    Journée du <span className="font-semibold">{today}</span>
+                    Date d'encaissement du <span className="font-semibold">{selectedRow["Date Encais"]}</span>
                   </h3>
                   <p className="mt-1 text-xs text-gray-500">
                     Détail des montants
