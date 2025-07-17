@@ -99,6 +99,7 @@ interface Encaissement {
     currentValidation?: {
         numeroReclamation?: string | null;
         validationLevel?: string;
+        nextLevelValidation?: string;
         dateValidation?: string;
         dateCloture?: string | null;
         statutValidation?: number;

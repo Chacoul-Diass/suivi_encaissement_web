@@ -435,12 +435,13 @@ const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
                                             </h3>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
+
                                             <div>
                                                 <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
-                                                    Niveau de validation
+                                                    Niveau actuel
                                                 </p>
-                                                <p className={`mt-1 text-sm font-semibold ${getValidationLevelColor(encaissement.currentValidation.validationLevel)}`}>
-                                                    {encaissement.currentValidation.validationLevel}
+                                                <p className={`mt-1 text-sm font-semibold ${getValidationLevelColor(encaissement.currentValidation.nextLevelValidation)}`}>
+                                                    {encaissement.currentValidation.nextLevelValidation || "Aucun"}
                                                 </p>
                                             </div>
                                             <div>
@@ -451,22 +452,7 @@ const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
                                                     {encaissement.currentValidation.dateValidation ? new Date(encaissement.currentValidation.dateValidation).toLocaleString('fr-FR') : "Non spécifié"}
                                                 </p>
                                             </div>
-                                            <div>
-                                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
-                                                    Validateur
-                                                </p>
-                                                <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-200">
-                                                    {encaissement.currentValidation.user ? `${encaissement.currentValidation.user.firstname} ${encaissement.currentValidation.user.lastname}` : "Non spécifié"}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
-                                                    Profil validateur
-                                                </p>
-                                                <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-200">
-                                                    {encaissement.currentValidation.user?.profile || "Non spécifié"}
-                                                </p>
-                                            </div>
+
                                         </div>
                                     </div>
                                 )}
