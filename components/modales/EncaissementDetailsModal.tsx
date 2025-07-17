@@ -377,7 +377,7 @@ const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
                                                 Compte Banque
                                             </p>
                                             <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                                {encaissement.compteBanque || "Non spécifié"}
+                                                {encaissement.compteBanque && encaissement.compteBanque.trim() !== "" ? encaissement.compteBanque : "Non spécifié"}
                                             </p>
                                         </div>
                                         <div>
@@ -399,57 +399,33 @@ const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Détail des montants par type */}
-                                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                                    <div className="mb-4">
-                                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                                            Détail des montants par type
-                                        </h3>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                                Montant Caisse
-                                            </p>
-                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
-                                                {formatNumberSafe(encaissement.montantEspece)} F CFA
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                                Montant Cloturé
-                                            </p>
-                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
-                                                {formatNumberSafe(encaissement.montantBordereauBanqueEspece)} F CFA
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+
 
                                 {/* Validation actuelle */}
-                                {encaissement.currentValidation && (
+                                {(encaissement.currentValidation || (encaissement.validationEncaissement && encaissement.validationEncaissement.length > 0)) && (
                                     <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-700 dark:bg-emerald-900/20">
                                         <div className="mb-4">
                                             <h3 className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                                                Validation actuelle
+                                                Niveau de validation actuel
                                             </h3>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-3 gap-4">
 
                                             <div>
                                                 <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
                                                     Niveau actuel
                                                 </p>
-                                                <p className={`mt-1 text-sm font-semibold ${getValidationLevelColor(encaissement.currentValidation.nextLevelValidation)}`}>
-                                                    {encaissement.currentValidation.nextLevelValidation || "Aucun"}
+                                                <p className={`mt-1 text-sm font-semibold ${getValidationLevelColor(encaissement.currentValidation?.nextLevelValidation || encaissement.validationEncaissement?.[0]?.validationLevel)}`}>
+                                                    {encaissement.currentValidation?.nextLevelValidation || encaissement.validationEncaissement?.[0]?.validationLevel || "Aucun"}
                                                 </p>
                                             </div>
+
                                             <div>
                                                 <p className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
                                                     Date de validation
                                                 </p>
                                                 <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-200">
-                                                    {encaissement.currentValidation.dateValidation ? new Date(encaissement.currentValidation.dateValidation).toLocaleString('fr-FR') : "Non spécifié"}
+                                                    {(encaissement.currentValidation?.dateValidation || encaissement.validationEncaissement?.[0]?.dateValidation) ? new Date(encaissement.currentValidation?.dateValidation || encaissement.validationEncaissement?.[0]?.dateValidation).toLocaleString('fr-FR') : "Non spécifié"}
                                                 </p>
                                             </div>
 
@@ -468,7 +444,7 @@ const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
                                         <div className="space-y-3">
                                             {encaissement.validationEncaissement.map((validation: any, index: number) => (
                                                 <div key={validation.id || index} className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700">
-                                                    <div className="grid grid-cols-3 gap-3">
+                                                    <div className="grid grid-cols-4 gap-3">
                                                         <div>
                                                             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                                                                 Niveau
@@ -491,6 +467,14 @@ const EncaissementDetailsModal: React.FC<EncaissementDetailsModalProps> = ({
                                                             </p>
                                                             <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                                                 {validation.user ? `${validation.user.firstname} ${validation.user.lastname}` : "Non spécifié"}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                                Statut
+                                                            </p>
+                                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                                                                {validation.statutValidation || "Non spécifié"}
                                                             </p>
                                                         </div>
                                                     </div>

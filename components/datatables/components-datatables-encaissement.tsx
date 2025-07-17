@@ -1851,11 +1851,11 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Légende :</span>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-3 bg-primary border-l-2 border-l-primary rounded-sm"></div>
-                    <span className="text-xs text-gray-600 dark:text-gray-300">RC - Responsable Comptable</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-300">AGC/RGC - Assistant Gestion Comptable / Responsable Gestion Comptable</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-3 bg-warning border-l-2 border-l-warning rounded-sm"></div>
-                    <span className="text-xs text-gray-600 dark:text-gray-300">DR - Direction Régionale</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-300">DR - Directeur Régional</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-3 bg-success border-l-2 border-l-success rounded-sm"></div>

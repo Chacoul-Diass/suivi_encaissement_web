@@ -22,6 +22,7 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
 import Dropdown from "../dropdown";
+import { EStatutEncaissement } from "@/utils/enums";
 
 interface FilterEtatEncaissementsProps {
     initialFilters: {
@@ -31,6 +32,7 @@ interface FilterEtatEncaissementsProps {
         caisse: string[];
         produit: string[];
         modeReglement: string[];
+        statut: number[]; // Ajout du filtre par statut
         startDate: string;
         endDate: string;
         dailyCaisse: string[];
@@ -54,6 +56,7 @@ const FilterEtatEncaissements = ({
         caisse: initialFilters.caisse || [],
         produit: initialFilters.produit || [],
         modeReglement: initialFilters.modeReglement || [],
+        statut: initialFilters.statut || [], // Ajout du filtre par statut
         startDate: initialFilters.startDate || "",
         endDate: initialFilters.endDate || "",
         dailyCaisse: initialFilters.dailyCaisse || [],
@@ -68,6 +71,7 @@ const FilterEtatEncaissements = ({
         caisse: "",
         produit: "",
         modeReglement: "",
+        statut: "",
     });
 
     // État pour les éléments sélectionnés (sous forme d'objets pour une meilleure gestion)
@@ -77,6 +81,7 @@ const FilterEtatEncaissements = ({
         caisse: initialFilters.caisse.map(id => ({ value: id, label: "" })),
         produit: initialFilters.produit.map(id => ({ value: id, label: "" })),
         modeReglement: initialFilters.modeReglement.map(id => ({ value: id, label: "" })),
+        statut: initialFilters.statut.map(id => ({ value: id.toString(), label: "" })),
     });
 
     // État pour afficher/masquer le sélecteur de date
@@ -124,6 +129,18 @@ const FilterEtatEncaissements = ({
             })) || []
     );
 
+    // Définition des statuts disponibles
+    const statuts = [
+        { value: EStatutEncaissement.EN_ATTENTE.toString(), label: "En attente" },
+        { value: EStatutEncaissement.REJETE.toString(), label: "Rejeté" },
+        { value: EStatutEncaissement.TRAITE.toString(), label: "Traité" },
+        { value: EStatutEncaissement.VALIDE.toString(), label: "Validé" },
+        { value: EStatutEncaissement.RECLAMATION_REVERSES.toString(), label: "Réclamation chargée" },
+        { value: EStatutEncaissement.CLOTURE.toString(), label: "Clôturé" },
+        { value: EStatutEncaissement.RECLAMATION_TRAITES.toString(), label: "Réclamation traitée" },
+        { value: EStatutEncaissement.DFC.toString(), label: "DFC" },
+    ];
+
     // Fermer le sélecteur de date quand on clique en dehors
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -169,13 +186,19 @@ const FilterEtatEncaissements = ({
             return { value: item.value, label: found?.label || item.label || "Inconnu" };
         });
 
+        const updatedStatuts = selectedItems.statut.map(item => {
+            const found = statuts.find(s => s.value === item.value);
+            return { value: item.value, label: found?.label || item.label || "Inconnu" };
+        });
+
         // Vérifier si une mise à jour est nécessaire pour éviter une boucle infinie
         const needsUpdate =
             JSON.stringify(updatedDirections) !== JSON.stringify(selectedItems.directionRegional) ||
             JSON.stringify(updatedBanques) !== JSON.stringify(selectedItems.banque) ||
             JSON.stringify(updatedCaisses) !== JSON.stringify(selectedItems.caisse) ||
             JSON.stringify(updatedProduits) !== JSON.stringify(selectedItems.produit) ||
-            JSON.stringify(updatedModes) !== JSON.stringify(selectedItems.modeReglement);
+            JSON.stringify(updatedModes) !== JSON.stringify(selectedItems.modeReglement) ||
+            JSON.stringify(updatedStatuts) !== JSON.stringify(selectedItems.statut);
 
         if (needsUpdate) {
             setSelectedItems({
@@ -184,6 +207,7 @@ const FilterEtatEncaissements = ({
                 caisse: updatedCaisses,
                 produit: updatedProduits,
                 modeReglement: updatedModes,
+                statut: updatedStatuts, // Mettre à jour les labels des statuts
             });
         }
     }, [directionRegionals, banques, caisses, produits, modesReglement]);
@@ -191,7 +215,7 @@ const FilterEtatEncaissements = ({
     // Gestion du changement des filtres via les dropdowns
     const toggleSelection = (
         item: { value: string, label: string },
-        type: "directionRegional" | "banque" | "caisse" | "produit" | "modeReglement"
+        type: "directionRegional" | "banque" | "caisse" | "produit" | "modeReglement" | "statut"
     ) => {
         setSelectedItems(prev => {
             const isSelected = prev[type].some(selected => selected.value === item.value);
@@ -209,7 +233,7 @@ const FilterEtatEncaissements = ({
 
     // Sélection/désélection de tous les éléments d'un type
     const toggleAll = (
-        type: "directionRegional" | "banque" | "caisse" | "produit" | "modeReglement",
+        type: "directionRegional" | "banque" | "caisse" | "produit" | "modeReglement" | "statut",
         items: { value: string, label: string }[],
         isAllSelected: boolean
     ) => {
@@ -239,6 +263,7 @@ const FilterEtatEncaissements = ({
             caisse: selectedItems.caisse.map(item => item.value),
             produit: selectedItems.produit.map(item => item.value),
             modeReglement: selectedItems.modeReglement.map(item => item.value),
+            statut: selectedItems.statut.map(item => parseInt(item.value)), // Conversion en nombre
         };
 
         console.log("Filtres appliqués:", updatedFilters);
@@ -253,6 +278,7 @@ const FilterEtatEncaissements = ({
             caisse: [],
             produit: [],
             modeReglement: [],
+            statut: [], // Ajout du reset pour statut
         });
 
         setFilters({
@@ -262,6 +288,7 @@ const FilterEtatEncaissements = ({
             caisse: [],
             produit: [],
             modeReglement: [],
+            statut: [], // Ajout du reset pour statut
             startDate: "",
             endDate: "",
             dailyCaisse: [],
@@ -275,6 +302,7 @@ const FilterEtatEncaissements = ({
             caisse: "",
             produit: "",
             modeReglement: "",
+            statut: "",
         });
 
         onApplyFilters({
@@ -284,6 +312,7 @@ const FilterEtatEncaissements = ({
             caisse: [],
             produit: [],
             modeReglement: [],
+            statut: [], // Ajout du reset pour statut
             startDate: "",
             endDate: "",
             dailyCaisse: [],
@@ -297,7 +326,7 @@ const FilterEtatEncaissements = ({
     // Fonction pour rendre un dropdown avec recherche
     const renderDropdown = (
         label: React.ReactNode,
-        type: "directionRegional" | "banque" | "caisse" | "produit" | "modeReglement",
+        type: "directionRegional" | "banque" | "caisse" | "produit" | "modeReglement" | "statut",
         items: { value: string, label: string }[],
         selected: { value: string, label: string }[]
     ) => (
@@ -533,7 +562,7 @@ const FilterEtatEncaissements = ({
                 </div>
 
                 {/* Dropdowns avec icônes */}
-                <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
                     <div className="w-full">
                         {renderDropdown(
                             <>
@@ -591,6 +620,18 @@ const FilterEtatEncaissements = ({
                             "modeReglement",
                             modesReglement,
                             selectedItems.modeReglement
+                        )}
+                    </div>
+
+                    <div className="w-full">
+                        {renderDropdown(
+                            <>
+                                <IconFilter className="h-4 w-4 text-gray-400" />
+                                <span>Statut</span>
+                            </>,
+                            "statut",
+                            statuts,
+                            selectedItems.statut
                         )}
                     </div>
                 </div>
