@@ -1854,8 +1854,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-8 bg-primary border-l-6 border-l-primary rounded-sm shadow-sm"></div>
                     <div>
-                      <span className="text-sm font-semibold text-gray-800 dark:text-white-dark">AGC</span>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Agence Générale Comptable</p>
+                      <span className="text-sm font-semibold text-gray-800 dark:text-white-dark">RC</span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Responsable Comptable</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
