@@ -9,7 +9,7 @@ import { TAppDispatch, TRootState } from "@/store";
 import { fetchDataReleve } from "@/store/reducers/encaissements/releve.slice";
 import { submitEncaissementValidation } from "@/store/reducers/encaissements/soumission.slice";
 import { sendEmail } from "@/store/reducers/mail/mail.slice";
-import { EStatutEncaissement } from "@/utils/enums";
+import { EStatutEncaissement, EProfileLevel } from "@/utils/enums";
 import { Paginations } from "@/utils/interface";
 import { ToastError, ToastSuccess } from "@/utils/toast";
 import getUserPermission from "@/utils/user-info";
@@ -128,6 +128,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
   handleLimitChange,
 }: EncaissementComptableProps): React.ReactElement => {
     const dispatch = useDispatch<TAppDispatch>();
+
+    // Récupérer les informations de l'utilisateur connecté au niveau du composant
+    const user = useSelector((state: TRootState) => state.auth?.user);
 
     const [search, setSearch] = useState("");
     const [hideCols, setHideCols] = useState<string[]>([]);
@@ -851,12 +854,19 @@ const ComponentsDatatablesColumnChooser: React.FC<
         accessor: "numeroBordereau",
         title: "Numéro Bordereau",
         sortable: true,
-        render: ({ numeroBordereau, validationEncaissement }: DataReverse) => {
+        render: ({ numeroBordereau, validationEncaissement, observationRejete, "Observation rejet": observationRejet, statutValidation: encaissementStatut }: DataReverse) => {
           // Fonction pour déterminer la couleur de bordure selon le validationLevel
           const getBorderColor = () => {
-            // Si c'est un encaissement rejeté (statutValidation === 1)
-            if (statutValidation === 1) {
+            // Si c'est un encaissement rejeté (encaissementStatut === 1)
+            if (encaissementStatut === 1) {
               const validationLevel = validationEncaissement?.validationLevel;
+              console.log("🔍 Debug getBorderColor - statut 1 (rejeté):", {
+                validationLevel,
+                validationEncaissement,
+                encaissementStatut,
+                observationRejete,
+                observationRejet
+              });
               if (validationLevel) {
                 switch (validationLevel.toUpperCase()) {
                   case "AGC":
@@ -868,8 +878,61 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   default:
                     return "border-l-8 border-l-red-500"; // Rouge par défaut - plus large
                 }
+              } else {
+                console.log("🔍 Pas de validationLevel trouvé pour encaissement rejeté");
+                // Retourner une bordure par défaut même sans validationLevel
+                return "border-l-8 border-l-red-500"; // Rouge par défaut
               }
             }
+
+            // Si c'est un encaissement vérifié (encaissementStatut === 2) avec une observation de rejet
+            if (encaissementStatut === 2 && observationRejete && observationRejete.trim() !== "") {
+              return "border-l-8 border-l-secondary"; // Bleu - plus large
+            }
+
+            // Si c'est un encaissement traité (encaissementStatut === 3) avec observationRejete
+            if (encaissementStatut === 3 && observationRejete && observationRejete.trim() !== "") {
+              const validationLevel = validationEncaissement?.validationLevel;
+              console.log("🔍 Debug getBorderColor - statut 3:", {
+                validationLevel,
+                validationEncaissement,
+                statutValidation,
+                observationRejete
+              });
+
+              // Si pas de validationLevel, retourner une bordure par défaut
+              if (!validationLevel) {
+                console.log("🔍 Pas de validationLevel trouvé, bordure par défaut");
+                return "border-l-8 border-l-gray-400"; // Gris par défaut
+              }
+
+              // Déterminer la couleur selon le validationLevel
+              switch (validationLevel.toUpperCase()) {
+                case "COMPTABLE":
+                  return "border-l-8 border-l-secondary"; // Bleu
+                case "RGC/AGC":
+                case "AGC":
+                  return "border-l-8 border-l-primary"; // Rouge
+                default:
+                  console.log("🔍 Niveau non reconnu:", validationLevel);
+                  return ""; // Pas de bordure pour les autres niveaux
+              }
+            }
+
+            // Si c'est un encaissement DFC (encaissementStatut === 7) avec validationLevel DR
+            if (encaissementStatut === 7) {
+              const validationLevel = validationEncaissement?.validationLevel;
+              console.log("🔍 Debug getBorderColor - statut 7:", {
+                validationLevel,
+                validationEncaissement,
+                statutValidation
+              });
+
+              if (validationLevel && validationLevel.toUpperCase() === "DR") {
+                return "border-l-8 border-l-warning"; // Jaune
+              }
+            }
+
             return "";
           };
 
@@ -1502,10 +1565,67 @@ const ComponentsDatatablesColumnChooser: React.FC<
         buttonsStyling: false,
       });
 
+      // Utiliser les données de l'utilisateur connecté (déjà récupérées au niveau du composant)
+      const userLevel = user?.profile?.level;
+
+      // Fonction pour déterminer le statut de validation selon le niveau de l'utilisateur
+      // UNIQUEMENT pour les encaissements rejetés (statut 1)
+      const getStatutValidationByUserLevel = (level: number): number => {
+        switch (level) {
+          case EProfileLevel.COMPTABLE: // 5 (COMPTABLE)
+            return EStatutEncaissement.TRAITE; // 2 (AGC)
+          case EProfileLevel.RC: // 4 (RC/AGC)
+            return EStatutEncaissement.VALIDE; // 3 (DR)
+          case EProfileLevel.DR: // 3 (DR)
+            return EStatutEncaissement.DFC; // 7 (DFC)
+          default:
+            // Par défaut, retourner TRAITE si le niveau n'est pas reconnu
+            return EStatutEncaissement.TRAITE;
+        }
+      };
+
+      // Déterminer le statut de validation approprié
+      // Si c'est un encaissement rejeté (statut 1), utiliser la logique spécifique
+      // Sinon, utiliser le statut TRAITE par défaut
+      const newStatutValidation = statutValidation === EStatutEncaissement.REJETE
+        ? getStatutValidationByUserLevel(userLevel)
+        : EStatutEncaissement.TRAITE;
+
+      console.log("🔍 === RETRANSMISSION ENCAISSEMENT ===");
+      console.log("👤 Utilisateur connecté:", {
+        nom: `${user?.firstname} ${user?.lastname}`,
+        profil: user?.profile?.name,
+        level: userLevel
+      });
+      console.log("📄 Encaissement:", {
+        id: encaissementId,
+        montantReleve,
+        statutActuel: statutValidation
+      });
+      console.log("⚖️ Statut de validation déterminé:", newStatutValidation);
+      console.log("🎯 Logique spéciale appliquée:", statutValidation === EStatutEncaissement.REJETE ? "OUI (encaissement rejeté)" : "NON (statut par défaut)");
+      console.log("=====================================");
+
+      // Déterminer le niveau de destination selon le niveau de l'utilisateur
+      const getNiveauDestination = (level: number): string => {
+        switch (level) {
+          case EProfileLevel.COMPTABLE: // 5
+            return "AGC";
+          case EProfileLevel.RC: // 4
+            return "DR";
+          case EProfileLevel.DR: // 3
+            return "DFC";
+          default:
+            return "niveau suivant";
+        }
+      };
+
+      const niveauDestination = getNiveauDestination(userLevel);
+
       await swalWithBootstrapButtons
         .fire({
           title: "Êtes-vous sûr de retransmettre ?",
-          text: "Cette action retransmettra l'encaissement.",
+          text: `Cette action retransmettra l'encaissement rejeté vers le niveau ${niveauDestination}.`,
           icon: "warning",
           showCancelButton: true,
           confirmButtonText: "Confirmer",
@@ -1515,10 +1635,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
         })
         .then((result) => {
           if (result.isConfirmed) {
-            // Payload à soumettre
+            // Payload à soumettre avec le statut de validation approprié
             const payload: any = {
               encaissementId,
-              statutValidation: EStatutEncaissement.TRAITE,
+              statutValidation: newStatutValidation,
             };
             if (typeof montantReleve !== "undefined") {
               payload.montantReleve = montantReleve;
@@ -1539,7 +1659,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
               .then(async (response) => {
                 swalWithBootstrapButtons.fire(
                   "Retransmis",
-                  "Votre encaissement a été retransmis avec succès.",
+                  `Votre encaissement rejeté a été retransmis avec succès vers le niveau ${niveauDestination}.`,
                   "success"
                 );
 
@@ -1844,26 +1964,69 @@ const ComponentsDatatablesColumnChooser: React.FC<
               </div>
             </div>
 
+
+
+
+
+
+
             {/* Légende des bordures colorées */}
-            {statutValidation === 1 && (
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 dark:bg-[#1b2e4b] dark:border-[#253b5c]">
-                <div className="flex items-center gap-4">
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Légende :</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-3 bg-primary border-l-2 border-l-primary rounded-sm"></div>
-                    <span className="text-xs text-gray-600 dark:text-gray-300">AGC/RGC - Assistant Gestion Comptable / Responsable Gestion Comptable</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-3 bg-warning border-l-2 border-l-warning rounded-sm"></div>
-                    <span className="text-xs text-gray-600 dark:text-gray-300">DR - Directeur Régional</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-3 bg-success border-l-2 border-l-success rounded-sm"></div>
-                    <span className="text-xs text-gray-600 dark:text-gray-300">DFC - Direction Financière</span>
+            {(statutValidation === 1 ||
+              (statutValidation === 2 && (filteredData?.some((item: any) => item.observationRejete && item.observationRejete.trim() !== "") || data?.some((item: any) => item.observationRejete && item.observationRejete.trim() !== ""))) ||
+              (statutValidation === 3 && (filteredData?.some((item: any) => item.observationRejete && item.observationRejete.trim() !== "") || data?.some((item: any) => item.observationRejete && item.observationRejete.trim() !== ""))) ||
+              (statutValidation === 7 && (filteredData?.some((item: any) => item.validationEncaissement?.validationLevel === "DR") || data?.some((item: any) => item.validationEncaissement?.validationLevel === "DR")))
+            ) && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 dark:bg-[#1b2e4b] dark:border-[#253b5c]">
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Légende :</span>
+
+                    {/* Légende pour les encaissements rejetés */}
+                    {statutValidation === 1 && (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-3 bg-primary border-l-2 border-l-primary rounded-sm"></div>
+                          <span className="text-xs text-gray-600 dark:text-gray-300">AGC/RGC - Assistant Gestion Comptable / Responsable Gestion Comptable</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-3 bg-warning border-l-2 border-l-warning rounded-sm"></div>
+                          <span className="text-xs text-gray-600 dark:text-gray-300">DR - Directeur Régional</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-3 bg-success border-l-2 border-l-success rounded-sm"></div>
+                          <span className="text-xs text-gray-600 dark:text-gray-300">DFC - Direction Financière</span>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Légende pour les encaissements vérifiés avec observation de rejet */}
+                    {statutValidation === 2 && (filteredData?.some((item: any) => item.observationRejete && item.observationRejete.trim() !== "") || data?.some((item: any) => item.observationRejete && item.observationRejete.trim() !== "")) && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-3 bg-secondary border-l-2 border-l-secondary rounded-sm"></div>
+                        <span className="text-xs text-gray-600 dark:text-gray-300">Rejet traité par comptable</span>
+                      </div>
+                    )}
+
+                    {/* Légende pour les encaissements traités selon le validationLevel */}
+                    {statutValidation === 3 && (filteredData?.some((item: any) => item.observationRejete && item.observationRejete.trim() !== "") || data?.some((item: any) => item.observationRejete && item.observationRejete.trim() !== "")) && (
+                      <>
+
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-3 bg-primary border-l-2 border-l-primary rounded-sm"></div>
+                          <span className="text-xs text-gray-600 dark:text-gray-300">Traités par RGC/AGC</span>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Légende pour les encaissements DFC avec validationLevel DR */}
+                    {statutValidation === 7 && (filteredData?.some((item: any) => item.validationEncaissement?.validationLevel === "DR") || data?.some((item: any) => item.validationEncaissement?.validationLevel === "DR")) && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-3 bg-warning border-l-2 border-l-warning rounded-sm"></div>
+                        <span className="text-xs text-gray-600 dark:text-gray-300">Traités par DR</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {modalOpen && selectedRow && (
               <div>
