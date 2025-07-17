@@ -55,6 +55,7 @@ export interface DataReverse {
   montantBordereauBanque: number;
   ecartCaisseBanque: number;
   validationEncaissement: any | null;
+  level?: number; // Ajout du niveau de l'encaissement
 
   documents?: Array<{
     id: number;
@@ -236,6 +237,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
           montantBordereauBanque: item.montantBordereauBanque || 0,
           ecartCaisseBanque: item.ecartCaisseBanque || 0,
           validationEncaissement: item.validationEncaissement,
+          level: item.level, // Ajout du niveau de l'encaissement
         }));
         return mappedData;
       },
@@ -246,6 +248,11 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     useEffect(() => {
       const allData = filterAndMapData(data, statutValidation);
+      console.log("📊 Données mappées avec niveaux:", allData.map(item => ({
+        id: item.id,
+        numeroBordereau: item.numeroBordereau,
+        level: item.level
+      })));
       setRecordsData(allData);
     }, [data, filterAndMapData, statutValidation]);
 
@@ -1482,7 +1489,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         });
     };
 
-    const showAlertRamener = async (
+    const showAlertRetransmettre = async (
       encaissementId: number,
       montantReleve?: number
     ) => {
@@ -1497,8 +1504,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
       await swalWithBootstrapButtons
         .fire({
-          title: "Êtes-vous sûr de ramener a vérifié ?",
-          text: "Cette action ramenera l'encaissement.",
+          title: "Êtes-vous sûr de retransmettre ?",
+          text: "Cette action retransmettra l'encaissement.",
           icon: "warning",
           showCancelButton: true,
           confirmButtonText: "Confirmer",
@@ -1531,8 +1538,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
               .unwrap()
               .then(async (response) => {
                 swalWithBootstrapButtons.fire(
-                  "Validé",
-                  "Votre encaissement a été ramené avec succès.",
+                  "Retransmis",
+                  "Votre encaissement a été retransmis avec succès.",
                   "success"
                 );
 
@@ -1839,38 +1846,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
             {/* Légende des bordures colorées */}
             {statutValidation === 1 && (
-              <div className="mt-6 p-5 bg-white rounded-xl border border-gray-200 shadow-sm dark:bg-[#1b2e4b] dark:border-[#253b5c]">
-                <div className="text-center mb-4">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <svg className="w-5 h-5 text-danger" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    <h6 className="text-sm font-semibold text-gray-800 dark:text-white-dark">
-                      Acteurs ayant rejeté l'encaissement
-                    </h6>
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 dark:bg-[#1b2e4b] dark:border-[#253b5c]">
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Légende :</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-3 bg-primary border-l-2 border-l-primary rounded-sm"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-300">RC - Responsable Comptable</span>
                   </div>
-                </div>
-                <div className="flex justify-center gap-8">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-8 bg-primary border-l-6 border-l-primary rounded-sm shadow-sm"></div>
-                    <div>
-                      <span className="text-sm font-semibold text-gray-800 dark:text-white-dark">RC</span>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Responsable Comptable</p>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-3 bg-warning border-l-2 border-l-warning rounded-sm"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-300">DR - Direction Régionale</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-8 bg-warning border-l-6 border-l-warning rounded-sm shadow-sm"></div>
-                    <div>
-                      <span className="text-sm font-semibold text-gray-800 dark:text-white-dark">DR</span>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Direction Régionale</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-8 bg-success border-l-6 border-l-success rounded-sm shadow-sm"></div>
-                    <div>
-                      <span className="text-sm font-semibold text-gray-800 dark:text-white-dark">DFC</span>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Direction Financière</p>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-3 bg-success border-l-2 border-l-success rounded-sm"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-300">DFC - Direction Financière</span>
                   </div>
                 </div>
               </div>
@@ -1935,7 +1924,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     handleRasChecked2Change={handleRasChecked2Change}
                     showAlertRejete={showAlertRejete}
                     showAlertValide={showAlertValide}
-                    showAlertRamener={showAlertRamener}
+                    showAlertRetransmettre={showAlertRetransmettre}
                     today={today}
                     setPreuvePhotoModal={setPreuvePhotoModal}
                     handleSendEmail={handleSendEmail}

@@ -15,7 +15,7 @@ import IconPencil from "../icon/icon-pencil";
 import IconUser from "../icon/icon-user";
 import { EStatutEncaissement } from "@/utils/enums";
 import AskToRequestModal from "./askToRequestModal";
-import ImageUploading, { ImageListType } from "react-images-uploading";
+import { ImageListType } from "react-images-uploading";
 import { toast } from "react-hot-toast";
 import { submitEncaissementValidation } from "@/store/reducers/encaissements/soumission.slice";
 import { handleApiError } from "@/utils/apiErrorHandler";
@@ -42,7 +42,7 @@ interface ViewModalProps {
   setObservationBanque: any;
   showAlertRejete: any;
   showAlertValide: any;
-  showAlertRamener: any;
+  showAlertRetransmettre: any;
   today: any;
   setPreuvePhotoModal: any;
   handleSubmit: (updatedRow: any) => void;
@@ -60,6 +60,7 @@ interface ViewModalProps {
   onChange2: (imageList: ImageListType) => void;
   observationReclamation: any;
   setObservationReclamation: any;
+
 }
 
 export default function ViewModal({
@@ -83,7 +84,7 @@ export default function ViewModal({
   setObservationBanque,
   showAlertRejete,
   showAlertValide,
-  showAlertRamener,
+  showAlertRetransmettre,
   today,
   setPreuvePhotoModal,
   handleSendEmail,
@@ -109,12 +110,37 @@ export default function ViewModal({
   const isComptable = () => {
     return user?.profile?.name === "COMPTABLE";
   };
+
+  // Fonction pour vérifier si l'utilisateur peut modifier (niveaux différents)
+  const canModify = () => {
+    const userLevel = user?.profile?.level;
+    const encaissementLevel = selectedRow?.level;
+
+    console.log("🔍 === VÉRIFICATION DES NIVEAUX ===");
+    console.log("👤 Utilisateur connecté:", {
+      nom: `${user?.firstname} ${user?.lastname}`,
+      profil: user?.profile?.name,
+      level: userLevel
+    });
+    console.log("📄 Encaissement:", {
+      id: selectedRow?.id,
+      numeroBordereau: selectedRow?.numeroBordereau,
+      level: encaissementLevel
+    });
+    console.log("⚖️ Comparaison des niveaux:", {
+      userLevel,
+      encaissementLevel,
+      canModify: userLevel !== encaissementLevel
+    });
+    console.log("=====================================");
+
+    return userLevel !== encaissementLevel;
+  };
   const [askToRequestModalOpen, setAskToRequestModalOpen] = useState(false);
   const [isEditingMontantReleve, setIsEditingMontantReleve] = useState(false);
   const [editedMontantReleve, setEditedMontantReleve] = useState("");
   const [isMontantLoading, setIsMontantLoading] = useState(false);
   const dispatch = useDispatch<TAppDispatch>();
-  const maxNumber = 69;
 
   useEffect(() => {
     if (!modalOpen) {
@@ -174,10 +200,10 @@ export default function ViewModal({
     {
       statut: 1,
       buttons: [
-        ...(isComptable() ? [{
-          label: "Ramener",
+        ...(canModify() ? [{
+          label: "Retransmettre",
           className: "btn btn-success w-full",
-          onClick: () => showAlertRamener(selectedRow.id, selectedRow["Montant relevé (C)"] || selectedRow.montantReleve || 0),
+          onClick: () => showAlertRetransmettre(selectedRow.id, selectedRow["Montant relevé (C)"] || selectedRow.montantReleve || 0),
         }] : []),
         {
           label: "Preuve photo",
@@ -339,9 +365,7 @@ export default function ViewModal({
   };
 
   // Fonction pour gérer le changement d'images
-  const handleImageChange = (imageList: ImageListType) => {
-    onChange2(imageList);
-  };
+
 
   const handleMontantReleveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
@@ -613,7 +637,7 @@ export default function ViewModal({
                     className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                     rows={4}
                     placeholder="Saisir votre observation ici"
-                    disabled={statutValidation !== 1}
+                    disabled={statutValidation !== 1 || !canModify()}
                     value={observationCaisse}
                     onChange={(e) => setObservationCaisse(e.target.value)}
                   />
@@ -621,7 +645,7 @@ export default function ViewModal({
               )}
 
               {/* Image Upload */}
-              {statutValidation === EStatutEncaissement.REJETE && isComptable() && (
+              {statutValidation === EStatutEncaissement.REJETE && canModify() && (
                 <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
@@ -629,13 +653,16 @@ export default function ViewModal({
                         Importer le coupon
                       </h3>
                       <p className="mt-1 text-xs text-gray-500">
-                        Format accepté: Images
+                        Format accepté: Images (JPG, PNG, GIF) et PDF - Max 10 fichiers, 5 Mo par fichier
                       </p>
                     </div>
                     {images2.length > 0 && (
                       <button
                         type="button"
-                        onClick={() => setImages2([])}
+                        onClick={() => {
+                          setImages2([]);
+                          toast.success('Tous les fichiers ont été supprimés');
+                        }}
                         className="text-sm text-red-500 hover:text-red-600"
                       >
                         Supprimer tout
@@ -643,59 +670,105 @@ export default function ViewModal({
                     )}
                   </div>
 
-                  <ImageUploading
-                    multiple
-                    value={images2}
-                    onChange={handleImageChange}
-                    maxNumber={maxNumber}
-                  >
-                    {({
-                      imageList,
-                      onImageUpload,
-                      onImageRemove,
-                      isDragging,
-                      dragProps,
-                    }) => (
-                      <div className="space-y-4">
-                        <button
-                          type="button"
-                          onClick={onImageUpload}
-                          className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-primary dark:border-gray-600 dark:hover:border-primary ${isDragging ? "border-primary" : ""
-                            }`}
-                          {...dragProps}
-                        >
-                          <IconPaperclip className="h-5 w-5 text-gray-400" />
-                          <span className="text-sm text-gray-600 dark:text-gray-300">
-                            Cliquez ou glissez vos images ici
-                          </span>
-                        </button>
+                  <div className="space-y-4">
+                    {/* Input file caché */}
+                    <input
+                      type="file"
+                      id="file-upload"
+                      multiple
+                      accept="image/*,.pdf,application/pdf"
+                      className="hidden"
+                      disabled={images2.length >= 10}
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
 
-                        {imageList.length > 0 && (
-                          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                            {imageList.map((image, index) => (
-                              <div
-                                key={index}
-                                className="group relative aspect-square overflow-hidden rounded-lg"
-                              >
-                                <img
-                                  src={image.dataURL}
-                                  alt={`Image ${index + 1}`}
-                                  className="h-full w-full object-cover"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => onImageRemove(index)}
-                                  className="absolute right-2 top-2 rounded-full bg-white/80 p-1 opacity-0 transition-opacity group-hover:opacity-100 dark:bg-black/80"
-                                >
-                                  <IconX className="h-4 w-4" />
-                                </button>
+                        // Vérifier le nombre total de fichiers
+                        if (images2.length + files.length > 10) {
+                          toast.error(`Vous ne pouvez pas ajouter plus de 10 fichiers au total. Vous avez déjà ${images2.length} fichier(s).`);
+                          e.target.value = '';
+                          return;
+                        }
+
+                        // Vérifier la taille de chaque fichier (5 Mo = 5 * 1024 * 1024 bytes)
+                        const maxSize = 5 * 1024 * 1024; // 5 Mo en bytes
+                        const oversizedFiles = files.filter(file => file.size > maxSize);
+
+                        if (oversizedFiles.length > 0) {
+                          const fileNames = oversizedFiles.map(f => f.name).join(', ');
+                          toast.error(`Les fichiers suivants dépassent 5 Mo : ${fileNames}`);
+                          e.target.value = '';
+                          return;
+                        }
+
+                        const newImages = files.map((file) => ({
+                          file,
+                          dataURL: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+                        }));
+
+                        setImages2([...images2, ...newImages]);
+                        toast.success(`${files.length} fichier(s) ajouté(s) avec succès`);
+                        e.target.value = ''; // Réinitialiser l'input
+                      }}
+                    />
+
+                    {/* Bouton d'upload stylisé */}
+                    <label
+                      htmlFor="file-upload"
+                      className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 transition-colors ${images2.length >= 10
+                        ? 'border-gray-200 bg-gray-100 cursor-not-allowed dark:border-gray-700 dark:bg-gray-800'
+                        : 'border-gray-300 hover:border-primary dark:border-gray-600 dark:hover:border-primary'
+                        }`}
+                    >
+                      <IconPaperclip className={`h-5 w-5 ${images2.length >= 10 ? 'text-gray-300' : 'text-gray-400'}`} />
+                      <span className={`text-sm ${images2.length >= 10 ? 'text-gray-400' : 'text-gray-600 dark:text-gray-300'}`}>
+                        {images2.length >= 10
+                          ? 'Limite de 10 fichiers atteinte'
+                          : `Cliquez pour sélectionner vos fichiers (${10 - images2.length} restant(s))`
+                        }
+                      </span>
+                    </label>
+
+                    {/* Affichage des fichiers sélectionnés */}
+                    {images2.length > 0 && (
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                        {images2.map((image, index) => (
+                          <div
+                            key={index}
+                            className="group relative aspect-square overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600"
+                          >
+                            {image.file?.type === "application/pdf" ? (
+                              <div className="flex h-full w-full items-center justify-center bg-gray-50 dark:bg-gray-800">
+                                <div className="text-center">
+                                  <svg className="mx-auto h-8 w-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                  </svg>
+                                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">PDF</p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-500 truncate px-2">{image.file?.name}</p>
+                                </div>
                               </div>
-                            ))}
+                            ) : (
+                              <img
+                                src={image.dataURL}
+                                alt={`Fichier ${index + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newImages = images2.filter((_, i) => i !== index);
+                                setImages2(newImages);
+                                toast.success('Fichier supprimé');
+                              }}
+                              className="absolute right-2 top-2 rounded-full bg-white/80 p-1 opacity-0 transition-opacity group-hover:opacity-100 dark:bg-black/80"
+                            >
+                              <IconX className="h-4 w-4" />
+                            </button>
                           </div>
-                        )}
+                        ))}
                       </div>
                     )}
-                  </ImageUploading>
+                  </div>
                 </div>
               )}
 
@@ -734,7 +807,7 @@ export default function ViewModal({
                             )}{" "}
                             F CFA
                           </p>
-                          {statutValidation === EStatutEncaissement.REJETE && !isEditingMontantReleve && isComptable() && (
+                          {statutValidation === EStatutEncaissement.REJETE && !isEditingMontantReleve && isComptable() && canModify() && (
                             <Tippy content="Modifier le montant relevé">
                               <button
                                 type="button"
@@ -775,7 +848,7 @@ export default function ViewModal({
               </div>
 
               {/* Section édition du montant relevé en bas de la modale */}
-              {isEditingMontantReleve && isComptable() && (
+              {isEditingMontantReleve && isComptable() && canModify() && (
                 <div className="w-full bg-gray-50 dark:bg-gray-800 rounded-lg shadow flex flex-col gap-4 mt-8 p-6 border-t border-gray-200 dark:border-gray-700">
                   <label className="text-sm font-medium text-gray-900 dark:text-white text-left w-full mb-2">Modifier le montant relevé</label>
                   <div className="relative w-full flex items-center gap-2">
@@ -832,7 +905,7 @@ export default function ViewModal({
                     className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                     rows={4}
                     placeholder="Saisir votre observation ici"
-                    disabled={statutValidation !== 1}
+                    disabled={statutValidation !== 1 || !canModify()}
                     value={observationBanque}
                     onChange={(e) => setObservationBanque(e.target.value)}
                   />

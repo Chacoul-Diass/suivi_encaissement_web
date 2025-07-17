@@ -8,3 +8,11 @@ export enum EStatutEncaissement {
   RECLAMATION_TRAITES = 6,
   DFC = 7,
 }
+
+export enum EProfileLevel {
+  ADMIN = 1,
+  DFC = 2,
+  DR = 3,
+  RC = 4,
+  COMPTABLE = 5,
+}

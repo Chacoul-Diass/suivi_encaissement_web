@@ -12,7 +12,7 @@ import IconPaperclip from "../icon/icon-paperclip";
 import IconPackage from "../icon/icon-package";
 import IconFileText from "../icon/icon-file-text";
 import IconUser from "../icon/icon-user";
-import ImageUploading, { ImageListType } from "react-images-uploading";
+import { ImageListType } from "react-images-uploading";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -200,7 +200,7 @@ export default function EditModal({
   handleMontantChange,
   fetchData,
 }: EditModalProps) {
-  const maxNumber = 69;
+
   // États pour le cas où un montant est déjà remonté
   const [montantAutomatique, setMontantAutomatique] = useState<string>("");
   const [montantAutomatiqueAffiche, setMontantAutomatiqueAffiche] =
@@ -459,22 +459,7 @@ export default function EditModal({
     }
   };
 
-  // Fonction pour gérer le changement d'images
-  const handleImageChange = (imageList: ImageListType) => {
-    // Préserver l'état actuel du montant modifié
-    const currentMontant =
-      montantModifie !== null ? montantModifie : selectedRow.montantReleve ?? 0;
 
-    // Mettre à jour les images
-    onChange2(imageList);
-
-    // Restaurer l'état du montant
-    if (currentMontant > 0) {
-      setMontantModifie(currentMontant);
-      setMontantAutomatique(currentMontant.toString());
-      setMontantAutomatiqueAffiche(formatNumber(currentMontant));
-    }
-  };
 
   return (
     <>
@@ -656,13 +641,16 @@ export default function EditModal({
                     Importer le coupon
                   </h3>
                   <p className="mt-1 text-xs text-gray-500">
-                    Format accepté: Images
+                    Format accepté: Images (JPG, PNG, GIF) et PDF - Max 10 fichiers, 5 Mo par fichier
                   </p>
                 </div>
                 {images2.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => setImages2([])}
+                    onClick={() => {
+                      setImages2([]);
+                      toast.success('Tous les fichiers ont été supprimés');
+                    }}
                     className="text-sm text-red-500 hover:text-red-600"
                   >
                     Supprimer tout
@@ -670,59 +658,118 @@ export default function EditModal({
                 )}
               </div>
 
-              <ImageUploading
-                multiple
-                value={images2}
-                onChange={handleImageChange}
-                maxNumber={maxNumber}
-              >
-                {({
-                  imageList,
-                  onImageUpload,
-                  onImageRemove,
-                  isDragging,
-                  dragProps,
-                }) => (
-                  <div className="space-y-4">
-                    <button
-                      type="button"
-                      onClick={onImageUpload}
-                      className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-primary dark:border-gray-600 dark:hover:border-primary ${isDragging ? "border-primary" : ""
-                        }`}
-                      {...dragProps}
-                    >
-                      <IconPaperclip className="h-5 w-5 text-gray-400" />
-                      <span className="text-sm text-gray-600 dark:text-gray-300">
-                        Cliquez ou glissez vos images ici
-                      </span>
-                    </button>
+              <div className="space-y-4">
+                {/* Input file caché */}
+                <input
+                  type="file"
+                  id="file-upload-edit"
+                  multiple
+                  accept="image/*,.pdf,application/pdf"
+                  className="hidden"
+                  disabled={images2.length >= 10}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
 
-                    {imageList.length > 0 && (
-                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                        {imageList.map((image, index) => (
-                          <div
-                            key={index}
-                            className="group relative aspect-square overflow-hidden rounded-lg"
-                          >
-                            <img
-                              src={image.dataURL}
-                              alt={`Image ${index + 1}`}
-                              className="h-full w-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => onImageRemove(index)}
-                              className="absolute right-2 top-2 rounded-full bg-white/80 p-1 opacity-0 transition-opacity group-hover:opacity-100 dark:bg-black/80"
-                            >
-                              <IconX className="h-4 w-4" />
-                            </button>
+                    // Vérifier le nombre total de fichiers
+                    if (images2.length + files.length > 10) {
+                      toast.error(`Vous ne pouvez pas ajouter plus de 10 fichiers au total. Vous avez déjà ${images2.length} fichier(s).`);
+                      e.target.value = '';
+                      return;
+                    }
+
+                    // Vérifier la taille de chaque fichier (5 Mo = 5 * 1024 * 1024 bytes)
+                    const maxSize = 5 * 1024 * 1024; // 5 Mo en bytes
+                    const oversizedFiles = files.filter(file => file.size > maxSize);
+
+                    if (oversizedFiles.length > 0) {
+                      const fileNames = oversizedFiles.map(f => f.name).join(', ');
+                      toast.error(`Les fichiers suivants dépassent 5 Mo : ${fileNames}`);
+                      e.target.value = '';
+                      return;
+                    }
+
+                    const newImages = files.map((file) => ({
+                      file,
+                      dataURL: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+                    }));
+
+                    // Préserver l'état actuel du montant modifié
+                    const currentMontant =
+                      montantModifie !== null ? montantModifie : selectedRow.montantReleve ?? 0;
+
+                    // Mettre à jour les images
+                    setImages2([...images2, ...newImages]);
+
+                    // Restaurer l'état du montant
+                    if (currentMontant > 0) {
+                      setMontantModifie(currentMontant);
+                      setMontantAutomatique(currentMontant.toString());
+                      setMontantAutomatiqueAffiche(formatNumber(currentMontant));
+                    }
+
+                    toast.success(`${files.length} fichier(s) ajouté(s) avec succès`);
+                    e.target.value = ''; // Réinitialiser l'input
+                  }}
+                />
+
+                {/* Bouton d'upload stylisé */}
+                <label
+                  htmlFor="file-upload-edit"
+                  className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 transition-colors ${images2.length >= 10
+                    ? 'border-gray-200 bg-gray-100 cursor-not-allowed dark:border-gray-700 dark:bg-gray-800'
+                    : 'border-gray-300 hover:border-primary dark:border-gray-600 dark:hover:border-primary'
+                    }`}
+                >
+                  <IconPaperclip className={`h-5 w-5 ${images2.length >= 10 ? 'text-gray-300' : 'text-gray-400'}`} />
+                  <span className={`text-sm ${images2.length >= 10 ? 'text-gray-400' : 'text-gray-600 dark:text-gray-300'}`}>
+                    {images2.length >= 10
+                      ? 'Limite de 10 fichiers atteinte'
+                      : `Cliquez pour sélectionner vos fichiers (${10 - images2.length} restant(s))`
+                    }
+                  </span>
+                </label>
+
+                {/* Affichage des fichiers sélectionnés */}
+                {images2.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    {images2.map((image, index) => (
+                      <div
+                        key={index}
+                        className="group relative aspect-square overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600"
+                      >
+                        {image.file?.type === "application/pdf" ? (
+                          <div className="flex h-full w-full items-center justify-center bg-gray-50 dark:bg-gray-800">
+                            <div className="text-center">
+                              <svg className="mx-auto h-8 w-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                              </svg>
+                              <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">PDF</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-500 truncate px-2">{image.file?.name}</p>
+                            </div>
                           </div>
-                        ))}
+                        ) : (
+                          <img
+                            src={image.dataURL}
+                            alt={`Fichier ${index + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newImages = images2.filter((_, i) => i !== index);
+                            setImages2(newImages);
+                            toast.success('Fichier supprimé');
+                          }}
+                          className="absolute right-2 top-2 rounded-full bg-white/80 p-1 opacity-0 transition-opacity group-hover:opacity-100 dark:bg-black/80"
+                        >
+                          <IconX className="h-4 w-4" />
+                        </button>
                       </div>
-                    )}
+                    ))}
                   </div>
                 )}
-              </ImageUploading>
+              </div>
             </div>
 
             {/* Montant Banque */}

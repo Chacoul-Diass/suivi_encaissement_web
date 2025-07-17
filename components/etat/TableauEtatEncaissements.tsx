@@ -458,7 +458,7 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                                 borderColor: "border-blue-200",
                                 dotColor: "bg-blue-500",
                                 icon: "🏢",
-                                label: "AGC"
+                                label: "AGC/RGC"
                             };
                         case "DR":
                             return {
