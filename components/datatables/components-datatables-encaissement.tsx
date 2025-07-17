@@ -972,9 +972,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
             <div
               className={
                 ecart < 0
-                  ? "text-danger"
+                  ? "text-success"
                   : ecart > 0
-                    ? "text-success"
+                    ? "text-danger"
                     : "font-bold"
               }
             >
@@ -1015,9 +1015,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 <div
                   className={
                     ecart < 0
-                      ? "text-danger"
+                      ? "text-success"
                       : ecart > 0
-                        ? "text-success"
+                        ? "text-danger"
                         : "font-bold"
                   }
                 >
