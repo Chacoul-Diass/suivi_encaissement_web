@@ -942,22 +942,22 @@ export default function EditModal({
                 {selectedRow.isCorrect !== 1 ? (
                   <div className="mt-4 space-y-2">
                     <p className="text-sm text-gray-500">
-                      Écart (Bordereau - Saisi) :
+                      Écart (Caisse - Saisi) :
                     </p>
                     <p
                       className={`text-lg font-semibold ${(() => {
-                        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
+                        const montantCaisse = selectedRow["Montant caisse (A)"] || 0;
                         const montantSaisi = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
-                        const ecart = montantBordereau - montantSaisi;
-                        if (ecart < 0) return "text-red-500";
-                        if (ecart > 0) return "text-green-500";
+                        const ecart = montantCaisse - montantSaisi;
+                        if (ecart < 0) return "text-green-500";
+                        if (ecart > 0) return "text-red-500";
                         return "text-gray-900";
                       })()}`}
                     >
                       {(() => {
-                        const montantBordereau = selectedRow["Montant bordereau (B)"] || 0;
+                        const montantCaisse = selectedRow["Montant caisse (A)"] || 0;
                         const montantSaisi = montantSaisiAffichage ? parseFloat(montantSaisiAffichage) : 0;
-                        return formatNumber(montantBordereau - montantSaisi);
+                        return formatNumber(montantCaisse - montantSaisi);
                       })()} F CFA
                     </p>
                   </div>
