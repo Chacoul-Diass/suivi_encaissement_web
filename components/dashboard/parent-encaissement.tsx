@@ -50,7 +50,7 @@ const ComponentsDashboardValider = () => {
       order: 5, // Troisième dans l'ordre
     },
     {
-      id: EStatutEncaissement.VALIDE, // 3
+      id: EStatutEncaissement.DFC, // 3
       label: "Encaissements Validés",
       icon: IconCircleCheck,
       habilitationName: "ENCAISSEMENTS VALIDES",
