@@ -429,7 +429,7 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
         },
         {
             accessor: "validationLevel",
-            title: "Validation Level",
+            title: "Validation précédente",
             sortable: false,
             width: 130,
             render: ({ validationEncaissement, currentValidation }: Encaissement) => {
