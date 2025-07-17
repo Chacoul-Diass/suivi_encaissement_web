@@ -346,7 +346,7 @@ const ComponentsDashboardValider = () => {
 
   return (
     <div>
-      <div className="mb-5">
+      {/* <div className="mb-5">
         <ol className="flex flex-wrap items-center gap-y-4 font-semibold text-gray-500 dark:text-white-dark">
           <li>
             <button className="flex items-center justify-center rounded-md border border-gray-500/20 p-2.5 shadow hover:text-gray-500/70 dark:border-0 dark:bg-[#191e3a] dark:hover:text-white-dark/70">
@@ -364,7 +364,7 @@ const ComponentsDashboardValider = () => {
             </button>
           </li>
         </ol>
-      </div>
+      </div> */}
 
       <div className="panel mb-5">
 

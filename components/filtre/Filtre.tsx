@@ -96,12 +96,12 @@ const Filtre = () => {
   // Générer les années (de l'année actuelle à 5 ans en arrière)
   const currentYear = new Date().getFullYear();
 
-  const selectedDRs = drData?.filter((dr: { id: number }) =>
+  const selectedDRs = Array.isArray(drData) ? drData.filter((dr: { id: number }) =>
     selectedDRIds.includes(dr.id)
-  );
-  const selectedSecteurs = secteurData?.filter((secteur) =>
+  ) : [];
+  const selectedSecteurs = Array.isArray(secteurData) ? secteurData.filter((secteur) =>
     selectedSecteurIds.includes(secteur.id)
-  );
+  ) : [];
 
   const clearFilters = () => {
     setSelectedDRIds([]);
@@ -232,7 +232,7 @@ const Filtre = () => {
                 content={
                   <div className="max-h-[200px] overflow-y-auto p-2">
                     {selectedDRIds.map((id) => {
-                      const dr = drData.find((dr: any) => dr.id === id);
+                      const dr = Array.isArray(drData) ? drData.find((dr: any) => dr.id === id) : undefined;
                       return (
                         <div key={id} className="whitespace-nowrap text-sm">
                           {dr ? dr.name : "Inconnu"}
@@ -268,13 +268,13 @@ const Filtre = () => {
                     className="text-xs font-medium text-primary hover:text-primary/80"
                     onClick={() =>
                       setSelectedDRIds(
-                        selectedDRIds.length === drData.length
+                        Array.isArray(drData) && selectedDRIds.length === drData.length
                           ? []
-                          : drData.map((dr: any) => dr.id)
+                          : Array.isArray(drData) ? drData.map((dr: any) => dr.id) : []
                       )
                     }
                   >
-                    {selectedDRIds.length === drData.length
+                    {Array.isArray(drData) && selectedDRIds.length === drData.length
                       ? "Tout désélectionner"
                       : "Tout sélectionner"}
                   </button>
@@ -284,7 +284,7 @@ const Filtre = () => {
                 </div>
 
                 <div className="max-h-[250px] overflow-y-auto">
-                  {drData.map((dr: any) => (
+                  {Array.isArray(drData) ? drData.map((dr: any) => (
                     <label
                       key={dr.id}
                       className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -299,7 +299,7 @@ const Filtre = () => {
                         {dr.name}
                       </span>
                     </label>
-                  ))}
+                  )) : null}
                 </div>
               </div>
             </Dropdown>
@@ -312,9 +312,9 @@ const Filtre = () => {
                 content={
                   <div className="max-h-[200px] overflow-y-auto p-2">
                     {selectedSecteurIds.map((id) => {
-                      const secteur = secteurData?.find(
+                      const secteur = Array.isArray(secteurData) ? secteurData.find(
                         (s: any) => s.id === id
-                      );
+                      ) : undefined;
                       return (
                         <div key={id} className="whitespace-nowrap text-sm">
                           {secteur ? secteur.name : "Inconnu"}
@@ -352,9 +352,9 @@ const Filtre = () => {
                     type="button"
                     className="text-xs font-medium text-primary hover:text-primary/80"
                     onClick={() => {
-                      const filteredSecteurs = secteurData.filter((s: any) =>
+                      const filteredSecteurs = Array.isArray(secteurData) ? secteurData.filter((s: any) =>
                         selectedDRIds.includes(s.directionRegionaleId)
-                      );
+                      ) : [];
                       setSelectedSecteurIds(
                         selectedSecteurIds.length === filteredSecteurs.length
                           ? []
@@ -363,9 +363,9 @@ const Filtre = () => {
                     }}
                   >
                     {selectedSecteurIds.length ===
-                      secteurData.filter((s: any) =>
+                      (Array.isArray(secteurData) ? secteurData.filter((s: any) =>
                         selectedDRIds.includes(s.directionRegionaleId)
-                      ).length
+                      ).length : 0)
                       ? "Tout désélectionner"
                       : "Tout sélectionner"}
                   </button>
@@ -375,7 +375,7 @@ const Filtre = () => {
                 </div>
 
                 <div className="max-h-[250px] overflow-y-auto">
-                  {secteurData
+                  {Array.isArray(secteurData) ? secteurData
                     .filter((secteur: any) =>
                       selectedDRIds.includes(secteur.directionRegionaleId)
                     )
@@ -394,7 +394,7 @@ const Filtre = () => {
                           {secteur.name}
                         </span>
                       </label>
-                    ))}
+                    )) : null}
                 </div>
               </div>
             </Dropdown>

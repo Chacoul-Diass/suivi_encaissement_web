@@ -73,7 +73,7 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
     <div>
       <div className="grid pt-3 md:pt-5">
         <div className="flex flex-col gap-3 md:gap-4 sm:flex-row flex-wrap lg:gap-5 xl:gap-6 xl:flex-nowrap">
-          <div className="panel h-full w-full flex-1 min-w-0 p-3 md:p-5" id="completion">
+          {/* <div className="panel h-full w-full flex-1 min-w-0 p-3 md:p-5" id="completion">
             <div className="-m-3 md:-m-5 mb-3 md:mb-5 flex items-center justify-between border-b border-white-light p-3 md:p-5 dark:border-[#1b2e4b]">
               <button type="button" className="flex items-center font-semibold">
                 <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-md bg-primary text-white ltr:mr-2 md:ltr:mr-4 rtl:ml-2 md:rtl:ml-4">
@@ -116,7 +116,7 @@ const EncaissementComptable: React.FC<EncaissementComptableProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="panel h-full w-full flex-1 min-w-0 p-3 md:p-5" id="totalmontant">
             <div className="flex items-center justify-between">
