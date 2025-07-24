@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import IconBox from "../icon/icon-box";
 import IconHome from "@/components/icon/icon-home";
 import { Tab } from "@headlessui/react";
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState, useRef } from "react";
 import EncaissementComptable from "./enfant1-encaissement";
 import IconBarChart from "../icon/icon-bar-chart";
 import IconXCircle from "../icon/icon-x-circle";
@@ -21,10 +21,14 @@ import axiosInstance from "@/utils/axios";
 import { API_AUTH_SUIVI } from "@/config/constants";
 import { active } from "sortablejs";
 import GlobalFiltre from "@/components/filtre/globalFiltre";
+import { useFilterPersistence } from "@/hooks/useFilterPersistence";
 
 const ComponentsDashboardValider = () => {
   const dispatch = useDispatch<TAppDispatch>();
   const habilitation = getUserHabilitation();
+
+  // État pour le nombre d'encaissements rejetés
+  const [rejetesCount, setRejetesCount] = useState(0);
 
   // Définition des onglets disponibles dans l'ordre métier souhaité
   const allTabs = [
@@ -81,6 +85,24 @@ const ComponentsDashboardValider = () => {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  // Fonction pour récupérer le nombre d'encaissements rejetés
+  const fetchRejetesCount = async () => {
+    try {
+      const response = await axiosInstance.get(`${API_AUTH_SUIVI}/encaissements/1?page=1&limit=1`);
+      if (response?.data?.pagination?.totalCount) {
+        setRejetesCount(response.data.pagination.totalCount);
+        console.log("📊 Nombre d'encaissements rejetés:", response.data.pagination.totalCount);
+      }
+    } catch (error) {
+      console.error("❌ Erreur lors de la récupération du nombre d'encaissements rejetés:", error);
+    }
+  };
+
+  // Charger le nombre d'encaissements rejetés au montage du composant
+  useEffect(() => {
+    fetchRejetesCount();
   }, []);
 
   // Données des directions régionales pour le filtre
@@ -181,18 +203,51 @@ const ComponentsDashboardValider = () => {
     }
   }, [activeTab, filteredTabs, isMounted]);
 
+  // Rafraîchir le compteur quand l'onglet actif change vers les rejetés
+  useEffect(() => {
+    if (activeTab === EStatutEncaissement.REJETE) {
+      fetchRejetesCount();
+    }
+  }, [activeTab]);
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(5);
   const [ecartDataEncaissement, setEcartDataEncaissement] = useState<any>(null);
 
+  // Référence pour éviter les doubles chargements lors de la restauration
+  const hasLoadedOnce = useRef(false);
+
   console.log(ecartDataEncaissement, "ecartDataEncaissement")
-  // Ajouter un état pour stocker les filtres courants
-  const [currentFilters, setCurrentFilters] = useState<Record<string, any>>({});
+
+  // Utiliser le hook de persistance des filtres
+  const {
+    filters: persistentFilters,
+    isLoaded: filtersLoaded,
+    saveFilters,
+    savePagination,
+    getCurrentFilters,
+    hasActiveFilters
+  } = useFilterPersistence(activeTab);
 
   const handlePageChange = (page: number) => {
-    if (page > 0 && page <= paginate.totalPages) {
+    console.log(`🔄 Tentative changement page: ${page}, totalPages: ${paginate.totalPages}, totalCount: ${paginate.totalCount}`);
+
+    // Validation robuste de la pagination
+    if (page > 0 && paginate.totalPages > 0 && page <= paginate.totalPages) {
+      console.log(`✅ Changement de page validé: ${page}`);
       setPage(page);
+      // Sauvegarder la nouvelle page avec les filtres actuels
+      savePagination(page, limit);
+      // Le useEffect se chargera de déclencher fetchData
+    } else {
+      console.warn(`❌ Changement de page rejeté: page=${page}, totalPages=${paginate.totalPages}`);
+      // Si la page demandée est invalide, rediriger vers la dernière page valide
+      if (paginate.totalPages > 0 && page > paginate.totalPages) {
+        console.log(`🔄 Redirection vers la dernière page valide: ${paginate.totalPages}`);
+        setPage(paginate.totalPages);
+        savePagination(paginate.totalPages, limit);
+      }
     }
   };
 
@@ -202,13 +257,13 @@ const ComponentsDashboardValider = () => {
   const fetchData = async (filters?: Record<string, any>) => {
     setLoading(true);
     try {
-      // Si des filtres sont fournis, les mettre à jour dans l'état
+      // Si des filtres sont fournis, les sauvegarder
       if (filters) {
-        setCurrentFilters(filters);
+        saveFilters(filters);
       }
 
-      // Utiliser soit les nouveaux filtres passés, soit ceux stockés dans l'état
-      const filtersToUse = filters || currentFilters;
+      // Utiliser soit les nouveaux filtres passés, soit ceux persistés
+      const filtersToUse = filters || getCurrentFilters();
 
       const cleanArray = (arr?: string[]): string[] =>
         arr ? arr.map((item) => item.trim()) : [];
@@ -259,6 +314,17 @@ const ComponentsDashboardValider = () => {
       if (response?.data && !response.data.error) {
         setEcartDataEncaissement(response.data);
         console.log("✅ Données reçues pour activeTab:", activeTab);
+        console.log("📊 Pagination reçue:", response.data.pagination);
+
+        // Validation des données de pagination
+        if (response.data.pagination) {
+          const p = response.data.pagination;
+          console.log(`📄 Pagination validée: currentPage=${p.currentPage}, totalPages=${p.totalPages}, totalCount=${p.totalCount}`);
+
+          if (p.totalPages && p.currentPage > p.totalPages) {
+            console.warn(`⚠️ Page actuelle (${p.currentPage}) > totalPages (${p.totalPages}) - possible problème côté API`);
+          }
+        }
       }
     } catch (error) {
       console.error("❌ Erreur lors de la récupération :", error);
@@ -270,18 +336,40 @@ const ComponentsDashboardValider = () => {
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setPage(1);
+    // Sauvegarder la recherche avec page remise à 1
+    savePagination(1, limit);
+    // Le useEffect se chargera de déclencher fetchData
   };
 
   const handleLimitChange = (value: number) => {
     setLimit(value);
     setPage(1);
+    // Sauvegarder la nouvelle limite avec page remise à 1
+    savePagination(1, value);
+    // Le useEffect se chargera de déclencher fetchData
   };
 
   // Mise à jour du useEffect pour utiliser les filtres actuels lors des changements de page/recherche/limite
   useEffect(() => {
-    if (isMounted) {
+    if (isMounted && filtersLoaded) {
+      // Restaurer la pagination persistée au chargement initial uniquement
+      const currentFilters = getCurrentFilters();
+
+      // Si c'est le premier chargement, restaurer la pagination sauvegardée
+      if (currentFilters.page && currentFilters.page !== page && !hasLoadedOnce.current) {
+        setPage(currentFilters.page);
+        hasLoadedOnce.current = true;
+        return; // Sortir pour éviter le double fetchData
+      }
+      if (currentFilters.limit && currentFilters.limit !== limit && !hasLoadedOnce.current) {
+        setLimit(currentFilters.limit);
+        hasLoadedOnce.current = true;
+        return; // Sortir pour éviter le double fetchData
+      }
+
       console.log("⭐ Déclenchement requête API avec activeTab:", activeTab, "page:", page, "search:", search, "limit:", limit);
-      fetchData();
+      fetchData(currentFilters);
+      hasLoadedOnce.current = true;
 
       // Mettre à jour le titre dans la page
       const activeTabInfo = filteredTabs.find(tab => tab.id === activeTab);
@@ -305,9 +393,15 @@ const ComponentsDashboardValider = () => {
             fetchData();
           }, 100);
         };
+
+        // Rendre fetchRejetesCount disponible globalement pour les actions de rejet/validation
+        (window as any).refreshRejetesCount = () => {
+          console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
+          fetchRejetesCount();
+        };
       }
     }
-  }, [activeTab, isMounted, page, search, limit]);
+  }, [activeTab, isMounted, filtersLoaded, page, search, limit]);
 
   // Effet pour mettre à jour l'URL lorsque l'onglet actif change
   useEffect(() => {
@@ -330,19 +424,32 @@ const ComponentsDashboardValider = () => {
         );
       }
     }
+
+    // Réinitialiser le flag lors du changement d'onglet
+    hasLoadedOnce.current = false;
   }, [activeTab, isMounted, filteredTabs]);
 
   // Mise à jour de la méthode handleApplyFilters pour GlobalFiltre
   const handleApplyFilters = (newFilters: any) => {
     // Réinitialiser la page à 1 lors de l'application de nouveaux filtres
     setPage(1);
-    // Appliquer les nouveaux filtres
+    // Sauvegarder les nouveaux filtres avec page remise à 1
+    savePagination(1, limit);
+    // Appliquer les nouveaux filtres immédiatement (pas de useEffect ici)
     fetchData(newFilters);
   };
 
   const dataEncaissementReverse = ecartDataEncaissement?.result || [];
   const Totaldata = ecartDataEncaissement?.totals || [];
-  const paginate = ecartDataEncaissement?.pagination || [];
+  const paginate = ecartDataEncaissement?.pagination || {
+    currentPage: 1,
+    previousPage: null,
+    nextPage: null,
+    count: 0,
+    totalCount: 0,
+    totalPages: 0,
+    pageSizes: [5, 10, 20, 50, 100]
+  };
 
   return (
     <div>
@@ -391,6 +498,12 @@ const ComponentsDashboardValider = () => {
                       >
                         <tab.icon className="ltr:mr-2 rtl:ml-2" />
                         {tab.label}
+                        {/* Bulle de notification pour les encaissements rejetés */}
+                        {tab.id === EStatutEncaissement.REJETE && rejetesCount > 0 && (
+                          <span className="ml-2 inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-white shadow-sm">
+                            {rejetesCount > 99 ? '99+' : rejetesCount}
+                          </span>
+                        )}
                       </button>
                     )}
                   </Tab>

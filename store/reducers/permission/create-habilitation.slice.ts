@@ -33,7 +33,7 @@ export const fetchAddRole = createAsyncThunk(
       );
       return response.data; // Retourne les données de la réponse
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || "Une erreur est survenue");
+      return rejectWithValue(error.response?.data);
     }
   }
 );

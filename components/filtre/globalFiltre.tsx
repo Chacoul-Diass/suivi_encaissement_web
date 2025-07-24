@@ -22,6 +22,7 @@ import { fetchProduit } from "@/store/reducers/select/produit.slice";
 import { fetchJourneeCaisse } from "@/store/reducers/select/journeeCaisse.slice";
 import dayjs from "dayjs";
 import { EStatutEncaissement } from "@/utils/enums";
+import { useFilterPersistence } from "@/hooks/useFilterPersistence";
 
 interface GlobalFiltreProps {
   drData: any;
@@ -41,6 +42,9 @@ export default function GlobalFiltre({
 }: GlobalFiltreProps) {
   const dispatch = useDispatch<TAppDispatch>();
   const [isFilterExpanded, setIsFilterExpanded] = useState(true);
+
+  // Hook de persistance des filtres
+  const { saveFilters, getCurrentFilters, resetFilters: resetPersistentFilters, isLoaded: filtersLoaded } = useFilterPersistence(statutValidation || 0);
 
   // État pour la période, adapté pour utiliser des chaînes de caractères au lieu de dates
   const [dateRange, setDateRange] = useState<{ startDate: string, endDate: string }>({
@@ -375,11 +379,34 @@ export default function GlobalFiltre({
   // Appliquer les filtres
   const applyFilters = () => {
     const params = getFilterParams();
+
+    // Sauvegarder les filtres dans localStorage
+    const filtersToSave = {
+      directionRegional: params.directionRegional || [],
+      codeExpl: params.codeExpl || [],
+      banque: params.banque || [],
+      caisse: params.caisse || [],
+      produit: params.produit || [],
+      modeReglement: params.modeReglement || [],
+      statut: params.status ? [params.status] : [],
+      startDate: params.startDate || "",
+      endDate: params.endDate || "",
+      dailyCaisse: params.dailyCaisse || [],
+      codeCaisse: [],
+      noCaisse: [],
+    };
+
+    saveFilters(filtersToSave);
+    console.log("💾 Filtres sauvegardés automatiquement:", filtersToSave);
+
     onApplyFilters(params);
   };
 
   // Réinitialiser : on vide toutes les sélections, mais on garde id dans l'URL
   const resetFilters = () => {
+    console.log("🔄 Début de la réinitialisation complète des filtres...");
+
+    // D'abord, remettre à zéro tous les états locaux
     setDateRange({ startDate: "", endDate: "" });
     setSelectedDRIds([]);
     setSelectedSecteurIds([]);
@@ -396,7 +423,30 @@ export default function GlobalFiltre({
       journeeCaisse: "",
     });
 
+    // Supprimer immédiatement le localStorage
+    const storageKey = `encaissement_filters_${statutValidation || 0}`;
+    localStorage.removeItem(storageKey);
+    console.log(`🗑️ localStorage supprimé: ${storageKey}`);
+
+    // Appliquer les filtres vides
     onApplyFilters({ id: statutValidation });
+
+    // FORCER la suppression du localStorage après toutes les actions (approche robuste)
+    setTimeout(() => {
+      localStorage.removeItem(storageKey);
+      console.log(`🔥 FORCAGE: localStorage définitivement supprimé: ${storageKey}`);
+
+      // Double vérification
+      const remaining = localStorage.getItem(storageKey);
+      if (remaining) {
+        console.warn("⚠️ localStorage encore présent, suppression forcée...");
+        localStorage.removeItem(storageKey);
+      } else {
+        console.log("✅ Vérification: localStorage bien supprimé");
+      }
+    }, 1500); // 1.5 secondes pour être sûr que toutes les actions sont terminées
+
+    console.log("✅ Réinitialisation lancée - Suppression forcée programmée");
   };
 
   // Petite fonction utilitaire pour générer un Dropdown

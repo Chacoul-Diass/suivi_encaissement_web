@@ -28,6 +28,8 @@ import RefreshBtn from "../actionBtn/refreshBtn";
 import GlobalFiltre from "../filtre/globalFiltre";
 import ConfirmationModal from "../modales/confirmationModal";
 import EditModal from "../modales/editModal";
+import { useFilterPersistence } from "@/hooks/useFilterPersistence";
+import { FilterIndicator } from "../filtre/FilterIndicator";
 import EmailModal from "../modales/emailModal";
 import PreuvePhotoModal from "../modales/preuvePhotoModal";
 import ViewModal from "../modales/viewModal";
@@ -131,6 +133,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     // Récupérer les informations de l'utilisateur connecté au niveau du composant
     const user = useSelector((state: TRootState) => state.auth?.user);
+
+    // Hook de persistance des filtres
+    const { getCurrentFilters, savePagination } = useFilterPersistence(statutValidation);
 
     const [search, setSearch] = useState("");
     const [hideCols, setHideCols] = useState<string[]>([]);
@@ -373,65 +378,37 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const refreshTableData = async (showToast = true) => {
-      // Si déjà en cours de rafraîchissement, ne pas lancer une nouvelle requête
-      if (isRefreshing) {
-        console.log("⚠️ Rafraîchissement déjà en cours, demande ignorée");
-        return;
-      }
+    const refreshTableData = async (forceRefresh = false) => {
+      console.log("🔄 NOUVEAU refreshTableData - Force le rechargement depuis le parent");
 
-      console.log("🔄 Début du rafraîchissement des données...");
-
-      // Réinitialiser les données et montrer l'état de chargement
-      setRecordsData([]);
-      setIsRefreshing(true);
-
+      // Forcer le rechargement complet depuis le parent
+      // Cette approche est plus fiable car elle garantit la synchronisation
       try {
-        console.log("🔍 Chargement des nouvelles données...");
-
-        // Utiliser les paramètres actuels pour le rafraîchissement
-        const result = await dispatch(
-          fetchDataReleve({
-            id: statutValidation,
-            page: currentPage,
-            limit: pageSize,
-            search: search || "",
-            ...params, // Inclure tous les paramètres/filtres actuels
-          })
-        ).unwrap();
-
-        // Forcer un remontage complet
-        setForceRender((prev) => prev + 1);
-
-        // Mettre à jour la liste manuellement avec les nouvelles données
-        if (result && result.result) {
-          const newData = filterAndMapData(result.result, statutValidation);
-          console.log(`📊 ${newData.length} enregistrements chargés avec succès`);
-          setRecordsData(newData);
+        // Méthode 1: Utiliser window.fetchData global (rechargement complet depuis le parent)
+        if (typeof window !== 'undefined' && (window as any).fetchData) {
+          console.log("🔄 Rechargement via window.fetchData (PARENT)");
+          (window as any).fetchData();
+          console.log("✅ Rechargement depuis le parent lancé");
+          return;
         }
 
-        console.log("✅ Rafraîchissement des données terminé");
+        // Méthode 2: Si window.fetchData n'existe pas, essayer de forcer un rechargement
+        console.log("🔄 Aucune méthode window.fetchData trouvée");
 
-        // Afficher le toast seulement si showToast est true
-        if (showToast) {
-          toast.success("Données actualisées avec succès");
+        // Méthode 3: Fallback - Recharger la page (plus drastique mais garantit la mise à jour)
+        console.warn("⚠️ Aucune méthode de rechargement parent trouvée - rechargement de la page");
+        if (typeof window !== 'undefined') {
+          window.location.reload();
         }
 
-        return result;
       } catch (error) {
-        console.error("❌ Erreur lors du rafraîchissement des données:", error);
+        console.error("❌ Erreur lors du rechargement:", error);
 
-        // Afficher le toast d'erreur seulement si showToast est true
-        if (showToast) {
-          toast.error("Erreur lors du rafraîchissement des données");
+        // En dernier recours, recharger la page
+        if (typeof window !== 'undefined') {
+          console.log("🔄 Rechargement de la page en dernier recours");
+          window.location.reload();
         }
-
-        throw error;
-      } finally {
-        // S'assurer que l'état de chargement est désactivé, même en cas d'erreur
-        setTimeout(() => {
-          setIsRefreshing(false);
-        }, 500); // Petit délai pour éviter un flashage du bouton
       }
     };
 
@@ -441,8 +418,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
       setIsRefreshing(true);
       try {
-        // Toujours afficher le toast lors d'un refresh explicite
-        await refreshTableData(true);
+        await refreshTableData();
       } catch (error) {
         console.error("Erreur lors de l'actualisation :", error);
       } finally {
@@ -502,8 +478,14 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
-                // Utiliser la nouvelle fonction de rafraîchissement sans afficher le toast
-                await refreshTableData(false);
+                // Utiliser la nouvelle fonction de rafraîchissement (forcé pour validation)
+                await refreshTableData(true);
+
+                // Rafraîchir le compteur d'encaissements rejetés
+                if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
+                  console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
+                  (window as any).refreshRejetesCount();
+                }
 
                 setModalOpen(false);
               })
@@ -657,8 +639,22 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
-                // Utiliser la nouvelle fonction de rafraîchissement
-                await refreshTableData(false);
+                // Forcer le rafraîchissement après rejet
+                console.log("🔄 Début rafraîchissement après rejet...");
+
+                try {
+                  // Force le rechargement depuis le parent (plus fiable)
+                  await refreshTableData(true);
+                  console.log("✅ Rafraîchissement après rejet terminé");
+
+                  // Rafraîchir le compteur d'encaissements rejetés
+                  if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
+                    console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
+                    (window as any).refreshRejetesCount();
+                  }
+                } catch (error) {
+                  console.error("❌ Erreur lors du rafraîchissement après rejet:", error);
+                }
 
                 setModalOpen(false);
               })
@@ -726,8 +722,14 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
-                // Utiliser la nouvelle fonction de rafraîchissement
-                await refreshTableData(false);
+                // Utiliser la nouvelle fonction de rafraîchissement (forcé pour clôture)
+                await refreshTableData(true);
+
+                // Rafraîchir le compteur d'encaissements rejetés
+                if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
+                  console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
+                  (window as any).refreshRejetesCount();
+                }
 
                 setModalOpen(false);
               })
@@ -795,8 +797,14 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
-                // Utiliser la nouvelle fonction de rafraîchissement
-                await refreshTableData(false);
+                // Utiliser la nouvelle fonction de rafraîchissement (forcé pour validation DFC)
+                await refreshTableData(true);
+
+                // Rafraîchir le compteur d'encaissements rejetés
+                if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
+                  console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
+                  (window as any).refreshRejetesCount();
+                }
 
                 setModalOpen(false);
               })
@@ -1294,7 +1302,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             setEmailSubject("");
 
             // Rafraîchir les données après l'envoi de l'email
-            await refreshTableData(false);
+            await refreshTableData();
           } else {
             console.error("❌ Échec lors de l'envoi de l'email :", emailResult);
             ToastError.fire({ text: "Le statut a été mis à jour mais l'envoi de l'email a échoué." });
@@ -1305,7 +1313,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
         }
       } catch (error) {
         console.error("⚠️ Erreur inattendue :", error);
-        ToastError.fire({ text: "Une erreur inattendue est survenue." });
       }
     };
 
@@ -1398,8 +1405,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
           setRasChecked2(false);
           setImages2([]);
 
-          // Rafraîchir les données sans afficher de toast
-          await refreshTableData(false);
+          // Rafraîchir les données
+          await refreshTableData();
         })
         .catch((error) => {
           const errorMessage = handleApiError(error);
@@ -1445,7 +1452,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
         // Utiliser la fonction refreshTableData pour rafraîchir les données
         // avec les nouveaux paramètres
-        await refreshTableData(true);
+        await refreshTableData();
       } catch (error) {
         console.error("Erreur lors de l'application des filtres:", error);
         toast.error("Erreur lors de l'application des filtres");
@@ -1511,31 +1518,19 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
-                setTimeout(() => {
-                  // Méthode 1: Utiliser le prop fetchData (refreshTableData)
-                  if (refreshTableData) {
-                    refreshTableData();
-                  }
+                // Utiliser la nouvelle fonction de rafraîchissement (forcé pour réclamation)
+                try {
+                  await refreshTableData(true);
+                  console.log("✅ Rafraîchissement après réclamation terminé");
 
-                  // Méthode 2: Utiliser window.fetchData global
-                  if (
-                    typeof window !== "undefined" &&
-                    (window as any).fetchData
-                  ) {
-                    (window as any).fetchData();
+                  // Rafraîchir le compteur d'encaissements rejetés
+                  if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
+                    console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
+                    (window as any).refreshRejetesCount();
                   }
-                  // Méthode 3: Forcer un rafraîchissement de la page si rien d'autre ne fonctionne
-                  // Cette méthode est plus drastique mais garantit la mise à jour
-                  if (
-                    !refreshTableData &&
-                    (typeof window === "undefined" ||
-                      !(window as any).refreshTableData)
-                  ) {
-                    if (typeof window !== "undefined") {
-                      window.location.reload();
-                    }
-                  }
-                }, 800);
+                } catch (error) {
+                  console.error("❌ Erreur lors du rafraîchissement après réclamation:", error);
+                }
                 setModalOpen(false);
               })
               .catch((error) => {
@@ -1663,31 +1658,19 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   "success"
                 );
 
-                setTimeout(() => {
-                  // Méthode 1: Utiliser le prop fetchData (refreshTableData)
-                  if (refreshTableData) {
-                    refreshTableData();
-                  }
+                // Utiliser la nouvelle fonction de rafraîchissement (forcé pour retransmission)
+                try {
+                  await refreshTableData(true);
+                  console.log("✅ Rafraîchissement après retransmission terminé");
 
-                  // Méthode 2: Utiliser window.fetchData global
-                  if (
-                    typeof window !== "undefined" &&
-                    (window as any).fetchData
-                  ) {
-                    (window as any).fetchData();
+                  // Rafraîchir le compteur d'encaissements rejetés
+                  if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
+                    console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
+                    (window as any).refreshRejetesCount();
                   }
-                  // Méthode 3: Forcer un rafraîchissement de la page si rien d'autre ne fonctionne
-                  // Cette méthode est plus drastique mais garantit la mise à jour
-                  if (
-                    !refreshTableData &&
-                    (typeof window === "undefined" ||
-                      !(window as any).refreshTableData)
-                  ) {
-                    if (typeof window !== "undefined") {
-                      window.location.reload();
-                    }
-                  }
-                }, 800);
+                } catch (error) {
+                  console.error("❌ Erreur lors du rafraîchissement après retransmission:", error);
+                }
 
                 setModalOpen(false);
               })
@@ -1726,6 +1709,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 handleRefresh={handleRefresh}
               />
               <div className="flex flex-wrap items-center gap-2">
+                <FilterIndicator
+                  statutValidation={statutValidation}
+                  className="mr-2"
+                />
                 <ExportBtn
                   filteredData={filteredData}
                   cols={cols}
@@ -1925,8 +1912,16 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   recordsPerPage={pageSize}
                   page={currentPage}
                   onPageChange={(page) => {
-                    setCurrentPage(page);
-                    handlePageChange && handlePageChange(page);
+                    console.log(`📊 DataTable onPageChange: ${page}, totalPages: ${Math.ceil((paginate.totalCount || 0) / pageSize)}`);
+
+                    // Validation additionnelle au niveau DataTable
+                    const calculatedTotalPages = Math.ceil((paginate.totalCount || 0) / pageSize);
+                    if (page > 0 && page <= calculatedTotalPages) {
+                      setCurrentPage(page);
+                      handlePageChange && handlePageChange(page);
+                    } else {
+                      console.warn(`❌ DataTable: Page ${page} rejetée (totalPages calculées: ${calculatedTotalPages})`);
+                    }
                   }}
                   recordsPerPageOptions={PAGE_SIZES}
                   onRecordsPerPageChange={(size) => {

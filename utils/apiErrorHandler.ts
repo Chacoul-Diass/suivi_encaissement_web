@@ -28,5 +28,5 @@ export const handleApiError = (error: any): string => {
   }
 
   // Si une autre erreur est survenue
-  return error.message || "Une erreur est survenue.";
+  return error.message;
 };

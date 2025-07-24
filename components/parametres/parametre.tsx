@@ -328,7 +328,7 @@ const Parametre = () => {
       }
     } catch (err: any) {
       console.error("Erreur lors de la soumission:", err);
-      toast.error(err.message || "Une erreur est survenue lors de l'opération");
+      toast.error(err.message);
     }
   };
 

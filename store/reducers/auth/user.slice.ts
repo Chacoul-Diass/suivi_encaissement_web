@@ -63,9 +63,7 @@ export const login = createAsyncThunk(
     } catch (error: any) {
       const errorMessage = handleApiError(error); // Utilisation de la fonction
       toast.error(errorMessage);
-      return rejectWithValue(
-        error.response?.data || "Une erreur est survenue."
-      );
+      return rejectWithValue(error.response?.data);
     }
   }
 );

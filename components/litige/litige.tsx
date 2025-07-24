@@ -174,7 +174,15 @@ export default function Litige() {
 
   const dataEncaissementReverse = ecartDataEncaissement?.result || [];
   const Totaldata = ecartDataEncaissement?.totals || [];
-  const paginate = ecartDataEncaissement?.pagination || [];
+  const paginate = ecartDataEncaissement?.pagination || {
+    currentPage: 1,
+    previousPage: null,
+    nextPage: null,
+    count: 0,
+    totalCount: 0,
+    totalPages: 0,
+    pageSizes: [5, 10, 20, 50, 100]
+  };
 
   return (
     <div>

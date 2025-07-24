@@ -17,7 +17,13 @@ interface Role {
 export const fetchUpdateRole = createAsyncThunk(
   "roles/updateRole",
   async (
-    { roleData, id }: { roleData: { name: string; description: string; permissions: any[] }, id: number },
+    {
+      roleData,
+      id,
+    }: {
+      roleData: { name: string; description: string; permissions: any[] };
+      id: number;
+    },
     { rejectWithValue }
   ) => {
     try {
@@ -33,7 +39,7 @@ export const fetchUpdateRole = createAsyncThunk(
       );
       return response.data; // Retourne les données de la réponse
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || "Une erreur est survenue");
+      return rejectWithValue(error.response?.data);
     }
   }
 );
