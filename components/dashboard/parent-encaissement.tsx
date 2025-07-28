@@ -296,11 +296,15 @@ const ComponentsDashboardValider = () => {
         modeReglement: filtersToUse?.modeReglement
           ? formatArray(filtersToUse.modeReglement)
           : undefined,
+        status: filtersToUse?.status ? JSON.stringify(filtersToUse.status) : undefined,
       };
 
       Object.entries(params).forEach(([key, value]) => {
         if (value === undefined) delete params[key];
       });
+
+      console.log("🔍 Filtres utilisés:", filtersToUse);
+      console.log("🔍 Paramètres envoyés à l'API:", params);
 
       // Utiliser directement activeTab au lieu de filters?.id
       const apiUrl = `${API_AUTH_SUIVI}/encaissements/${activeTab}?page=${page}&search=${search}&limit=${limit}`;

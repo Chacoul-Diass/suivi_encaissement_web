@@ -406,7 +406,7 @@ export default function GlobalFiltre({
       dailyCaisse: selectedItems.journeeCaisse.map((jc) => jc.libelle.trim()),
       startDate: dateRange.startDate || "",
       endDate: dateRange.endDate || "",
-      statut: selectedStatuses,
+      status: selectedStatuses,
     };
   };
 
@@ -422,7 +422,7 @@ export default function GlobalFiltre({
       caisse: params.caisse || [],
       produit: params.produit || [],
       modeReglement: params.modeReglement || [],
-      statut: params.statut || [],
+      status: params.status || [],
       startDate: params.startDate || "",
       endDate: params.endDate || "",
       dailyCaisse: params.dailyCaisse || [],

@@ -19,6 +19,7 @@ export const fetchDataReleve = createAsyncThunk(
       search,
       page,
       limit,
+      status,
     }: {
       id: any;
       directionRegional?: string[];
@@ -33,6 +34,7 @@ export const fetchDataReleve = createAsyncThunk(
       modeReglement?: string[];
       page?: any;
       limit?: any;
+      status?: number[];
     },
     { rejectWithValue }
   ) => {
@@ -63,6 +65,7 @@ export const fetchDataReleve = createAsyncThunk(
       if (dailyCaisse) params["dailyCaisse"] = formatArray(dailyCaisse);
       if (produit) params["produit"] = formatArray(produit);
       if (modeReglement) params["modeReglement"] = formatArray(modeReglement);
+      if (status && status.length > 0) params["status"] = status.join(",");
 
       Object.keys(params).forEach((key) => {
         if (params[key] === undefined) {

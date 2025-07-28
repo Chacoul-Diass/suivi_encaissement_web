@@ -20,6 +20,7 @@ export const fetchEtatEncaissements = createAsyncThunk(
       dailyCaisse,
       codeCaisse,
       noCaisse,
+      status,
     }: {
       directionRegional?: string[];
       codeExpl?: string[];
@@ -35,6 +36,7 @@ export const fetchEtatEncaissements = createAsyncThunk(
       dailyCaisse?: string[];
       codeCaisse?: string[];
       noCaisse?: string[];
+      status?: number[];
     },
     { rejectWithValue }
   ) => {
@@ -69,6 +71,7 @@ export const fetchEtatEncaissements = createAsyncThunk(
       if (dailyCaisse?.length) params["dailyCaisse"] = formatArray(dailyCaisse);
       if (codeCaisse?.length) params["codeCaisse"] = formatArray(codeCaisse);
       if (noCaisse?.length) params["noCaisse"] = formatArray(noCaisse);
+      if (status && status.length > 0) params["status"] = status.join(",");
 
       Object.keys(params).forEach((key) => {
         if (params[key] === undefined) {
