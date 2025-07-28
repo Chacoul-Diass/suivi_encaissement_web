@@ -62,6 +62,7 @@ export default function EmailModal({
   const [showAddressBook, setShowAddressBook] = useState(false);
   const [currentType, setCurrentType] = useState<"to" | "cc">("to");
   const [inputValue, setInputValue] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   console.log(emailConnecte, "emailConnecte");
   console.log("Banques disponibles:", banquesMail);
@@ -89,12 +90,23 @@ export default function EmailModal({
   const handleAddressBookClick = (type: "to" | "cc") => {
     setCurrentType(type);
     setShowAddressBook((prev) => !prev);
+    setSearchTerm(""); // Réinitialiser la recherche quand on ouvre le carnet
   };
 
   // Fonction pour rafraîchir la liste des banques
   const refreshBanquesList = () => {
     dispatch(fetchBanquesMail());
   };
+
+  // Fonction pour filtrer les banques selon le terme de recherche
+  const filteredBanques = banquesMail?.filter((banque: Banque) => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      banque.libelle.toLowerCase().includes(searchLower) ||
+      banque.emails?.some(email => email.toLowerCase().includes(searchLower))
+    );
+  });
 
   // Fonction améliorée pour gérer la sélection d'une banque et ajouter tous ses emails
   const handleSelectBanque = (banque: Banque) => {
@@ -339,7 +351,12 @@ export default function EmailModal({
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
                     À (Emails principaux)
                   </label>
-                  <div className="form-input relative flex min-h-[42px] w-full flex-wrap items-center gap-2 rounded-lg border border-gray-300 bg-white p-2 pr-12 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                  <div
+                    className="form-input relative flex min-h-[42px] w-full flex-wrap items-center gap-2 rounded-lg border border-gray-300 bg-white p-2 pr-12 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
+                    style={{
+                      zIndex: showAddressBook && currentType === "to" ? 9999999 : "auto"
+                    }}
+                  >
                     {params?.toEmails?.map(({ mail }: any, index: number) => (
                       <div
                         key={index}
@@ -385,11 +402,12 @@ export default function EmailModal({
                             position: "absolute",
                             right: 0,
                             top: "100%",
-                            zIndex: 99999,
+                            zIndex: 9999999,
                             maxHeight: "300px",
                             overflow: "auto",
                             width: "300px",
-                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                            isolation: "isolate"
                           }}
                           className="address-book-menu mt-2 rounded-md bg-white ring-1 ring-black ring-opacity-5"
                         >
@@ -423,9 +441,34 @@ export default function EmailModal({
                               </button>
                             </div>
                           </div>
+                          {/* Barre de recherche */}
+                          <div className="border-b border-gray-100 p-3">
+                            <div className="relative">
+                              <input
+                                type="text"
+                                placeholder="Rechercher une banque ou un email..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 pl-10 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              />
+                              <svg
+                                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                />
+                              </svg>
+                            </div>
+                          </div>
                           <div className="z-50 max-h-60 divide-y divide-gray-100 overflow-y-auto">
-                            {banquesMail?.length > 0 ? (
-                              banquesMail.map((banque: Banque) => {
+                            {filteredBanques?.length > 0 ? (
+                              filteredBanques.map((banque: Banque) => {
                                 // Vérifier si tous les emails de cette banque sont déjà sélectionnés
                                 const emailsAlreadySelected = banque.emails?.every(
                                   (email) => params?.toEmails?.some((e: any) => e.mail === email)
@@ -528,11 +571,12 @@ export default function EmailModal({
                             position: "absolute",
                             right: 0,
                             top: "100%",
-                            zIndex: 9999,
+                            zIndex: 999999,
                             maxHeight: "300px",
                             overflow: "auto",
                             width: "300px",
-                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                            isolation: "isolate"
                           }}
                           className="address-book-menu mt-2 rounded-md bg-white ring-1 ring-black ring-opacity-5"
                         >
@@ -566,9 +610,34 @@ export default function EmailModal({
                               </button>
                             </div>
                           </div>
+                          {/* Barre de recherche */}
+                          <div className="border-b border-gray-100 p-3">
+                            <div className="relative">
+                              <input
+                                type="text"
+                                placeholder="Rechercher une banque ou un email..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 pl-10 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              />
+                              <svg
+                                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                />
+                              </svg>
+                            </div>
+                          </div>
                           <div className="max-h-60 divide-y divide-gray-100 overflow-y-auto">
-                            {banquesMail?.length > 0 ? (
-                              banquesMail.map((banque: Banque) => {
+                            {filteredBanques?.length > 0 ? (
+                              filteredBanques.map((banque: Banque) => {
                                 // Vérifier si tous les emails de cette banque sont déjà sélectionnés
                                 const emailsAlreadySelected = banque.emails?.every(
                                   (email) => params?.ccEmails?.some((e: any) => e.mail === email)

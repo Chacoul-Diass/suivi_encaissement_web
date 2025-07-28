@@ -7,6 +7,7 @@ import Link from "next/link";
 import IconHome from "../icon/icon-home";
 import IconBox from "../icon/icon-box";
 import { fetchEtatEncaissements } from "@/store/reducers/etat/etat.slice";
+import { fetchDirectionRegionales } from "@/store/reducers/select/dr.slice";
 import TableauEtatEncaissements from "./TableauEtatEncaissements";
 import FilterEtatEncaissements from "./FilterEtatEncaissements";
 import GlobalFiltre from "../filtre/globalFiltre";
@@ -42,7 +43,7 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
   const [limit, setLimit] = useState(5);
 
   // Récupération des données depuis le store Redux
-  const etatStore = useSelector((state: TRootState) => state.etatEncaissement).data;
+  const etatStore = useSelector((state: TRootState) => state.etatEncaissement?.data);
   const etatEncaissements = useSelector(
     (state: TRootState) => state.etatEncaissement?.data?.result || []
   );
@@ -65,6 +66,12 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Charger les DR au démarrage
+  useEffect(() => {
+    console.log("🚀 Chargement des DR dans EtatParent");
+    dispatch(fetchDirectionRegionales());
+  }, [dispatch]);
 
   // Synchroniser la recherche externe avec la recherche locale
   useEffect(() => {
@@ -141,6 +148,12 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
   // logique de filtrage
   const [hideCols, setHideCols] = useState<string[]>([]);
   const drData: any = useSelector((state: TRootState) => state.dr?.data);
+  const drLoading: boolean = useSelector((state: TRootState) => state.dr?.loading || false);
+
+  // Debug: afficher les données DR
+  useEffect(() => {
+    console.log("État DR dans EtatParent:", { drData, drLoading });
+  }, [drData, drLoading]);
 
   const showHideColumns = (col: string) => {
     if (hideCols.includes(col)) {

@@ -784,9 +784,7 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                         case 'csv':
                             generateCSVFile(data);
                             break;
-                        case 'pdf':
-                            generatePDFFile(data);
-                            break;
+
                         default:
                             throw new Error(`Format non supporté: ${format}`);
                     }
@@ -875,84 +873,84 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
     };
 
     // Fonction pour générer un fichier PDF
-    const generatePDFFile = (data: any) => {
-        try {
-            console.log("Données reçues pour l'exportation PDF:", data);
+    // const generatePDFFile = (data: any) => {
+    //     try {
+    //         console.log("Données reçues pour l'exportation PDF:", data);
 
-            // Vérifier le format des données reçues
-            let dataToNormalize = data;
-            if (data && typeof data === 'object' && !Array.isArray(data)) {
-                // Si c'est un objet avec une propriété 'data' ou 'items'
-                if (Array.isArray(data.data)) {
-                    dataToNormalize = data.data;
-                } else if (Array.isArray(data.items)) {
-                    dataToNormalize = data.items;
-                } else {
-                    // Essayer de transformer l'objet en tableau si possible
-                    const keys = Object.keys(data).filter(key => !isNaN(Number(key)));
-                    if (keys.length > 0) {
-                        dataToNormalize = keys.map(key => data[key]);
-                    }
-                }
-            }
+    //         // Vérifier le format des données reçues
+    //         let dataToNormalize = data;
+    //         if (data && typeof data === 'object' && !Array.isArray(data)) {
+    //             // Si c'est un objet avec une propriété 'data' ou 'items'
+    //             if (Array.isArray(data.data)) {
+    //                 dataToNormalize = data.data;
+    //             } else if (Array.isArray(data.items)) {
+    //                 dataToNormalize = data.items;
+    //             } else {
+    //                 // Essayer de transformer l'objet en tableau si possible
+    //                 const keys = Object.keys(data).filter(key => !isNaN(Number(key)));
+    //                 if (keys.length > 0) {
+    //                     dataToNormalize = keys.map(key => data[key]);
+    //                 }
+    //             }
+    //         }
 
-            // Normaliser les données pour l'export (version simplifiée)
-            const exportData = normalizeDataForExport(dataToNormalize);
-            console.log(`Données normalisées pour PDF: ${exportData.length} éléments`);
+    //         // Normaliser les données pour l'export (version simplifiée)
+    //         const exportData = normalizeDataForExport(dataToNormalize);
+    //         console.log(`Données normalisées pour PDF: ${exportData.length} éléments`);
 
-            if (exportData.length === 0) {
-                throw new Error("Aucune donnée à exporter");
-            }
+    //         if (exportData.length === 0) {
+    //             throw new Error("Aucune donnée à exporter");
+    //         }
 
-            // Créer un nouveau document PDF avec autoTable
-            const doc = new jsPDF({ orientation: 'landscape' });
+    //         // Créer un nouveau document PDF avec autoTable
+    //         const doc = new jsPDF({ orientation: 'landscape' });
 
-            // Ajouter un titre
-            doc.text("État des encaissements - Rapport complet", 14, 15);
+    //         // Ajouter un titre
+    //         doc.text("État des encaissements - Rapport complet", 14, 15);
 
-            // Préparer les en-têtes et les données
-            const headers = [
-                ["Direction", "Code", "Date", "Banque", "Produit", "Mode", "Montant Caisse", "Montant Banque", "Écart", "Statut", "Validation Level"]
-            ];
+    //         // Préparer les en-têtes et les données
+    //         const headers = [
+    //             ["Direction", "Code", "Date", "Banque", "Produit", "Mode", "Montant Caisse", "Montant Banque", "Écart", "Statut", "Validation Level"]
+    //         ];
 
-            const body = exportData.map(item => [
-                item.directionRegionale || "N/A",
-                item.codeExpl || "N/A",
-                item.dateEncaissement || "N/A",
-                item.banque || "N/A",
-                item.produit || "N/A",
-                item.modeReglement || "N/A",
-                formatMontantForPDF(item.montantRestitutionCaisse || 0),
-                formatMontantForPDF(item.montantBordereauBanque || 0),
-                formatMontantForPDF(item.ecartCaisseBanque || 0),
-                item.statut || "N/A",
-                item.validationLevel || "N/A"
-            ]);
+    //         const body = exportData.map(item => [
+    //             item.directionRegionale || "N/A",
+    //             item.codeExpl || "N/A",
+    //             item.dateEncaissement || "N/A",
+    //             item.banque || "N/A",
+    //             item.produit || "N/A",
+    //             item.modeReglement || "N/A",
+    //             formatMontantForPDF(item.montantRestitutionCaisse || 0),
+    //             formatMontantForPDF(item.montantBordereauBanque || 0),
+    //             formatMontantForPDF(item.ecartCaisseBanque || 0),
+    //             item.statut || "N/A",
+    //             item.validationLevel || "N/A"
+    //         ]);
 
-            // Utiliser autoTable comme une fonction externe
-            autoTable(doc, {
-                head: headers,
-                body: body,
-                startY: 20,
-                theme: "grid",
-                headStyles: { fillColor: [54, 162, 235], textColor: 255 },
-                styles: {
-                    fontSize: 8,
-                    cellPadding: 3,
-                    overflow: "linebreak",
-                },
-                margin: { top: 20, left: 10, right: 10 },
-            });
+    //         // Utiliser autoTable comme une fonction externe
+    //         autoTable(doc, {
+    //             head: headers,
+    //             body: body,
+    //             startY: 20,
+    //             theme: "grid",
+    //             headStyles: { fillColor: [54, 162, 235], textColor: 255 },
+    //             styles: {
+    //                 fontSize: 8,
+    //                 cellPadding: 3,
+    //                 overflow: "linebreak",
+    //             },
+    //             margin: { top: 20, left: 10, right: 10 },
+    //         });
 
-            // Enregistrer le fichier PDF
-            doc.save("etat_encaissements.pdf");
+    //         // Enregistrer le fichier PDF
+    //         doc.save("etat_encaissements.pdf");
 
-            console.log('Exportation PDF réussie!');
-        } catch (error) {
-            console.error("Erreur lors de la génération du fichier PDF:", error);
-            showErrorModal(`Erreur lors de la génération du fichier PDF: ${error}`, null, 'csv');
-        }
-    };
+    //         console.log('Exportation PDF réussie!');
+    //     } catch (error) {
+    //         console.error("Erreur lors de la génération du fichier PDF:", error);
+    //         showErrorModal(`Erreur lors de la génération du fichier PDF: ${error}`, null, 'csv');
+    //     }
+    // };
 
     // Fonction utilitaire pour télécharger un blob
     const saveAs = (blob: Blob, fileName: string) => {
@@ -1027,15 +1025,6 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                                         onClick={() => handleExportAllData('csv')}
                                     >
                                         <Csv className="h-5 w-5" />
-                                    </button>
-                                </Tippy>
-                                <Tippy content="Exporter en PDF" animation="scale" placement="top">
-                                    <button
-                                        type="button"
-                                        className="rounded-lg p-2 text-gray-600 transition-all hover:bg-gray-100"
-                                        onClick={() => handleExportAllData('pdf')}
-                                    >
-                                        <Pdf className="h-5 w-5" />
                                     </button>
                                 </Tippy>
                             </div>

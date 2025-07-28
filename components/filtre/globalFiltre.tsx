@@ -84,8 +84,10 @@ export default function GlobalFiltre({
     journeeCaisse: [],
   });
 
-  // Add status state
-  const [selectedStatus, setSelectedStatus] = useState<EStatutEncaissement | null>(null);
+  // Add status state - maintenant un tableau d'entiers
+  const [selectedStatuses, setSelectedStatuses] = useState<EStatutEncaissement[]>([]);
+
+  console.log("selectedStatuses", selectedStatuses);
 
   // Fonction pour obtenir le libellé du statut
   const getStatutLabel = (statut: EStatutEncaissement): string => {
@@ -146,7 +148,9 @@ export default function GlobalFiltre({
   useEffect(() => {
     console.log("Secteurs reçus:", secteurs);
     console.log("DR sélectionnées:", selectedDRIds);
-  }, [secteurs, selectedDRIds]);
+    console.log("DR Data reçues:", drData);
+    console.log("DR Loading:", drLoading);
+  }, [secteurs, selectedDRIds, drData, drLoading]);
 
   // Charger les données initiales (produit, modes)
   useEffect(() => {
@@ -156,12 +160,22 @@ export default function GlobalFiltre({
 
   // Mémoriser les valeurs pour éviter les re-calculs
   const dirRegionalMemo = useMemo(() => {
-    if (!selectedDRIds.length || !drData.length) return [];
+    console.log("Calcul dirRegionalMemo - selectedDRIds:", selectedDRIds, "drData:", drData);
 
-    return selectedDRIds.map(id => {
-      const name = drData.find((dr: any) => dr.id === id)?.name || "";
+    if (!selectedDRIds.length || !drData || !Array.isArray(drData) || !drData.length) {
+      console.log("Retour tableau vide - pas de DR sélectionnées ou données DR invalides");
+      return [];
+    }
+
+    const result = selectedDRIds.map(id => {
+      const dr = drData.find((dr: any) => dr.id === id);
+      const name = dr?.name || "";
+      console.log(`DR ID ${id} -> nom: "${name}"`);
       return name.trim();
     }).filter(Boolean);
+
+    console.log("Résultat dirRegionalMemo:", result);
+    return result;
   }, [selectedDRIds, drData]);
 
   const codeExplMemo = useMemo(() => {
@@ -194,8 +208,11 @@ export default function GlobalFiltre({
 
   // Charger les données en fonction des DR et secteurs sélectionnés
   useEffect(() => {
+    console.log("🔄 Vérification chargement données - DR Loading:", drLoading, "Secteur Loading:", secteurLoading, "Journée Caisse Loading:", journeeCaisseLoading);
+
     // Éviter les appels API si les données sont déjà en cours de chargement
     if (drLoading || secteurLoading || journeeCaisseLoading) {
+      console.log("⏳ Données en cours de chargement, attente...");
       return;
     }
 
@@ -204,15 +221,19 @@ export default function GlobalFiltre({
       codeExpl: codeExplMemo
     };
 
+    console.log("📊 Paramètres actuels:", currentParams);
+
     // Vérifier si les paramètres ont changé depuis le dernier appel
     const lastCall = lastApiCall.current;
     if (lastCall &&
       JSON.stringify(lastCall.directionRegional) === JSON.stringify(currentParams.directionRegional) &&
       JSON.stringify(lastCall.codeExpl) === JSON.stringify(currentParams.codeExpl)) {
+      console.log("🔄 Paramètres identiques, pas de nouvel appel API");
       return; // Les paramètres n'ont pas changé, ne pas refaire l'appel
     }
 
     if (currentParams.directionRegional.length > 0 || currentParams.codeExpl.length > 0) {
+      console.log("🚀 Lancement des appels API avec paramètres:", currentParams);
       // Mémoriser les paramètres de cet appel
       lastApiCall.current = currentParams;
 
@@ -224,6 +245,8 @@ export default function GlobalFiltre({
 
       // Charger les journées caisse
       dispatch(fetchJourneeCaisse(currentParams));
+    } else {
+      console.log("⚠️ Aucun paramètre valide, pas d'appel API");
     }
   }, [dirRegionalMemo, codeExplMemo, dispatch, drLoading, secteurLoading, journeeCaisseLoading]);
 
@@ -241,6 +264,17 @@ export default function GlobalFiltre({
       journeeCaisse: [],
     }));
   }, [selectedDRIds, selectedSecteurIds]);
+
+  // Fonction pour gérer la sélection/désélection de statuts
+  const toggleStatus = (status: EStatutEncaissement) => {
+    setSelectedStatuses(prev => {
+      if (prev.includes(status)) {
+        return prev.filter(s => s !== status);
+      } else {
+        return [...prev, status];
+      }
+    });
+  };
 
   // Ajout/suppression d'un item (banque, caisse, mode, journeeCaisse)
   const toggleSelection = (
@@ -372,7 +406,7 @@ export default function GlobalFiltre({
       dailyCaisse: selectedItems.journeeCaisse.map((jc) => jc.libelle.trim()),
       startDate: dateRange.startDate || "",
       endDate: dateRange.endDate || "",
-      status: selectedStatus,
+      statut: selectedStatuses,
     };
   };
 
@@ -388,7 +422,7 @@ export default function GlobalFiltre({
       caisse: params.caisse || [],
       produit: params.produit || [],
       modeReglement: params.modeReglement || [],
-      statut: params.status ? [params.status] : [],
+      statut: params.statut || [],
       startDate: params.startDate || "",
       endDate: params.endDate || "",
       dailyCaisse: params.dailyCaisse || [],
@@ -410,7 +444,7 @@ export default function GlobalFiltre({
     setDateRange({ startDate: "", endDate: "" });
     setSelectedDRIds([]);
     setSelectedSecteurIds([]);
-    setSelectedStatus(null);
+    setSelectedStatuses([]);
     setSelectedItems({ produit: [], banques: [], caisses: [], modes: [], journeeCaisse: [] });
 
     setSearchQueries({
@@ -739,57 +773,21 @@ export default function GlobalFiltre({
                   <Dropdown
                     placement="bottom-start"
                     offset={[0, 10]}
-                    btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${selectedStatus !== null
-                      ? selectedStatus === EStatutEncaissement.VALIDE
-                        ? "ring-2 ring-success/30 bg-success-light dark:bg-success/20"
-                        : selectedStatus === EStatutEncaissement.EN_ATTENTE
-                          ? "ring-2 ring-primary/30 bg-primary-light dark:bg-primary/20"
-                          : selectedStatus === EStatutEncaissement.TRAITE
-                            ? "ring-2 ring-secondary/30 bg-secondary-light dark:bg-secondary/20"
-                            : selectedStatus === EStatutEncaissement.REJETE
-                              ? "ring-2 ring-danger/30 bg-danger-light dark:bg-danger/20"
-                              : "ring-2 ring-warning/30 bg-warning-light dark:bg-warning/20"
+                    btnClassName={`relative flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 ${selectedStatuses.length > 0
+                      ? "ring-2 ring-primary/30 bg-primary-light dark:bg-primary/20"
                       : ""
                       }`}
                     button={
                       <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                        {selectedStatus !== null ? (
-                          <div className={`flex items-center justify-center w-5 h-5 rounded-full ${selectedStatus === EStatutEncaissement.VALIDE
-                            ? "bg-success-light dark:bg-success/30"
-                            : selectedStatus === EStatutEncaissement.EN_ATTENTE
-                              ? "bg-primary-light dark:bg-primary/30"
-                              : selectedStatus === EStatutEncaissement.TRAITE
-                                ? "bg-secondary-light dark:bg-secondary/30"
-                                : selectedStatus === EStatutEncaissement.REJETE
-                                  ? "bg-danger-light dark:bg-danger/30"
-                                  : "bg-warning-light dark:bg-warning/30"
-                            }`}>
+                        {selectedStatuses.length > 0 ? (
+                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary-light dark:bg-primary/30">
                             <svg
-                              className={`h-3 w-3 ${selectedStatus === EStatutEncaissement.VALIDE
-                                ? "text-success dark:text-success"
-                                : selectedStatus === EStatutEncaissement.EN_ATTENTE
-                                  ? "text-primary dark:text-primary"
-                                  : selectedStatus === EStatutEncaissement.TRAITE
-                                    ? "text-secondary dark:text-secondary"
-                                    : selectedStatus === EStatutEncaissement.REJETE
-                                      ? "text-danger dark:text-danger"
-                                      : "text-warning dark:text-warning"
-                                }`}
+                              className="h-3 w-3 text-primary dark:text-primary"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
                             >
-                              {selectedStatus === EStatutEncaissement.VALIDE ? (
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                              ) : selectedStatus === EStatutEncaissement.EN_ATTENTE ? (
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              ) : selectedStatus === EStatutEncaissement.TRAITE ? (
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              ) : selectedStatus === EStatutEncaissement.REJETE ? (
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                              ) : (
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              )}
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                           </div>
                         ) : (
@@ -798,7 +796,11 @@ export default function GlobalFiltre({
                           </svg>
                         )}
                         <span className="truncate">
-                          {selectedStatus !== null ? getStatutLabel(selectedStatus) : "Statut"}
+                          {selectedStatuses.length > 0
+                            ? selectedStatuses.length === 1
+                              ? getStatutLabel(selectedStatuses[0])
+                              : `${selectedStatuses.length} statuts sélectionnés`
+                            : "Statut"}
                         </span>
                       </div>
                     }
@@ -806,15 +808,15 @@ export default function GlobalFiltre({
                     <div className="w-full min-w-[200px] rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">
                       <div className="space-y-1">
                         <button
-                          onClick={() => setSelectedStatus(null)}
-                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${selectedStatus === null ? "bg-gray-100 dark:bg-gray-700" : ""
+                          onClick={() => setSelectedStatuses([])}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${selectedStatuses.length === 0 ? "bg-gray-100 dark:bg-gray-700" : ""
                             }`}
                         >
                           <span className="text-gray-500 dark:text-gray-400">Tous les statuts</span>
                         </button>
                         <button
-                          onClick={() => setSelectedStatus(EStatutEncaissement.EN_ATTENTE)}
-                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-primary-light dark:hover:bg-primary/20 ${selectedStatus === EStatutEncaissement.EN_ATTENTE ? "bg-primary-light dark:bg-primary/20" : ""
+                          onClick={() => toggleStatus(EStatutEncaissement.EN_ATTENTE)}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-primary-light dark:hover:bg-primary/20 ${selectedStatuses.includes(EStatutEncaissement.EN_ATTENTE) ? "bg-primary-light dark:bg-primary/20" : ""
                             }`}
                         >
                           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-light dark:bg-primary/30">
@@ -825,8 +827,8 @@ export default function GlobalFiltre({
                           <span className="text-primary dark:text-primary">En attente</span>
                         </button>
                         <button
-                          onClick={() => setSelectedStatus(EStatutEncaissement.TRAITE)}
-                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-secondary-light dark:hover:bg-secondary/20 ${selectedStatus === EStatutEncaissement.TRAITE ? "bg-secondary-light dark:bg-secondary/20" : ""
+                          onClick={() => toggleStatus(EStatutEncaissement.TRAITE)}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-secondary-light dark:hover:bg-secondary/20 ${selectedStatuses.includes(EStatutEncaissement.TRAITE) ? "bg-secondary-light dark:bg-secondary/20" : ""
                             }`}
                         >
                           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-secondary-light dark:bg-secondary/30">
@@ -837,8 +839,8 @@ export default function GlobalFiltre({
                           <span className="text-secondary dark:text-secondary">Traité</span>
                         </button>
                         <button
-                          onClick={() => setSelectedStatus(EStatutEncaissement.VALIDE)}
-                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-success-light dark:hover:bg-success/20 ${selectedStatus === EStatutEncaissement.VALIDE ? "bg-success-light dark:bg-success/20" : ""
+                          onClick={() => toggleStatus(EStatutEncaissement.VALIDE)}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-success-light dark:hover:bg-success/20 ${selectedStatuses.includes(EStatutEncaissement.VALIDE) ? "bg-success-light dark:bg-success/20" : ""
                             }`}
                         >
                           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success-light dark:bg-success/30">
@@ -849,8 +851,8 @@ export default function GlobalFiltre({
                           <span className="text-success dark:text-success">Validé</span>
                         </button>
                         <button
-                          onClick={() => setSelectedStatus(EStatutEncaissement.REJETE)}
-                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-danger-light dark:hover:bg-danger/20 ${selectedStatus === EStatutEncaissement.REJETE ? "bg-danger-light dark:bg-danger/20" : ""
+                          onClick={() => toggleStatus(EStatutEncaissement.REJETE)}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-danger-light dark:hover:bg-danger/20 ${selectedStatuses.includes(EStatutEncaissement.REJETE) ? "bg-danger-light dark:bg-danger/20" : ""
                             }`}
                         >
                           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-danger-light dark:bg-danger/30">
@@ -861,8 +863,8 @@ export default function GlobalFiltre({
                           <span className="text-danger dark:text-danger">Rejeté</span>
                         </button>
                         <button
-                          onClick={() => setSelectedStatus(EStatutEncaissement.CLOTURE)}
-                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-warning-light dark:hover:bg-warning/20 ${selectedStatus === EStatutEncaissement.CLOTURE ? "bg-warning-light dark:bg-warning/20" : ""
+                          onClick={() => toggleStatus(EStatutEncaissement.CLOTURE)}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-warning-light dark:hover:bg-warning/20 ${selectedStatuses.includes(EStatutEncaissement.CLOTURE) ? "bg-warning-light dark:bg-warning/20" : ""
                             }`}
                         >
                           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-warning-light dark:bg-warning/30">
@@ -871,6 +873,30 @@ export default function GlobalFiltre({
                             </svg>
                           </div>
                           <span className="text-warning dark:text-warning">Clôturé</span>
+                        </button>
+                        <button
+                          onClick={() => toggleStatus(EStatutEncaissement.RECLAMATION_REVERSES)}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-info-light dark:hover:bg-info/20 ${selectedStatuses.includes(EStatutEncaissement.RECLAMATION_REVERSES) ? "bg-info-light dark:bg-info/20" : ""
+                            }`}
+                        >
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-info-light dark:bg-info/30">
+                            <svg className="h-3 w-3 text-info dark:text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                          </div>
+                          <span className="text-info dark:text-info">Réclamation chargée</span>
+                        </button>
+                        <button
+                          onClick={() => toggleStatus(EStatutEncaissement.RECLAMATION_TRAITES)}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-success-light dark:hover:bg-success/20 ${selectedStatuses.includes(EStatutEncaissement.RECLAMATION_TRAITES) ? "bg-success-light dark:bg-success/20" : ""
+                            }`}
+                        >
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success-light dark:bg-success/30">
+                            <svg className="h-3 w-3 text-success dark:text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <span className="text-success dark:text-success">Réclamation traitée</span>
                         </button>
                       </div>
                     </div>
@@ -974,9 +1000,12 @@ export default function GlobalFiltre({
         <div className="px-3 sm:px-4 py-3 bg-gray-50 dark:bg-gray-700/30 rounded-b-lg overflow-x-auto">
           <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
             <span className="font-medium">Filtres actifs:</span>
-            {showStatusSelector && selectedStatus !== null && (
+            {showStatusSelector && selectedStatuses.length > 0 && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                Statut: {getStatutLabel(selectedStatus)}
+                Statut: {selectedStatuses.length === 1
+                  ? getStatutLabel(selectedStatuses[0])
+                  : `${selectedStatuses.length} statuts`
+                }
               </span>
             )}
             {dateRange.startDate && dateRange.endDate && (
