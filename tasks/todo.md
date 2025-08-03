@@ -34,9 +34,9 @@ Implémenter un système pour détecter quand le nombre d'encaissements rejetés
 
 ### 4. Optimiser les performances
 
-- [ ] Implémenter un polling intelligent
-- [ ] Éviter les requêtes inutiles
-- [ ] Gérer le cache des données
+- [x] Implémenter un polling intelligent
+- [x] Éviter les requêtes inutiles
+- [x] Gérer le cache des données
 
 ### 5. Tests et validation
 
@@ -94,8 +94,9 @@ Implémenter un système pour détecter quand le nombre d'encaissements rejetés
 #### 4. Intégration avec le système existant
 
 - **Compatibilité** : Utilise l'API existante `/encaissements/1?page=1&limit=1`
-- **Performance** : Polling intelligent sans surcharge
+- **Performance** : Polling intelligent adaptatif (3-10 secondes selon l'activité)
 - **UX** : Notifications non-intrusives avec animations fluides
+- **Réactivité** : Vérification immédiate lors du retour sur l'onglet
 
 #### 5. Modal de confirmation de déconnexion
 

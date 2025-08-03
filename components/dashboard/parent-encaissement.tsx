@@ -37,8 +37,9 @@ const ComponentsDashboardValider = () => {
     hasNotified,
     refreshCount: refreshRejetesCount,
     resetIncreaseState,
-    markAsNotified
-  } = useRejetesDetection(30000); // Polling toutes les 30 secondes
+    markAsNotified,
+    checkAfterAction
+  } = useRejetesDetection(5000); // Polling intelligent toutes les 5 secondes
 
   // Référence pour l'audio de notification
   const notificationSound = useRef<HTMLAudioElement | null>(null);
@@ -280,6 +281,14 @@ const ComponentsDashboardValider = () => {
       }, 15000);
     }
   }, [hasIncreased, increaseAmount, hasNotified, resetIncreaseState, markAsNotified, rejetesCount]);
+
+  // Vérifier les rejets après certaines actions importantes
+  useEffect(() => {
+    // Vérifier quand l'utilisateur revient sur l'onglet des rejets
+    if (activeTab === EStatutEncaissement.REJETE) {
+      checkAfterAction();
+    }
+  }, [activeTab, checkAfterAction]);
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");

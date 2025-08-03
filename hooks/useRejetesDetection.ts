@@ -11,7 +11,7 @@ interface RejetesDetectionState {
   hasNotified: boolean; // Pour éviter les notifications répétitives
 }
 
-export const useRejetesDetection = (pollingInterval: number = 30000) => {
+export const useRejetesDetection = (pollingInterval: number = 5000) => {
   const [state, setState] = useState<RejetesDetectionState>({
     currentCount: 0,
     previousCount: 0,
@@ -23,6 +23,7 @@ export const useRejetesDetection = (pollingInterval: number = 30000) => {
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialized = useRef(false);
+  const lastActivityRef = useRef<number>(Date.now());
 
   // Fonction pour récupérer le nombre d'encaissements rejetés
   const fetchRejetesCount = async (): Promise<number> => {
@@ -72,16 +73,62 @@ export const useRejetesDetection = (pollingInterval: number = 30000) => {
     }
   }, []);
 
-  // Polling pour les mises à jour
+  // Polling intelligent avec détection d'activité
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Vérifier immédiatement quand l'utilisateur revient sur l'onglet
+        updateCount();
+        lastActivityRef.current = Date.now();
+      }
+    };
+
+    const handleUserActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    // Polling adaptatif
+    const startPolling = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      // Polling plus fréquent si l'utilisateur est actif
+      const isUserActive = Date.now() - lastActivityRef.current < 30000; // 30 secondes
+      const currentInterval = isUserActive ? 3000 : 10000; // 3s si actif, 10s sinon
+
+      intervalRef.current = setInterval(() => {
+        updateCount();
+        // Ajuster l'intervalle selon l'activité
+        const timeSinceActivity = Date.now() - lastActivityRef.current;
+        if (timeSinceActivity > 30000 && currentInterval === 3000) {
+          startPolling(); // Redémarrer avec un intervalle plus long
+        }
+      }, currentInterval);
+    };
+
     if (pollingInterval > 0) {
-      intervalRef.current = setInterval(updateCount, pollingInterval);
+      startPolling();
+
+      // Écouter les changements de visibilité
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+
+      // Écouter l'activité utilisateur
+      document.addEventListener("mousemove", handleUserActivity);
+      document.addEventListener("keydown", handleUserActivity);
+      document.addEventListener("click", handleUserActivity);
+      document.addEventListener("scroll", handleUserActivity);
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("mousemove", handleUserActivity);
+      document.removeEventListener("keydown", handleUserActivity);
+      document.removeEventListener("click", handleUserActivity);
+      document.removeEventListener("scroll", handleUserActivity);
     };
   }, [pollingInterval]);
 
@@ -108,10 +155,27 @@ export const useRejetesDetection = (pollingInterval: number = 30000) => {
     }));
   };
 
+  // Fonction pour forcer la vérification après une action
+  const checkAfterAction = () => {
+    // Vérifier immédiatement
+    updateCount();
+
+    // Vérifier à nouveau après 2 secondes
+    setTimeout(() => {
+      updateCount();
+    }, 2000);
+
+    // Vérifier à nouveau après 5 secondes
+    setTimeout(() => {
+      updateCount();
+    }, 5000);
+  };
+
   return {
     ...state,
     refreshCount,
     resetIncreaseState,
     markAsNotified,
+    checkAfterAction,
   };
 };
