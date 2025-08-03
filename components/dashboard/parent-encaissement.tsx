@@ -22,13 +22,41 @@ import { API_AUTH_SUIVI } from "@/config/constants";
 import { active } from "sortablejs";
 import GlobalFiltre from "@/components/filtre/globalFiltre";
 import { useFilterPersistence } from "@/hooks/useFilterPersistence";
+import { useRejetesDetection } from "@/hooks/useRejetesDetection";
+import { toast } from "react-toastify";
 
 const ComponentsDashboardValider = () => {
   const dispatch = useDispatch<TAppDispatch>();
   const habilitation = getUserHabilitation();
 
-  // État pour le nombre d'encaissements rejetés
-  const [rejetesCount, setRejetesCount] = useState(0);
+  // Utiliser le hook de détection des encaissements rejetés
+  const {
+    currentCount: rejetesCount,
+    hasIncreased,
+    increaseAmount,
+    hasNotified,
+    refreshCount: refreshRejetesCount,
+    resetIncreaseState,
+    markAsNotified
+  } = useRejetesDetection(30000); // Polling toutes les 30 secondes
+
+  // Référence pour l'audio de notification
+  const notificationSound = useRef<HTMLAudioElement | null>(null);
+
+  // Fonction pour jouer le son de notification
+  const playNotificationSound = () => {
+    try {
+      if (!notificationSound.current) {
+        notificationSound.current = new Audio('/assets/sounds/notification.mp3');
+        notificationSound.current.volume = 0.5; // Volume à 50%
+      }
+      notificationSound.current.play().catch(error => {
+        console.warn("Impossible de jouer le son de notification:", error);
+      });
+    } catch (error) {
+      console.warn("Erreur lors du chargement du son de notification:", error);
+    }
+  };
 
   // Définition des onglets disponibles dans l'ordre métier souhaité
   const allTabs = [
@@ -80,30 +108,13 @@ const ComponentsDashboardValider = () => {
     .sort((a, b) => a.order - b.order); // Trier selon l'ordre défini - Chargés → Vérifiés → Rejetés → Validés → Traités
 
   // Debug: Afficher l'ordre des onglets
-  console.log("🔍 Ordre des onglets:", filteredTabs.map(tab => `${tab.label} (order: ${tab.order})`));
 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Fonction pour récupérer le nombre d'encaissements rejetés
-  const fetchRejetesCount = async () => {
-    try {
-      const response = await axiosInstance.get(`${API_AUTH_SUIVI}/encaissements/1?page=1&limit=1`);
-      if (response?.data?.pagination?.totalCount) {
-        setRejetesCount(response.data.pagination.totalCount);
-        console.log("📊 Nombre d'encaissements rejetés:", response.data.pagination.totalCount);
-      }
-    } catch (error) {
-      console.error("❌ Erreur lors de la récupération du nombre d'encaissements rejetés:", error);
-    }
-  };
 
-  // Charger le nombre d'encaissements rejetés au montage du composant
-  useEffect(() => {
-    fetchRejetesCount();
-  }, []);
 
   // Données des directions régionales pour le filtre
   const [drData, setDrData] = useState([]);
@@ -139,7 +150,6 @@ const ComponentsDashboardValider = () => {
         return EStatutEncaissement.EN_ATTENTE; // 0
       }
       if (window.location.pathname.includes('verifies') && hasVerifiesAccess) {
-        console.log("Détecté: Page des encaissements vérifiés");
         return EStatutEncaissement.TRAITE; // 2 = Encaissements vérifiés
       }
       if (window.location.pathname.includes('rejetes') && hasRejetesAccess) {
@@ -206,9 +216,70 @@ const ComponentsDashboardValider = () => {
   // Rafraîchir le compteur quand l'onglet actif change vers les rejetés
   useEffect(() => {
     if (activeTab === EStatutEncaissement.REJETE) {
-      fetchRejetesCount();
+      refreshRejetesCount();
     }
-  }, [activeTab]);
+  }, [activeTab, refreshRejetesCount]);
+
+  // Effet pour afficher une notification quand il y a une augmentation
+  useEffect(() => {
+    if (hasIncreased && increaseAmount > 0 && !hasNotified) {
+      // Jouer le son de notification
+      playNotificationSound();
+
+      // Créer un toast personnalisé avec les couleurs de la sidebar
+      const toastContent = (
+        <div className="bg-gradient-to-br from-[#0E1726] via-[#162236] to-[#1a2941] text-white p-5 rounded-lg shadow-lg border border-white/10 w-[500px]">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-base font-semibold text-white mb-2">
+                {increaseAmount >= 5 ? '⚠️ Nouveaux encaissements rejetés' : 'ℹ️ Nouvel encaissement rejeté'}
+              </div>
+              <div className="text-sm text-white/80 mb-2">
+                {increaseAmount} nouvel(le)(s) encaissement(s) rejeté(s) détecté(s)
+              </div>
+              <div className="text-sm text-white/60">
+                Total actuel : {rejetesCount} encaissement(s) rejeté(s)
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+      // Afficher une notification toast personnalisée
+      toast(toastContent, {
+        position: "top-center",
+        autoClose: increaseAmount >= 5 ? 10000 : 8000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        style: {
+          background: 'transparent',
+          boxShadow: 'none',
+          padding: 0,
+          marginTop: '20px',
+          minWidth: '500px',
+          maxWidth: '500px',
+          width: '500px',
+        },
+      });
+
+      // Marquer comme notifié pour éviter les notifications répétitives
+      markAsNotified();
+
+      // Réinitialiser l'état d'augmentation après 15 secondes (plus long)
+      setTimeout(() => {
+        resetIncreaseState();
+      }, 15000);
+    }
+  }, [hasIncreased, increaseAmount, hasNotified, resetIncreaseState, markAsNotified, rejetesCount]);
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -218,7 +289,6 @@ const ComponentsDashboardValider = () => {
   // Référence pour éviter les doubles chargements lors de la restauration
   const hasLoadedOnce = useRef(false);
 
-  console.log(ecartDataEncaissement, "ecartDataEncaissement")
 
   // Utiliser le hook de persistance des filtres
   const {
@@ -231,11 +301,9 @@ const ComponentsDashboardValider = () => {
   } = useFilterPersistence(activeTab);
 
   const handlePageChange = (page: number) => {
-    console.log(`🔄 Tentative changement page: ${page}, totalPages: ${paginate.totalPages}, totalCount: ${paginate.totalCount}`);
 
     // Validation robuste de la pagination
     if (page > 0 && paginate.totalPages > 0 && page <= paginate.totalPages) {
-      console.log(`✅ Changement de page validé: ${page}`);
       setPage(page);
       // Sauvegarder la nouvelle page avec les filtres actuels
       savePagination(page, limit);
@@ -244,7 +312,6 @@ const ComponentsDashboardValider = () => {
       console.warn(`❌ Changement de page rejeté: page=${page}, totalPages=${paginate.totalPages}`);
       // Si la page demandée est invalide, rediriger vers la dernière page valide
       if (paginate.totalPages > 0 && page > paginate.totalPages) {
-        console.log(`🔄 Redirection vers la dernière page valide: ${paginate.totalPages}`);
         setPage(paginate.totalPages);
         savePagination(paginate.totalPages, limit);
       }
@@ -303,8 +370,6 @@ const ComponentsDashboardValider = () => {
         if (value === undefined) delete params[key];
       });
 
-      console.log("🔍 Filtres utilisés:", filtersToUse);
-      console.log("🔍 Paramètres envoyés à l'API:", params);
 
       // Utiliser directement activeTab au lieu de filters?.id
       const apiUrl = `${API_AUTH_SUIVI}/encaissements/${activeTab}?page=${page}&search=${search}&limit=${limit}`;
@@ -317,13 +382,10 @@ const ComponentsDashboardValider = () => {
 
       if (response?.data && !response.data.error) {
         setEcartDataEncaissement(response.data);
-        console.log("✅ Données reçues pour activeTab:", activeTab);
-        console.log("📊 Pagination reçue:", response.data.pagination);
 
         // Validation des données de pagination
         if (response.data.pagination) {
           const p = response.data.pagination;
-          console.log(`📄 Pagination validée: currentPage=${p.currentPage}, totalPages=${p.totalPages}, totalCount=${p.totalCount}`);
 
           if (p.totalPages && p.currentPage > p.totalPages) {
             console.warn(`⚠️ Page actuelle (${p.currentPage}) > totalPages (${p.totalPages}) - possible problème côté API`);
@@ -371,7 +433,6 @@ const ComponentsDashboardValider = () => {
         return; // Sortir pour éviter le double fetchData
       }
 
-      console.log("⭐ Déclenchement requête API avec activeTab:", activeTab, "page:", page, "search:", search, "limit:", limit);
       fetchData(currentFilters);
       hasLoadedOnce.current = true;
 
@@ -385,7 +446,6 @@ const ComponentsDashboardValider = () => {
       if (typeof window !== 'undefined') {
         // Définir un type pour window pour éviter les erreurs TypeScript
         (window as any).fetchData = () => {
-          console.log("❗Appel de window.fetchData global - Rafraîchissement complet");
           // Forcer le nettoyage des données actuelles
           setEcartDataEncaissement(null);
 
@@ -398,10 +458,9 @@ const ComponentsDashboardValider = () => {
           }, 100);
         };
 
-        // Rendre fetchRejetesCount disponible globalement pour les actions de rejet/validation
+        // Rendre refreshRejetesCount disponible globalement pour les actions de rejet/validation
         (window as any).refreshRejetesCount = () => {
-          console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
-          fetchRejetesCount();
+          refreshRejetesCount();
         };
       }
     }
@@ -483,9 +542,7 @@ const ComponentsDashboardValider = () => {
 
         {isMounted && (
           <>
-            {console.log("⚡ Rendu du Tab.Group avec activeTab =", activeTab)}
             <Tab.Group selectedIndex={selectedTabIndex} onChange={(index) => {
-              console.log("⚡ Changement d'onglet:", index, "Tab ID:", filteredTabs[index].id);
               setActiveTab(filteredTabs[index].id);
               setSelectedTabIndex(index);
             }}
@@ -504,8 +561,19 @@ const ComponentsDashboardValider = () => {
                         {tab.label}
                         {/* Bulle de notification pour les encaissements rejetés */}
                         {tab.id === EStatutEncaissement.REJETE && rejetesCount > 0 && (
-                          <span className="ml-2 inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-white shadow-sm">
+                          <span
+                            className={`ml-2 inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-bold text-white shadow-sm transition-all duration-300 ${hasIncreased
+                              ? 'bg-red-600 animate-pulse scale-110'
+                              : 'bg-red-500'
+                              }`}
+                            title={hasIncreased ? `+${increaseAmount} nouveaux rejets détectés` : `${rejetesCount} encaissements rejetés`}
+                          >
                             {rejetesCount > 99 ? '99+' : rejetesCount}
+                            {hasIncreased && increaseAmount > 0 && (
+                              <span className="ml-1 text-xs opacity-75">
+                                (+{increaseAmount})
+                              </span>
+                            )}
                           </span>
                         )}
                       </button>

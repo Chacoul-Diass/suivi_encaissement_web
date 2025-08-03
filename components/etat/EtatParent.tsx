@@ -69,7 +69,6 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
 
   // Charger les DR au démarrage
   useEffect(() => {
-    console.log("🚀 Chargement des DR dans EtatParent");
     dispatch(fetchDirectionRegionales());
   }, [dispatch]);
 
@@ -80,12 +79,6 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
 
   // Fonction pour charger les données en fonction des filtres
   const fetchData = () => {
-    console.log("Chargement des données avec les paramètres:", {
-      ...filters,
-      page,
-      search,
-      limit,
-    });
 
     dispatch(
       fetchEtatEncaissements({
@@ -98,14 +91,12 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
       if (action.error) {
         console.error("Erreur lors du chargement des données:", action.error);
       } else {
-        console.log("Données chargées avec succès:", action.payload);
       }
     });
   };
 
   // Fonction pour rafraîchir manuellement les données
   const refreshData = () => {
-    console.log("Rafraîchissement manuel des données");
     fetchData();
   };
 
@@ -152,7 +143,6 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
 
   // Debug: afficher les données DR
   useEffect(() => {
-    console.log("État DR dans EtatParent:", { drData, drLoading });
   }, [drData, drLoading]);
 
   const showHideColumns = (col: string) => {

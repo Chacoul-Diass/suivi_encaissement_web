@@ -87,7 +87,6 @@ export default function GlobalFiltre({
   // Add status state - maintenant un tableau d'entiers
   const [selectedStatuses, setSelectedStatuses] = useState<EStatutEncaissement[]>([]);
 
-  console.log("selectedStatuses", selectedStatuses);
 
   // Fonction pour obtenir le libellé du statut
   const getStatutLabel = (statut: EStatutEncaissement): string => {
@@ -146,10 +145,7 @@ export default function GlobalFiltre({
 
   // Debug: afficher les secteurs reçus
   useEffect(() => {
-    console.log("Secteurs reçus:", secteurs);
-    console.log("DR sélectionnées:", selectedDRIds);
-    console.log("DR Data reçues:", drData);
-    console.log("DR Loading:", drLoading);
+
   }, [secteurs, selectedDRIds, drData, drLoading]);
 
   // Charger les données initiales (produit, modes)
@@ -160,21 +156,17 @@ export default function GlobalFiltre({
 
   // Mémoriser les valeurs pour éviter les re-calculs
   const dirRegionalMemo = useMemo(() => {
-    console.log("Calcul dirRegionalMemo - selectedDRIds:", selectedDRIds, "drData:", drData);
 
     if (!selectedDRIds.length || !drData || !Array.isArray(drData) || !drData.length) {
-      console.log("Retour tableau vide - pas de DR sélectionnées ou données DR invalides");
       return [];
     }
 
     const result = selectedDRIds.map(id => {
       const dr = drData.find((dr: any) => dr.id === id);
       const name = dr?.name || "";
-      console.log(`DR ID ${id} -> nom: "${name}"`);
       return name.trim();
     }).filter(Boolean);
 
-    console.log("Résultat dirRegionalMemo:", result);
     return result;
   }, [selectedDRIds, drData]);
 
@@ -201,18 +193,15 @@ export default function GlobalFiltre({
     // Only fetch sectors if we have valid DR IDs
     const validDrIds = selectedDRIds.filter((id) => id != null);
     if (validDrIds.length > 0) {
-      console.log("Chargement des secteurs pour les DR:", validDrIds);
       dispatch(fetchSecteurs(validDrIds));
     }
   }, [selectedDRIds, dispatch]);
 
   // Charger les données en fonction des DR et secteurs sélectionnés
   useEffect(() => {
-    console.log("🔄 Vérification chargement données - DR Loading:", drLoading, "Secteur Loading:", secteurLoading, "Journée Caisse Loading:", journeeCaisseLoading);
 
     // Éviter les appels API si les données sont déjà en cours de chargement
     if (drLoading || secteurLoading || journeeCaisseLoading) {
-      console.log("⏳ Données en cours de chargement, attente...");
       return;
     }
 
@@ -221,19 +210,16 @@ export default function GlobalFiltre({
       codeExpl: codeExplMemo
     };
 
-    console.log("📊 Paramètres actuels:", currentParams);
 
     // Vérifier si les paramètres ont changé depuis le dernier appel
     const lastCall = lastApiCall.current;
     if (lastCall &&
       JSON.stringify(lastCall.directionRegional) === JSON.stringify(currentParams.directionRegional) &&
       JSON.stringify(lastCall.codeExpl) === JSON.stringify(currentParams.codeExpl)) {
-      console.log("🔄 Paramètres identiques, pas de nouvel appel API");
       return; // Les paramètres n'ont pas changé, ne pas refaire l'appel
     }
 
     if (currentParams.directionRegional.length > 0 || currentParams.codeExpl.length > 0) {
-      console.log("🚀 Lancement des appels API avec paramètres:", currentParams);
       // Mémoriser les paramètres de cet appel
       lastApiCall.current = currentParams;
 
@@ -246,7 +232,6 @@ export default function GlobalFiltre({
       // Charger les journées caisse
       dispatch(fetchJourneeCaisse(currentParams));
     } else {
-      console.log("⚠️ Aucun paramètre valide, pas d'appel API");
     }
   }, [dirRegionalMemo, codeExplMemo, dispatch, drLoading, secteurLoading, journeeCaisseLoading]);
 
@@ -431,14 +416,12 @@ export default function GlobalFiltre({
     };
 
     saveFilters(filtersToSave);
-    console.log("💾 Filtres sauvegardés automatiquement:", filtersToSave);
 
     onApplyFilters(params);
   };
 
   // Réinitialiser : on vide toutes les sélections, mais on garde id dans l'URL
   const resetFilters = () => {
-    console.log("🔄 Début de la réinitialisation complète des filtres...");
 
     // D'abord, remettre à zéro tous les états locaux
     setDateRange({ startDate: "", endDate: "" });
@@ -460,7 +443,6 @@ export default function GlobalFiltre({
     // Supprimer immédiatement le localStorage
     const storageKey = `encaissement_filters_${statutValidation || 0}`;
     localStorage.removeItem(storageKey);
-    console.log(`🗑️ localStorage supprimé: ${storageKey}`);
 
     // Appliquer les filtres vides
     onApplyFilters({ id: statutValidation });
@@ -468,7 +450,6 @@ export default function GlobalFiltre({
     // FORCER la suppression du localStorage après toutes les actions (approche robuste)
     setTimeout(() => {
       localStorage.removeItem(storageKey);
-      console.log(`🔥 FORCAGE: localStorage définitivement supprimé: ${storageKey}`);
 
       // Double vérification
       const remaining = localStorage.getItem(storageKey);
@@ -476,11 +457,9 @@ export default function GlobalFiltre({
         console.warn("⚠️ localStorage encore présent, suppression forcée...");
         localStorage.removeItem(storageKey);
       } else {
-        console.log("✅ Vérification: localStorage bien supprimé");
       }
     }, 1500); // 1.5 secondes pour être sûr que toutes les actions sont terminées
 
-    console.log("✅ Réinitialisation lancée - Suppression forcée programmée");
   };
 
   // Petite fonction utilitaire pour générer un Dropdown

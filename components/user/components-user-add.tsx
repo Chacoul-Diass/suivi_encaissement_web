@@ -278,7 +278,6 @@ const ComponentsAppsInvoiceAdd = () => {
         .filter((secteur) => secteur.id !== undefined),
     };
 
-    console.log(userData, "userData");
 
     setLoading(true);
 

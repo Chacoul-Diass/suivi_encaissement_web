@@ -256,11 +256,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
     useEffect(() => {
       const allData = filterAndMapData(data, statutValidation);
-      console.log("📊 Données mappées avec niveaux:", allData.map(item => ({
-        id: item.id,
-        numeroBordereau: item.numeroBordereau,
-        level: item.level
-      })));
+
       setRecordsData(allData);
     }, [data, filterAndMapData, statutValidation]);
 
@@ -379,21 +375,17 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const refreshTableData = async (forceRefresh = false) => {
-      console.log("🔄 NOUVEAU refreshTableData - Force le rechargement depuis le parent");
 
       // Forcer le rechargement complet depuis le parent
       // Cette approche est plus fiable car elle garantit la synchronisation
       try {
         // Méthode 1: Utiliser window.fetchData global (rechargement complet depuis le parent)
         if (typeof window !== 'undefined' && (window as any).fetchData) {
-          console.log("🔄 Rechargement via window.fetchData (PARENT)");
           (window as any).fetchData();
-          console.log("✅ Rechargement depuis le parent lancé");
           return;
         }
 
         // Méthode 2: Si window.fetchData n'existe pas, essayer de forcer un rechargement
-        console.log("🔄 Aucune méthode window.fetchData trouvée");
 
         // Méthode 3: Fallback - Recharger la page (plus drastique mais garantit la mise à jour)
         console.warn("⚠️ Aucune méthode de rechargement parent trouvée - rechargement de la page");
@@ -406,7 +398,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
         // En dernier recours, recharger la page
         if (typeof window !== 'undefined') {
-          console.log("🔄 Rechargement de la page en dernier recours");
           window.location.reload();
         }
       }
@@ -483,7 +474,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
                 // Rafraîchir le compteur d'encaissements rejetés
                 if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
-                  console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
                   (window as any).refreshRejetesCount();
                 }
 
@@ -640,16 +630,13 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 );
 
                 // Forcer le rafraîchissement après rejet
-                console.log("🔄 Début rafraîchissement après rejet...");
 
                 try {
                   // Force le rechargement depuis le parent (plus fiable)
                   await refreshTableData(true);
-                  console.log("✅ Rafraîchissement après rejet terminé");
 
                   // Rafraîchir le compteur d'encaissements rejetés
                   if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
-                    console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
                     (window as any).refreshRejetesCount();
                   }
                 } catch (error) {
@@ -727,7 +714,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
                 // Rafraîchir le compteur d'encaissements rejetés
                 if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
-                  console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
                   (window as any).refreshRejetesCount();
                 }
 
@@ -802,7 +788,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
 
                 // Rafraîchir le compteur d'encaissements rejetés
                 if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
-                  console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
                   (window as any).refreshRejetesCount();
                 }
 
@@ -838,7 +823,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
     }, [dispatch]);
 
     const [toEmails, setToEmails] = useState<{ mail: string }[]>([]);
-    console.log(toEmails, "toEmails");
 
     const [toInput, setToInput] = useState<string>("");
     const [ccEmails, setCcEmails] = useState<Array<{ mail: string }>>([]);
@@ -868,13 +852,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Si c'est un encaissement rejeté (encaissementStatut === 1)
             if (encaissementStatut === 1) {
               const validationLevel = validationEncaissement?.validationLevel;
-              console.log("🔍 Debug getBorderColor - statut 1 (rejeté):", {
-                validationLevel,
-                validationEncaissement,
-                encaissementStatut,
-                observationRejete,
-                observationRejet
-              });
+
               if (validationLevel) {
                 switch (validationLevel.toUpperCase()) {
                   case "AGC":
@@ -887,7 +865,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     return "border-l-8 border-l-red-500"; // Rouge par défaut - plus large
                 }
               } else {
-                console.log("🔍 Pas de validationLevel trouvé pour encaissement rejeté");
                 // Retourner une bordure par défaut même sans validationLevel
                 return "border-l-8 border-l-red-500"; // Rouge par défaut
               }
@@ -901,16 +878,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Si c'est un encaissement traité (encaissementStatut === 3) avec observationRejete
             if (encaissementStatut === 3 && observationRejete && observationRejete.trim() !== "") {
               const validationLevel = validationEncaissement?.validationLevel;
-              console.log("🔍 Debug getBorderColor - statut 3:", {
-                validationLevel,
-                validationEncaissement,
-                statutValidation,
-                observationRejete
-              });
+
 
               // Si pas de validationLevel, retourner une bordure par défaut
               if (!validationLevel) {
-                console.log("🔍 Pas de validationLevel trouvé, bordure par défaut");
                 return "border-l-8 border-l-gray-400"; // Gris par défaut
               }
 
@@ -922,7 +893,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 case "AGC":
                   return "border-l-8 border-l-primary"; // Rouge
                 default:
-                  console.log("🔍 Niveau non reconnu:", validationLevel);
                   return ""; // Pas de bordure pour les autres niveaux
               }
             }
@@ -930,11 +900,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             // Si c'est un encaissement DFC (encaissementStatut === 7) avec validationLevel DR
             if (encaissementStatut === 7) {
               const validationLevel = validationEncaissement?.validationLevel;
-              console.log("🔍 Debug getBorderColor - statut 7:", {
-                validationLevel,
-                validationEncaissement,
-                statutValidation
-              });
+
 
               if (validationLevel && validationLevel.toUpperCase() === "DR") {
                 return "border-l-8 border-l-warning"; // Jaune
@@ -1521,11 +1487,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 // Utiliser la nouvelle fonction de rafraîchissement (forcé pour réclamation)
                 try {
                   await refreshTableData(true);
-                  console.log("✅ Rafraîchissement après réclamation terminé");
 
                   // Rafraîchir le compteur d'encaissements rejetés
                   if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
-                    console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
                     (window as any).refreshRejetesCount();
                   }
                 } catch (error) {
@@ -1586,20 +1550,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
         ? getStatutValidationByUserLevel(userLevel)
         : EStatutEncaissement.TRAITE;
 
-      console.log("🔍 === RETRANSMISSION ENCAISSEMENT ===");
-      console.log("👤 Utilisateur connecté:", {
-        nom: `${user?.firstname} ${user?.lastname}`,
-        profil: user?.profile?.name,
-        level: userLevel
-      });
-      console.log("📄 Encaissement:", {
-        id: encaissementId,
-        montantReleve,
-        statutActuel: statutValidation
-      });
-      console.log("⚖️ Statut de validation déterminé:", newStatutValidation);
-      console.log("🎯 Logique spéciale appliquée:", statutValidation === EStatutEncaissement.REJETE ? "OUI (encaissement rejeté)" : "NON (statut par défaut)");
-      console.log("=====================================");
 
       // Déterminer le niveau de destination selon le niveau de l'utilisateur
       const getNiveauDestination = (level: number): string => {
@@ -1661,11 +1611,9 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 // Utiliser la nouvelle fonction de rafraîchissement (forcé pour retransmission)
                 try {
                   await refreshTableData(true);
-                  console.log("✅ Rafraîchissement après retransmission terminé");
 
                   // Rafraîchir le compteur d'encaissements rejetés
                   if (typeof window !== 'undefined' && (window as any).refreshRejetesCount) {
-                    console.log("🔄 Rafraîchissement du compteur d'encaissements rejetés");
                     (window as any).refreshRejetesCount();
                   }
                 } catch (error) {
@@ -1912,7 +1860,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   recordsPerPage={pageSize}
                   page={currentPage}
                   onPageChange={(page) => {
-                    console.log(`📊 DataTable onPageChange: ${page}, totalPages: ${Math.ceil((paginate.totalCount || 0) / pageSize)}`);
 
                     // Validation additionnelle au niveau DataTable
                     const calculatedTotalPages = Math.ceil((paginate.totalCount || 0) / pageSize);

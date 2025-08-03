@@ -116,23 +116,6 @@ export default function ViewModal({
     const userLevel = user?.profile?.level;
     const encaissementLevel = selectedRow?.level;
 
-    console.log("🔍 === VÉRIFICATION DES NIVEAUX ===");
-    console.log("👤 Utilisateur connecté:", {
-      nom: `${user?.firstname} ${user?.lastname}`,
-      profil: user?.profile?.name,
-      level: userLevel
-    });
-    console.log("📄 Encaissement:", {
-      id: selectedRow?.id,
-      numeroBordereau: selectedRow?.numeroBordereau,
-      level: encaissementLevel
-    });
-    console.log("⚖️ Comparaison des niveaux:", {
-      userLevel,
-      encaissementLevel,
-      canModify: userLevel !== encaissementLevel
-    });
-    console.log("=====================================");
 
     return userLevel !== encaissementLevel;
   };
@@ -356,7 +339,6 @@ export default function ViewModal({
     return montantB - montantC;
   };
 
-  console.log(selectedRow["Montant revelé"]);
 
   // Fonction pour nettoyer le HTML
   const stripHtml = (html: string) => {

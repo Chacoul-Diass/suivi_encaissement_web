@@ -245,7 +245,6 @@ const FilterEtatEncaissements = ({
 
     // Gestion du changement de date
     const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
-        console.log(`Date ${field} changée:`, value);
 
         setFilters(prev => ({
             ...prev,
@@ -266,7 +265,6 @@ const FilterEtatEncaissements = ({
             statut: selectedItems.statut.map(item => parseInt(item.value)), // Conversion en nombre
         };
 
-        console.log("Filtres appliqués:", updatedFilters);
         onApplyFilters(updatedFilters);
     };
 

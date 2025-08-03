@@ -6,11 +6,9 @@ export const fetchDirectionRegionales = createAsyncThunk(
   "directionRegionales/fetchDirectionRegionales",
   async (_, { rejectWithValue }) => {
     try {
-      console.log("🔄 Appel API DR:", `${API_AUTH_SUIVI}/direction-regionale`);
       const response = await axiosInstance.get(
         `${API_AUTH_SUIVI}/direction-regionale`
       );
-      console.log("✅ Réponse API DR:", response.data);
       return response.data;
     } catch (error: any) {
       console.error("❌ Erreur API DR:", error);

@@ -91,12 +91,8 @@ export const fetchEtatEncaissements = createAsyncThunk(
       const queryString = queryParams.toString();
       const url = queryString ? `${baseURL}?${queryString}` : baseURL;
 
-      console.log("URL de requête:", url);
-      console.log("Paramètres de requête:", params);
-
       // Exécution de la requête
       const response = await axiosInstance.get(url, { params });
-      console.log("Réponse brute de l'API:", response);
 
       return response.data;
     } catch (error: any) {
@@ -160,33 +156,21 @@ const etatEncaissementSlice = createSlice({
       })
       .addCase(fetchEtatEncaissements.fulfilled, (state, action) => {
         state.loading = false;
-        console.log("Réponse API complète reçue:", action.payload);
 
         // Vérifier les différentes structures possibles de réponse
         if (action.payload && action.payload.data) {
           // Format {data: {pagination, result}}
-          console.log(
-            "Structure de réponse type 1 détectée - avec data:",
-            action.payload.data
-          );
+
           state.data = action.payload.data;
         } else if (
           action.payload &&
           action.payload.result &&
           action.payload.pagination
         ) {
-          // Format {pagination, result} directement
-          console.log(
-            "Structure de réponse type 2 détectée - avec result et pagination directs:",
-            action.payload
-          );
           state.data = action.payload;
         } else if (action.payload && Array.isArray(action.payload)) {
           // Format tableau direct
-          console.log(
-            "Structure de réponse type 3 détectée - tableau direct:",
-            action.payload
-          );
+
           state.data = {
             result: action.payload,
             pagination: {

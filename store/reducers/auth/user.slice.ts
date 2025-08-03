@@ -114,10 +114,6 @@ const authSlice = createSlice({
           state.user = decodedUser;
 
           if (process.env.NODE_ENV === "development") {
-            console.log("Tokens stockés et utilisateur décodé :", {
-              tokens: action.payload,
-              user: decodedUser,
-            });
           }
         }
       )

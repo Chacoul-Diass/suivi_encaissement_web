@@ -108,10 +108,6 @@ const authSlice = createSlice({
         });
 
         if (process.env.NODE_ENV === "development") {
-          console.log("Token stocké et utilisateur décodé :", {
-            token: action.payload,
-            user: decodedUser,
-          });
         }
       })
       .addCase(login.rejected, (state, action) => {

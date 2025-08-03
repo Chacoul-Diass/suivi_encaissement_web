@@ -129,6 +129,9 @@ const Header = () => {
     }
   }, [pathname, isClient]);
 
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = async () => {
     // Récupérer le refresh token avec le nom de clé correct
     const refreshToken = localStorage.getItem("refreshToken");
@@ -157,6 +160,7 @@ const Header = () => {
     }
 
     try {
+      setIsLoggingOut(true);
       // Appeler l'API de déconnexion
       await axios.post(`${API_AUTH_SUIVI}/auth/logout`, { refreshToken });
       cleanSessionAndRedirect();
@@ -170,7 +174,14 @@ const Header = () => {
 
       // Même en cas d'erreur, déconnecter l'utilisateur
       cleanSessionAndRedirect();
+    } finally {
+      setIsLoggingOut(false);
     }
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    handleLogout();
   };
 
 
@@ -427,11 +438,11 @@ const Header = () => {
                   <li>
                     <button
                       className="group flex w-full items-center gap-3 px-4 py-3 text-sm text-red-600 transition-all duration-300 hover:bg-red-50"
-                      onClick={handleLogout}
-                      disabled={userLogin}
+                      onClick={() => setShowLogoutModal(true)}
+                      disabled={isLoggingOut}
                     >
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 transition-colors duration-300 group-hover:bg-red-200">
-                        {userLogin ? (
+                        {isLoggingOut ? (
                           <div className="h-4.5 w-4.5 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
                         ) : (
                           <IconLogout className="h-4.5 w-4.5 text-red-600" />
@@ -451,6 +462,57 @@ const Header = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmation de déconnexion */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-96 max-w-md mx-4">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <IconLogout className="w-5 h-5 text-red-600" />
+                </div>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Confirmer la déconnexion
+                </h3>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-sm text-gray-600">
+                Êtes-vous sûr de vouloir vous déconnecter ?
+                Toutes les données non sauvegardées seront perdues.
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors duration-200"
+                disabled={isLoggingOut}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors duration-200 flex items-center"
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Déconnexion...
+                  </>
+                ) : (
+                  'Se déconnecter'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

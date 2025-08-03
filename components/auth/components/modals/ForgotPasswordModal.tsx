@@ -37,7 +37,6 @@ export default function ForgotPasswordModal({
         setIsModalResetOpen(true); // Ouvre la modal de reset
       }
     } catch (error: any) {
-      console.log('');
       handleApiError(error);
     } finally {
       setLoading(false);

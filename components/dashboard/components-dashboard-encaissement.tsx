@@ -171,8 +171,6 @@ const ComponentsDashboardSales = () => {
       return cleaned.length ? JSON.stringify(cleaned) : undefined;
     };
 
-    console.log(filters, "filters");
-
     const params: Record<string, any> = {};
 
     if (filters?.selectedDRLabel?.length) {
@@ -205,7 +203,6 @@ const ComponentsDashboardSales = () => {
       }
     });
 
-    console.log(params, "params");
     try {
       setLoading(true);
       const response: any = await axiosInstance.get(
@@ -428,8 +425,6 @@ const ComponentsDashboardSales = () => {
       return cleaned.length ? JSON.stringify(cleaned) : undefined;
     };
 
-    console.log(filters, "filters ecartData");
-
     const params: Record<string, any> = {};
 
     if (filters?.selectedDRLabel?.length) {
@@ -462,7 +457,6 @@ const ComponentsDashboardSales = () => {
       }
     });
 
-    console.log(params, "params ecartData");
     try {
       setLoading(true);
       const response: any = await axiosInstance.get(

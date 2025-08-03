@@ -232,12 +232,7 @@ export default function EditModal({
   useEffect(() => {
     if (modalOpen) {
       const montantInitial = selectedRow.montantReleve || 0;
-      console.log(
-        "Montant initial:",
-        montantInitial,
-        typeof montantInitial,
-        selectedRow.montantReleve
-      );
+
 
       if (montantInitial > 0) {
         // Initialisation pour le cas automatique
@@ -435,24 +430,20 @@ export default function EditModal({
     // Attendre un peu pour laisser le temps à l'API de traiter la mise à jour,
     // puis rafraîchir les données avec plusieurs méthodes pour garantir la mise à jour
     setTimeout(() => {
-      console.log("Rafraîchissement des données après confirmation");
 
       // Méthode 1: Utiliser le prop fetchData (refreshTableData)
       if (fetchData) {
-        console.log("Méthode 1: Appel de fetchData via props");
         fetchData();
       }
 
       // Méthode 2: Utiliser window.fetchData global
       if (typeof window !== 'undefined' && (window as any).fetchData) {
-        console.log("Méthode 2: Appel de window.fetchData");
         (window as any).fetchData();
       }
 
       // Méthode 3: Forcer un rafraîchissement de la page si rien d'autre ne fonctionne
       // Cette méthode est plus drastique mais garantit la mise à jour
       if (!fetchData && (typeof window === 'undefined' || !(window as any).fetchData)) {
-        console.log("Méthode 3: Forcer le rafraîchissement de la page");
         if (typeof window !== 'undefined') {
           window.location.reload();
         }

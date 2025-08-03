@@ -53,7 +53,6 @@ export default function PreuvePhotoModal({
   async function fetchImage(doc: DocumentType): Promise<string> {
     try {
       const url = `${API_PHOTO_SUIVI}uploads/${doc?.encaissementId}/${doc?.fileName}`;
-      console.log("Tentative de chargement de l'image:", url);
 
       // Utiliser axios avec les headers d'authentification
       const response = await axios.get(url, {
@@ -70,7 +69,6 @@ export default function PreuvePhotoModal({
 
       const blob = new Blob([response.data], { type: response.headers['content-type'] || 'image/jpeg' });
       const blobUrl = URL.createObjectURL(blob);
-      console.log("Image chargée avec succès:", blobUrl);
       return blobUrl;
     } catch (error) {
       console.error("Erreur lors du chargement de l'image:", error);
@@ -83,7 +81,6 @@ export default function PreuvePhotoModal({
       setLocalImageUrls([]);
       setIsLoading(true);
 
-      console.log("Documents à charger:", documents);
 
       Promise.allSettled(documents.map(fetchImage))
         .then((results) => {
@@ -96,7 +93,6 @@ export default function PreuvePhotoModal({
             console.error("Certaines images n'ont pas pu être chargées:", failedResults);
           }
 
-          console.log("Images chargées avec succès:", successfulUrls.length);
           setLocalImageUrls(successfulUrls);
         })
         .catch((error) => {

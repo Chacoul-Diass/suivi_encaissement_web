@@ -73,7 +73,6 @@ const ComponentsAppsUsers: React.FC = () => {
     (state: TRootState) => state?.profile?.data
   );
 
-  console.log(users, "users");
 
   const [addUserModal, setAddUserModal] = useState(false);
   const [isDeleteUserModal, setIsDeleteUserModal] = useState(false);

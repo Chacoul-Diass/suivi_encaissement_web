@@ -95,7 +95,6 @@ export default function Litige() {
   const [ecartDataEncaissement, setEcartDataEncaissement] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  console.log(loading, "loading")
 
   const fetchData = async (filters?: Record<string, any>) => {
     setLoading(true);

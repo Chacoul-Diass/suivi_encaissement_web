@@ -51,10 +51,7 @@ export const useFilterPersistence = (statutValidation: number) => {
       const savedFilters = localStorage.getItem(getStorageKey());
       if (savedFilters) {
         const parsedFilters = JSON.parse(savedFilters);
-        console.log(
-          `📂 Filtres restaurés pour statut ${statutValidation}:`,
-          parsedFilters
-        );
+
         setFilters({
           ...DEFAULT_FILTERS,
           ...parsedFilters,
@@ -78,10 +75,6 @@ export const useFilterPersistence = (statutValidation: number) => {
 
         setFilters(updatedFilters);
         localStorage.setItem(getStorageKey(), JSON.stringify(updatedFilters));
-        console.log(
-          `💾 Filtres sauvegardés pour statut ${statutValidation}:`,
-          updatedFilters
-        );
       } catch (error) {
         console.error("Erreur lors de la sauvegarde des filtres:", error);
       }
@@ -101,9 +94,6 @@ export const useFilterPersistence = (statutValidation: number) => {
 
         setFilters(updatedFilters);
         localStorage.setItem(getStorageKey(), JSON.stringify(updatedFilters));
-        console.log(
-          `📄 Pagination sauvegardée pour statut ${statutValidation}: page=${page}, limit=${limit}`
-        );
       } catch (error) {
         console.error("Erreur lors de la sauvegarde de la pagination:", error);
       }
@@ -132,9 +122,6 @@ export const useFilterPersistence = (statutValidation: number) => {
     try {
       setFilters(DEFAULT_FILTERS);
       localStorage.removeItem(getStorageKey());
-      console.log(
-        `🗑️ Filtres réinitialisés pour statut ${statutValidation} - localStorage vidé complètement`
-      );
     } catch (error) {
       console.error("Erreur lors de la réinitialisation des filtres:", error);
     }

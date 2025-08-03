@@ -23,7 +23,6 @@ export const fetchJourneeCaisse = createAsyncThunk(
         `${API_AUTH_SUIVI}/encaissements/daily-caisse`,
         { params }
       );
-      console.log("Données journée caisse reçues:", response.data);
 
       // La structure attendue est { data: [{ libelle: "01" }, { libelle: "02" }, ...] }
       if (

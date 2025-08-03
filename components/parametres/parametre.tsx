@@ -54,7 +54,6 @@ const Parametre = () => {
   const banques = Array.isArray(banquesData) ? banquesData as Banque[] : [] as Banque[];
 
   // Debug log pour voir les données des banques
-  console.log("Banques disponibles:", banques.length, banquesData);
 
   // États pour les paramètres chargés directement avec axios
   const [parametres, setParametres] = useState<Parametre[]>([]);
@@ -87,17 +86,12 @@ const Parametre = () => {
   // Vérifier si le dropdown des banques s'affiche
   useEffect(() => {
     if (showModal && showBanqueDropdown) {
-      console.log("État du dropdown des banques:", {
-        showBanqueDropdown,
-        filteredBanquesCount: filteredBanques.length,
-        searchTerm: banqueSearchTerm
-      });
+
     }
   }, [showModal, showBanqueDropdown, filteredBanques.length, banqueSearchTerm]);
 
   // Sélectionner une banque depuis le dropdown
   const handleSelectBanque = (banque: Banque) => {
-    console.log("Banque sélectionnée:", banque.libelle);
 
     // Mettre à jour formData avec la nouvelle valeur de banque de manière synchrone
     setFormData({
@@ -105,10 +99,7 @@ const Parametre = () => {
       banque: banque.libelle
     });
 
-    console.log("Nouveau formData après sélection:", {
-      ...formData,
-      banque: banque.libelle
-    });
+
 
     // Mettre à jour le terme de recherche pour afficher la banque sélectionnée
     setBanqueSearchTerm(banque.libelle);
@@ -128,7 +119,6 @@ const Parametre = () => {
       );
 
       if (response && response.data && response.data.result) {
-        console.log("Données reçues de l'API:", response.data.result);
         setParametres(response.data.result);
         setPagination(response.data.pagination);
       } else {
@@ -146,10 +136,8 @@ const Parametre = () => {
   // Fonction pour charger les banques si nécessaire
   const loadBanques = async () => {
     // Toujours recharger les banques depuis l'API
-    console.log("Chargement des banques depuis l'API...");
     try {
       await dispatch(fetchBanques({})).unwrap();
-      console.log("Banques chargées avec succès:", banquesData);
     } catch (err: any) {
       console.error("Erreur lors du chargement des banques:", err);
       toast.error("Erreur lors du chargement des banques. Veuillez réessayer.");
@@ -201,7 +189,6 @@ const Parametre = () => {
   const handleEdit = (param: Parametre) => {
     setCurrentParam(param);
     const banqueValue = param.banque || "";
-    console.log("Édition avec banque:", banqueValue);
 
     setFormData({
       email: param.email,
@@ -216,7 +203,6 @@ const Parametre = () => {
     setTimeout(() => {
       loadBanques().then(() => {
         setShowBanqueDropdown(true);
-        console.log("Dropdown forcé à s'ouvrir après chargement des banques");
       });
     }, 300);
   };
@@ -268,14 +254,12 @@ const Parametre = () => {
     }
 
     // Déboguer les valeurs du formulaire avant soumission
-    console.log("Soumission du formulaire avec les valeurs:", formData);
 
     try {
       if (currentParam) {
         // Assurer que banque est définie et non undefined
         const banqueValue = formData.banque ? formData.banque : null;
 
-        console.log("Valeur de banque avant envoi:", formData.banque, "→", banqueValue);
 
         // Pour la modification, construire un payload explicite
         const updatePayload = {
@@ -286,7 +270,6 @@ const Parametre = () => {
         };
 
         // Log du payload avant envoi
-        console.log("Envoi de la mise à jour avec payload:", updatePayload);
 
         try {
           // Appel direct à l'API pour vérifier que tout fonctionne
@@ -298,7 +281,6 @@ const Parametre = () => {
               banque: banqueValue
             }
           );
-          console.log("Réponse API directe:", response);
 
           // Rafraîchir les données
           await fetchParametresDirectly(currentPage);
@@ -317,7 +299,6 @@ const Parametre = () => {
           banque: formData.banque || undefined
         };
 
-        console.log("Création avec payload:", createPayload);
 
         await dispatch(createParametre(createPayload)).unwrap();
         toast.success("Paramètre créé avec succès");
@@ -390,7 +371,6 @@ const Parametre = () => {
       if (showBanqueDropdown &&
         banqueDropdownRef.current &&
         !banqueDropdownRef.current.contains(event.target as Node)) {
-        console.log("Clic en dehors du dropdown détecté, fermeture");
         setShowBanqueDropdown(false);
       }
     }
@@ -753,7 +733,6 @@ const Parametre = () => {
                           value={banqueSearchTerm}
                           onChange={(e) => {
                             const value = e.target.value;
-                            console.log("Changement de valeur de recherche banque:", value);
 
                             // Mettre à jour le terme de recherche
                             setBanqueSearchTerm(value);
@@ -776,13 +755,11 @@ const Parametre = () => {
                               setBanqueSearchTerm("");  // Effacer la recherche pour montrer toutes les banques
                             }
 
-                            console.log("Focus sur input, dropdown devrait être visible maintenant");
                           }}
                           // Ajouter un clic explicite pour ouvrir le dropdown
                           onClick={() => {
                             setShowBanqueDropdown(true);
                             // Toujours recharger les banques depuis l'API pour s'assurer d'avoir les dernières données
-                            console.log("Chargement des banques lors du clic sur le champ");
                             loadBanques();
                           }}
                         />
@@ -795,7 +772,6 @@ const Parametre = () => {
                             onClick={(e) => {
                               e.stopPropagation();
                               // Utiliser la même approche cohérente pour mettre à jour formData
-                              console.log("Effacement de la banque sélectionnée");
                               setFormData({
                                 ...formData,
                                 banque: ""
@@ -858,9 +834,7 @@ const Parametre = () => {
                                   onClick={() => {
                                     setBanqueSearchTerm('');
                                     // Recharger toutes les banques depuis l'API
-                                    console.log("Recharger toutes les banques depuis l'API");
                                     dispatch(fetchBanques({})).then(() => {
-                                      console.log("Banques rechargées avec succès");
                                     });
                                   }}
                                 >

@@ -304,7 +304,6 @@ const ComponentsAuthLoginForm = () => {
 
         // Continuer avec la connexion normale
         const habilitation = getUserHabilitation();
-        console.log("Habilitations récupérées:", habilitation);
 
         if (!habilitation) {
           console.error("Échec de la récupération des habilitations:", {
@@ -316,7 +315,6 @@ const ComponentsAuthLoginForm = () => {
         }
 
         const redirectPath = getFirstAccessibleRoute(habilitation);
-        console.log("Chemin de redirection:", redirectPath);
 
         if (redirectPath === "/login") {
           Toastify(
@@ -398,7 +396,6 @@ const ComponentsAuthLoginForm = () => {
         }
 
         const redirectPath = getFirstAccessibleRoute(habilitation);
-        console.log("Chemin de redirection:", redirectPath);
 
         if (redirectPath === "/login") {
           Toastify(
@@ -420,10 +417,6 @@ const ComponentsAuthLoginForm = () => {
         window.location.replace(cleanPath);
       } else {
         setIsAnimating(false);
-        console.log(
-          "error",
-          "Échec de la connexion. Vérifiez vos identifiants."
-        );
       }
     } catch (error) {
       setIsAnimating(false);

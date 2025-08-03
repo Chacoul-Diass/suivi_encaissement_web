@@ -111,7 +111,6 @@ const AlertModal = ({ isOpen, onClose, alerts, loading, pagination, onPageChange
   };
 
   const handleViewDetails = (row: AlertItem) => {
-    console.log("Voir détails de l'alerte:", row);
     Toastify("success", "Fonctionnalité de détail en cours de développement");
   };
 

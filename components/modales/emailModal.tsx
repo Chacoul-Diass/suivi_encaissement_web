@@ -64,8 +64,6 @@ export default function EmailModal({
   const [inputValue, setInputValue] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  console.log(emailConnecte, "emailConnecte");
-  console.log("Banques disponibles:", banquesMail);
 
   useEffect(() => {
     dispatch(fetchBanquesMail());
@@ -110,9 +108,7 @@ export default function EmailModal({
 
   // Fonction améliorée pour gérer la sélection d'une banque et ajouter tous ses emails
   const handleSelectBanque = (banque: Banque) => {
-    console.log("Banque sélectionnée:", banque);
     if (!banque.emails || banque.emails.length === 0) {
-      console.log("Aucun email associé à cette banque");
       return;
     }
 
@@ -137,7 +133,6 @@ export default function EmailModal({
 
         // Mettre à jour la liste d'emails pour l'affichage externe
         setToEmails(newEmails.map((item: any) => item.mail));
-        console.log("Emails ajoutés dans TO:", newEmails);
       }
     } else {
       // Créer une copie des emails CC actuels
@@ -156,7 +151,6 @@ export default function EmailModal({
       if (emailsAdded) {
         // Mettre à jour l'état params avec les nouveaux emails CC
         setParams({ ...params, ccEmails: newEmails });
-        console.log("Emails ajoutés dans CC:", newEmails);
       }
     }
 

@@ -164,7 +164,6 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
 
         try {
             const response = await axiosInstance.get(`/encaissements/details/${encaissement.id}`);
-            console.log('Détails de l\'encaissement:', response.data);
             setEncaissementDetails(response.data);
         } catch (error) {
             console.error('Erreur lors du chargement des détails:', error);
@@ -184,12 +183,7 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
 
     // Log pour le débogage
     useEffect(() => {
-        console.log("TableauEtatEncaissements - État:", {
-            loading,
-            dataLength: data.length,
-            pagination,
-            normalizedDataLength: normalizeData(data).length
-        });
+
     }, [data, loading, pagination]);
 
     // Formatage des montants en francs CFA
@@ -729,7 +723,6 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
 
     // Modifier la fonction handleExportAllData
     const handleExportAllData = (format: 'excel' | 'csv' | 'pdf') => {
-        console.log(`Démarrage de l'exportation en format ${format}...`);
 
         try {
             // Récupérer l'URL de l'API et le token
@@ -764,14 +757,12 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
                 })
                 .then(response => {
                     // Accéder directement aux données dans response.data
-                    console.log("Réponse complète de l'API:", response);
 
                     if (!response || !response.data) {
                         throw new Error("Format de réponse inattendu: propriété 'data' manquante");
                     }
 
                     const data = response.data.result;
-                    console.log(`Données récupérées: ${Array.isArray(data) ? data.length : 'non-tableau'} éléments`);
 
                     // Fermer le modal de chargement
                     setLoadingModalOpen(false);
@@ -805,7 +796,6 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
     // Fonction pour générer un fichier Excel
     const generateExcelFile = (data: any) => {
         try {
-            console.log("Données reçues pour l'exportation Excel:", data);
 
             // Vérifier le format des données reçues
             let dataToNormalize = data;
@@ -826,7 +816,6 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
 
             // Normaliser les données pour l'export (version simplifiée)
             const exportData = normalizeDataForExport(dataToNormalize);
-            console.log(`Données normalisées pour Excel: ${exportData.length} éléments`);
 
             if (exportData.length === 0) {
                 throw new Error("Aucune donnée à exporter");
@@ -844,7 +833,6 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
             // Télécharger le fichier
             saveAs(blob, 'etat_encaissements.xlsx');
 
-            console.log('Exportation Excel réussie!');
         } catch (error) {
             console.error("Erreur lors de la génération du fichier Excel:", error);
             alert(`Erreur lors de la génération du fichier Excel: ${error}`);
@@ -865,7 +853,6 @@ const TableauEtatEncaissements: React.FC<TableauEtatEncaissementsProps> = ({
             const blob = new Blob([csvOutput], { type: 'text/csv;charset=utf-8;' });
             saveAs(blob, 'etat_encaissements.csv');
 
-            console.log('Exportation CSV réussie!');
         } catch (error) {
             console.error("Erreur lors de la génération du fichier CSV:", error);
             alert(`Erreur lors de la génération du fichier CSV: ${error}`);

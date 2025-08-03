@@ -61,13 +61,7 @@ const hasAnyPermission = (permission: Permission): boolean => {
     permission.LIRE ||
     permission.MODIFIER ||
     permission.SUPPRIMER;
-  console.log(`Vérification des permissions pour ${permission.name}:`, {
-    CREER: permission.CREER,
-    LIRE: permission.LIRE,
-    MODIFIER: permission.MODIFIER,
-    SUPPRIMER: permission.SUPPRIMER,
-    hasPermission: result,
-  });
+
   return result;
 };
 
@@ -85,9 +79,6 @@ export const getFirstAccessibleRoute = (habilitation: Permission[]): string => {
 
     if (permission) {
       if (hasAnyPermission(permission)) {
-        console.log(
-          `Accès autorisé pour ${menuItem.name}, redirection vers ${menuItem.path}`
-        );
         return menuItem.path;
       } else {
         console.log(`Aucune permission active pour ${menuItem.name}`);
@@ -97,6 +88,5 @@ export const getFirstAccessibleRoute = (habilitation: Permission[]): string => {
     }
   }
 
-  console.log("Aucune route accessible trouvée");
   return "/login";
 };
