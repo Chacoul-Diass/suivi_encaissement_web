@@ -3,9 +3,7 @@
 import React from "react";
 import IconExcel from "../icon/excel";
 import Csv from "../icon/csv";
-import Pdf from "../icon/pdf";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
 
 interface ExportBtnProps {
   filteredData: any;
@@ -51,68 +49,7 @@ export default function ExportBtn({
     window.URL.revokeObjectURL(url);
   };
 
-  const handleExportPDF = () => {
-    const doc = new jsPDF({ orientation: "landscape" });
-
-    const imgUrl = "/assets/images/logo.png";
-
-    const img = new Image();
-    img.src = imgUrl;
-
-    img.onload = () => {
-      doc.addImage(img, "PNG", 10, 5, 30, 15);
-
-      doc.text("Encaissements - Rapport détaillé", 50, 15);
-
-      const visibleColumns = cols.filter(
-        (col: any) =>
-          col.accessor !== "Actions" && !hideCols.includes(col.accessor)
-      );
-
-      const headers = [visibleColumns.map((col: any) => col.title)];
-
-      const body = filteredData.map((row: any) =>
-        visibleColumns.map((col: any) => {
-          const accessor = col.accessor;
-
-          if (row.hasOwnProperty(accessor)) {
-            const value = row[accessor];
-            return typeof value === "number"
-              ? formatNumber(value)
-              : value || "N/A";
-          }
-
-          if (accessor === "modeEtJournee") {
-            return `${row.journeeCaisse || "N/A"} - ${row.modeReglement || "N/A"
-              }`;
-          }
-
-          return "N/A";
-        })
-      );
-
-      doc.autoTable({
-        head: headers,
-        body: body,
-        startY: 25,
-        theme: "grid",
-        headStyles: { fillColor: [54, 162, 235], textColor: 255 },
-        bodyStyles: { fontSize: 8 },
-        styles: {
-          fontSize: 8,
-          cellPadding: 3,
-          overflow: "linebreak",
-        },
-        margin: { top: 20, left: 10, right: 10 },
-      });
-
-      doc.save("encaissements_complet.pdf");
-    };
-
-    img.onerror = () => {
-      console.error("Erreur lors du chargement de l'image.");
-    };
-  };
+  // Export PDF retiré
   return (
     <>
       {" "}
@@ -132,14 +69,7 @@ export default function ExportBtn({
       >
         <Csv />
       </button>
-      <button
-        type="button"
-        className="mr-7"
-        onClick={handleExportPDF}
-        title="Export Pdf"
-      >
-        <Pdf />
-      </button>
+      {/* Bouton PDF retiré */}
     </>
   );
 }

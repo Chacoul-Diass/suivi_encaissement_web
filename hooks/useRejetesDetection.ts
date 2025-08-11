@@ -12,9 +12,19 @@ interface RejetesDetectionState {
 }
 
 export const useRejetesDetection = (pollingInterval: number = 5000) => {
+  // Récupérer la valeur persistée pour éviter une fausse alerte au premier chargement
+  const getPersistedCount = (): number => {
+    if (typeof window === "undefined") return 0;
+    const raw = window.localStorage.getItem("encaissementsRejetesLastCount");
+    const parsed = raw ? parseInt(raw, 10) : NaN;
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const initialPersisted = getPersistedCount();
+
   const [state, setState] = useState<RejetesDetectionState>({
-    currentCount: 0,
-    previousCount: 0,
+    currentCount: initialPersisted,
+    previousCount: initialPersisted,
     hasIncreased: false,
     increaseAmount: 0,
     lastUpdate: null,
@@ -63,6 +73,18 @@ export const useRejetesDetection = (pollingInterval: number = 5000) => {
         hasNotified: false, // Réinitialiser pour permettre une nouvelle notification
       };
     });
+
+    // Persister la nouvelle valeur pour les prochaines sessions/montages
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          "encaissementsRejetesLastCount",
+          String(newCount)
+        );
+      }
+    } catch (e) {
+      // Ignorer les erreurs de quota/localStorage
+    }
   };
 
   // Initialisation
@@ -141,6 +163,7 @@ export const useRejetesDetection = (pollingInterval: number = 5000) => {
   const resetIncreaseState = () => {
     setState((prevState) => ({
       ...prevState,
+      // On garde currentCount et previousCount intacts; on efface juste les flags
       hasIncreased: false,
       increaseAmount: 0,
       hasNotified: false,

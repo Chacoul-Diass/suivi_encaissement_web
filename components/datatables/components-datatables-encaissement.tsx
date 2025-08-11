@@ -48,6 +48,9 @@ export interface DataReverse {
   banque: string;
   produit: string;
   compteBanque: string | null;
+  codeBanque?: string;
+  codeCaisse?: string;
+  dateFermeture?: string;
   numeroBordereau: string;
   journeeCaisse: string;
   modeReglement: string;
@@ -194,9 +197,16 @@ const ComponentsDatatablesColumnChooser: React.FC<
           Produit: item.produit,
           banque: item.banque,
           compteBanque: item.compteBanque,
+          codeBanque: item.codeBanque,
+          codeCaisse: item.codeCaisse,
           journeeCaisse: item.journeeCaisse,
           modeReglement: item.modeReglement,
           "Date Encais": item.dateEncaissement,
+          dateFermeture:
+            item?.validationEncaissement?.dateCloture ||
+            item?.dateRemiseBanque ||
+            item?.dateFermeture ||
+            "",
           "Montant caisse (A)": item.montantRestitutionCaisse || 0,
           "Montant bordereau (B)": item.montantBordereauBanque || 0,
           "Montant relevé (C)":
@@ -932,6 +942,18 @@ const ComponentsDatatablesColumnChooser: React.FC<
         ),
       },
       {
+        accessor: "codeCaisse",
+        title: "Code Caisse",
+        sortable: true,
+        render: ({ codeCaisse }: DataReverse) => (
+          <div className="text-sm text-secondary">
+            {codeCaisse && codeCaisse.toString().trim() !== ""
+              ? codeCaisse
+              : "Non renseigné"}
+          </div>
+        ),
+      },
+      {
         accessor: "matriculeCaissiere",
         title: "Matricule Caissière",
         sortable: true,
@@ -963,7 +985,19 @@ const ComponentsDatatablesColumnChooser: React.FC<
         ),
       },
 
+      {
+        accessor: "codeBanque",
+        title: "Compte banque",
+        sortable: true,
+        render: ({ codeBanque }: DataReverse) => (
+          <div className=" text-primary  hover:no-underline">
+            {codeBanque && codeBanque.toString().trim() !== "" ? codeBanque : "Non renseigné"}
+          </div>
+        ),
+      },
+
       { accessor: "DR", title: "DR", sortable: true },
+
       {
         accessor: "EXP",
         title: "Exploitation",
@@ -975,8 +1009,23 @@ const ComponentsDatatablesColumnChooser: React.FC<
         ),
       },
 
+      // Nouvelle colonne: Compte banque (affiche le code banque)
+
+
       { accessor: "Produit", title: "Produit", sortable: true },
       { accessor: "Date Encais", title: "Date Encaissement", sortable: true },
+      {
+        accessor: "dateFermeture",
+        title: "Date Fermeture",
+        sortable: true,
+        render: ({ dateFermeture }: DataReverse) => (
+          <div className="text-sm">
+            {dateFermeture && dateFermeture.toString().trim() !== ""
+              ? dateFermeture
+              : "Non renseignée"}
+          </div>
+        ),
+      },
 
       {
         accessor: "Montant caisse (A)",

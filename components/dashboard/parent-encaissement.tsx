@@ -24,6 +24,7 @@ import GlobalFiltre from "@/components/filtre/globalFiltre";
 import { useFilterPersistence } from "@/hooks/useFilterPersistence";
 import { useRejetesDetection } from "@/hooks/useRejetesDetection";
 import { toast } from "react-toastify";
+import { notify } from "@/utils/notificationService";
 
 const ComponentsDashboardValider = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -223,13 +224,14 @@ const ComponentsDashboardValider = () => {
 
   // Effet pour afficher une notification quand il y a une augmentation
   useEffect(() => {
-    if (hasIncreased && increaseAmount > 0 && !hasNotified) {
+    // Afficher la notification uniquement si augmentation strictement positive ET pas encore notifiée
+    if (hasIncreased === true && Number(increaseAmount) > 0 && !hasNotified) {
       // Jouer le son de notification
       playNotificationSound();
 
       // Créer un toast personnalisé avec les couleurs de la sidebar
       const toastContent = (
-        <div className="bg-gradient-to-br from-[#0E1726] via-[#162236] to-[#1a2941] text-white p-5 rounded-lg shadow-lg border border-white/10 w-[500px]">
+        <div className="bg-gradient-to-br from-[#0E1726] via-[#162236] to-[#1a2941] text-white p-5 rounded-lg shadow-lg border border-white/10 w-[500px] cursor-pointer">
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
@@ -253,24 +255,24 @@ const ComponentsDashboardValider = () => {
         </div>
       );
 
-      // Afficher une notification toast personnalisée
-      toast(toastContent, {
-        position: "top-center",
+      // Afficher une notification via le service (dedupe + throttle + son)
+      const displayedToastId = notify.info(toastContent, {
         autoClose: increaseAmount >= 5 ? 10000 : 8000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        style: {
-          background: 'transparent',
-          boxShadow: 'none',
-          padding: 0,
-          marginTop: '20px',
-          minWidth: '500px',
-          maxWidth: '500px',
-          width: '500px',
-        },
+        sound: true,
+        soundPath: "/assets/sounds/notification.mp3",
+        volume: 0.5,
+        dedupeKey: `rejetes-${rejetesCount}`,
       });
+
+      // Rendre le toast cliquable: fermer uniquement
+      try {
+        const toastElement = document.querySelector('[role="alert"]');
+        if (toastElement) {
+          toastElement.addEventListener('click', () => {
+            toast.dismiss(displayedToastId as any);
+          }, { once: true });
+        }
+      } catch { }
 
       // Marquer comme notifié pour éviter les notifications répétitives
       markAsNotified();
