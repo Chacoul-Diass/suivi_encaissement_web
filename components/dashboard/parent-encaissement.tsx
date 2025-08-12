@@ -24,7 +24,7 @@ import GlobalFiltre from "@/components/filtre/globalFiltre";
 import { useFilterPersistence } from "@/hooks/useFilterPersistence";
 import { useRejetesDetection } from "@/hooks/useRejetesDetection";
 import { toast } from "react-toastify";
-import { notify } from "@/utils/notificationService";
+// import { notify } from "@/utils/notificationService";
 
 const ComponentsDashboardValider = () => {
   const dispatch = useDispatch<TAppDispatch>();
@@ -40,7 +40,7 @@ const ComponentsDashboardValider = () => {
     resetIncreaseState,
     markAsNotified,
     checkAfterAction
-  } = useRejetesDetection(5000); // Polling intelligent toutes les 5 secondes
+  } = useRejetesDetection(0); // Polling désactivé, rafraîchissement manuel uniquement
 
   // Référence pour l'audio de notification
   const notificationSound = useRef<HTMLAudioElement | null>(null);
@@ -218,79 +218,24 @@ const ComponentsDashboardValider = () => {
   // Rafraîchir le compteur quand l'onglet actif change vers les rejetés
   useEffect(() => {
     if (activeTab === EStatutEncaissement.REJETE) {
+      // Dépendre uniquement de activeTab pour éviter une boucle via la référence de fonction
       refreshRejetesCount();
     }
-  }, [activeTab, refreshRejetesCount]);
+  }, [activeTab]);
 
-  // Effet pour afficher une notification quand il y a une augmentation
-  useEffect(() => {
-    // Afficher la notification uniquement si augmentation strictement positive ET pas encore notifiée
-    if (hasIncreased === true && Number(increaseAmount) > 0 && !hasNotified) {
-      // Jouer le son de notification
-      playNotificationSound();
+  // Effet de notification désactivé (pooling notifications commenté)
+  // useEffect(() => {
+  //   if (hasIncreased === true && Number(increaseAmount) > 0 && !hasNotified) {
+  //     // Notifications désactivées
+  //   }
+  // }, [hasIncreased, increaseAmount, hasNotified, resetIncreaseState, markAsNotified, rejetesCount]);
 
-      // Créer un toast personnalisé avec les couleurs de la sidebar
-      const toastContent = (
-        <div className="bg-gradient-to-br from-[#0E1726] via-[#162236] to-[#1a2941] text-white p-5 rounded-lg shadow-lg border border-white/10 w-[500px] cursor-pointer">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-base font-semibold text-white mb-2">
-                {increaseAmount >= 5 ? '⚠️ Nouveaux encaissements rejetés' : 'ℹ️ Nouvel encaissement rejeté'}
-              </div>
-              <div className="text-sm text-white/80 mb-2">
-                {increaseAmount} nouvel(le)(s) encaissement(s) rejeté(s) détecté(s)
-              </div>
-              <div className="text-sm text-white/60">
-                Total actuel : {rejetesCount} encaissement(s) rejeté(s)
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-
-      // Afficher une notification via le service (dedupe + throttle + son)
-      const displayedToastId = notify.info(toastContent, {
-        autoClose: increaseAmount >= 5 ? 10000 : 8000,
-        sound: true,
-        soundPath: "/assets/sounds/notification.mp3",
-        volume: 0.5,
-        dedupeKey: `rejetes-${rejetesCount}`,
-      });
-
-      // Rendre le toast cliquable: fermer uniquement
-      try {
-        const toastElement = document.querySelector('[role="alert"]');
-        if (toastElement) {
-          toastElement.addEventListener('click', () => {
-            toast.dismiss(displayedToastId as any);
-          }, { once: true });
-        }
-      } catch { }
-
-      // Marquer comme notifié pour éviter les notifications répétitives
-      markAsNotified();
-
-      // Réinitialiser l'état d'augmentation après 15 secondes (plus long)
-      setTimeout(() => {
-        resetIncreaseState();
-      }, 15000);
-    }
-  }, [hasIncreased, increaseAmount, hasNotified, resetIncreaseState, markAsNotified, rejetesCount]);
-
-  // Vérifier les rejets après certaines actions importantes
-  useEffect(() => {
-    // Vérifier quand l'utilisateur revient sur l'onglet des rejets
-    if (activeTab === EStatutEncaissement.REJETE) {
-      checkAfterAction();
-    }
-  }, [activeTab, checkAfterAction]);
+  // Vérification automatique désactivée
+  // useEffect(() => {
+  //   if (activeTab === EStatutEncaissement.REJETE) {
+  //     checkAfterAction();
+  //   }
+  // }, [activeTab, checkAfterAction]);
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");

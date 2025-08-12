@@ -1715,6 +1715,8 @@ const ComponentsDatatablesColumnChooser: React.FC<
                   cols={cols}
                   hideCols={hideCols}
                   formatNumber={formatNumber}
+                  getFilters={() => getCurrentFilters?.() || {}}
+                  statutValidation={statutValidation}
                 />
 
                 {/* Search Input with Icon */}
