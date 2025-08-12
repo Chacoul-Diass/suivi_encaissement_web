@@ -525,11 +525,11 @@ const ComponentsDashboardValider = () => {
                             title={hasIncreased ? `+${increaseAmount} nouveaux rejets détectés` : `${rejetesCount} encaissements rejetés`}
                           >
                             {rejetesCount > 99 ? '99+' : rejetesCount}
-                            {hasIncreased && increaseAmount > 0 && (
+                            {/* {hasIncreased && increaseAmount > 0 && (
                               <span className="ml-1 text-xs opacity-75">
                                 (+{increaseAmount})
                               </span>
-                            )}
+                            )} */}
                           </span>
                         )}
                       </button>
