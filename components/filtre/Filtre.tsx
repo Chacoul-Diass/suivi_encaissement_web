@@ -161,13 +161,10 @@ const Filtre = () => {
       if (newSelected.length === 0) {
         setSelectedSecteurIds([]);
       } else {
+        // Conserver uniquement les secteurs encore présents dans la liste renvoyée par l'API
         setSelectedSecteurIds((prevSecteurs) =>
           prevSecteurs.filter((secteurId) =>
-            secteurData.some(
-              (secteur) =>
-                newSelected.includes(secteur.directionRegionaleId) &&
-                secteur.id === secteurId
-            )
+            secteurData.some((secteur: any) => secteur.id === secteurId)
           )
         );
       }
@@ -176,10 +173,8 @@ const Filtre = () => {
   };
 
   const handleSecteurSelection = (id: number) => {
-    const secteur = secteurData.find((s) => s.id === id);
-    if (!secteur || !selectedDRIds.includes(secteur.directionRegionaleId)) {
-      return;
-    }
+    const secteur = secteurData.find((s: any) => s.id === id);
+    if (!secteur) return;
     setSelectedSecteurIds((prev) =>
       prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
     );
@@ -352,20 +347,16 @@ const Filtre = () => {
                     type="button"
                     className="text-xs font-medium text-primary hover:text-primary/80"
                     onClick={() => {
-                      const filteredSecteurs = Array.isArray(secteurData) ? secteurData.filter((s: any) =>
-                        selectedDRIds.includes(s.directionRegionaleId)
-                      ) : [];
+                      const allSecteurs = Array.isArray(secteurData) ? secteurData : [];
                       setSelectedSecteurIds(
-                        selectedSecteurIds.length === filteredSecteurs.length
+                        selectedSecteurIds.length === allSecteurs.length
                           ? []
-                          : filteredSecteurs.map((s: any) => s.id)
+                          : allSecteurs.map((s: any) => s.id)
                       );
                     }}
                   >
                     {selectedSecteurIds.length ===
-                      (Array.isArray(secteurData) ? secteurData.filter((s: any) =>
-                        selectedDRIds.includes(s.directionRegionaleId)
-                      ).length : 0)
+                      (Array.isArray(secteurData) ? secteurData.length : 0)
                       ? "Tout désélectionner"
                       : "Tout sélectionner"}
                   </button>
@@ -376,9 +367,6 @@ const Filtre = () => {
 
                 <div className="max-h-[250px] overflow-y-auto">
                   {Array.isArray(secteurData) ? secteurData
-                    .filter((secteur: any) =>
-                      selectedDRIds.includes(secteur.directionRegionaleId)
-                    )
                     .map((secteur: any) => (
                       <label
                         key={secteur.id}
