@@ -1016,7 +1016,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
       { accessor: "Date Encais", title: "Date Encaissement", sortable: true },
       {
         accessor: "dateFermeture",
-        title: "Date Fermeture",
+        title: "Date Clôture",
         sortable: true,
         render: ({ dateFermeture }: DataReverse) => (
           <div className="text-sm">
