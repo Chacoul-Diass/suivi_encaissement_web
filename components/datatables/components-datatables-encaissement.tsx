@@ -1672,10 +1672,10 @@ const ComponentsDatatablesColumnChooser: React.FC<
                 handleRefresh={handleRefresh}
               />
               <div className="flex flex-wrap items-center gap-2">
-                <FilterIndicator
+                {/* <FilterIndicator
                   statutValidation={statutValidation}
                   className="mr-2"
-                />
+                /> */}
                 <ExportBtn
                   filteredData={filteredData}
                   cols={cols}
