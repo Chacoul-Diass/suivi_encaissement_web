@@ -601,7 +601,7 @@ const ConnectionHistoryPage = () => {
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-3 rounded-lg bg-gray-50 p-2 dark:bg-gray-700">
+                        {/* <div className="flex items-center space-x-3 rounded-lg bg-gray-50 p-2 dark:bg-gray-700">
                           <IconLogout className="text-red-500" size={20} />
                           <div>
                             <span className="font-medium text-gray-700 dark:text-gray-300">
@@ -611,7 +611,7 @@ const ConnectionHistoryPage = () => {
                               {formatDateSafely(detail.disconnectedAt, true)}
                             </span>
                           </div>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   </div>

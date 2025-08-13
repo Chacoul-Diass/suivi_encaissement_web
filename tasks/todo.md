@@ -1,3 +1,31 @@
+## Plan de modification du tableau d'encaissements
+
+Objectif: retirer les colonnes demandées dans le tableau: « Numéro Bordereau », « Code Caisse » et « Code banque ».
+
+### TODO
+
+- [x] Identifier et lister précisément les colonnes dans `components/datatables/components-datatables-encaissement.tsx`
+  - [x] Colonne `numeroBordereau` (titre: « Numéro Bordereau »)
+  - [x] Colonne `codeCaisse` (titre: « Code Caisse »)
+  - [x] Colonne `compteBanque` (titre: « Code banque »)
+- [x] Supprimer ces colonnes de l'array `baseCols`
+- [x] Déplacer l’indicateur visuel (bordure colorée) vers la colonne `journeeCaisse`
+- [x] Vérifier qu'aucun autre endroit du rendu de la table ne dépend de ces colonnes pour l'affichage (tri, visibilité, export)
+- [x] Conserver les données mappées (ne pas supprimer les champs du mapping) pour ne pas impacter d'autres écrans ou fonctionnalités (ex: sujet d'email utilisant `numeroBordereau`)
+- [x] Vérifier le bon fonctionnement du tableau et de l'export après retrait
+
+### Notes de mise en œuvre (simplicité)
+
+- Changements localisés uniquement dans `baseCols`, sans modifier le mapping des données ni la logique métier.
+- Laisser intactes les autres colonnes et fonctionnalités (filtres, actions, export).
+
+### Review
+
+- Colonnes retirées: « Numéro Bordereau », « Code Caisse », « Code banque ».
+- Bordure colorée désormais rendue dans `journeeCaisse` (mêmes règles visuelles conservées).
+- Le mapping conserve `numeroBordereau`, donc les fonctionnalités annexes (ex: email) restent opérationnelles.
+- Aucune erreur de lint détectée après modifications. L’export et le sélecteur de colonnes utilisent `cols` filtré, ils restent fonctionnels.
+
 # Plan d'implémentation - Détection d'augmentation des encaissements rejetés
 
 ## Objectif

@@ -50,6 +50,7 @@ export interface DataReverse {
   compteBanque: string | null;
   codeBanque?: string;
   codeCaisse?: string;
+  numeroCaisse?: string;
   dateFermeture?: string;
   numeroBordereau: string;
   journeeCaisse: string;
@@ -199,6 +200,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
           compteBanque: item.compteBanque,
           codeBanque: item.codeBanque,
           codeCaisse: item.codeCaisse,
+          numeroCaisse: item.numeroCaisse,
           journeeCaisse: item.journeeCaisse,
           modeReglement: item.modeReglement,
           "Date Encais": item.dateEncaissement,
@@ -852,107 +854,19 @@ const ComponentsDatatablesColumnChooser: React.FC<
     >([]);
 
     const baseCols = [
+      { accessor: "DR", title: "DR", sortable: true },
       {
-        accessor: "numeroBordereau",
-        title: "Numéro Bordereau",
+        accessor: "EXP",
+        title: "Exploitation",
         sortable: true,
-        render: ({ numeroBordereau, validationEncaissement, observationRejete, "Observation rejet": observationRejet, statutValidation: encaissementStatut }: DataReverse) => {
-          // Fonction pour déterminer la couleur de bordure selon le validationLevel
-          const getBorderColor = () => {
-            // Si c'est un encaissement rejeté (encaissementStatut === 1)
-            if (encaissementStatut === 1) {
-              const validationLevel = validationEncaissement?.validationLevel;
-
-              if (validationLevel) {
-                switch (validationLevel.toUpperCase()) {
-                  case "AGC":
-                    return "border-l-8 border-l-primary"; // Rouge - plus large
-                  case "DR":
-                    return "border-l-8 border-l-warning"; // Violet - plus large
-                  case "DFC":
-                    return "border-l-8 border-l-success"; // Jaune - plus large
-                  default:
-                    return "border-l-8 border-l-red-500"; // Rouge par défaut - plus large
-                }
-              } else {
-                // Retourner une bordure par défaut même sans validationLevel
-                return "border-l-8 border-l-red-500"; // Rouge par défaut
-              }
-            }
-
-            // Si c'est un encaissement vérifié (encaissementStatut === 2) avec une observation de rejet
-            if (encaissementStatut === 2 && observationRejete && observationRejete.trim() !== "") {
-              return "border-l-8 border-l-secondary"; // Bleu - plus large
-            }
-
-            // Si c'est un encaissement traité (encaissementStatut === 3) avec observationRejete
-            if (encaissementStatut === 3 && observationRejete && observationRejete.trim() !== "") {
-              const validationLevel = validationEncaissement?.validationLevel;
-
-
-              // Si pas de validationLevel, retourner une bordure par défaut
-              if (!validationLevel) {
-                return "border-l-8 border-l-gray-400"; // Gris par défaut
-              }
-
-              // Déterminer la couleur selon le validationLevel
-              switch (validationLevel.toUpperCase()) {
-                case "COMPTABLE":
-                  return "border-l-8 border-l-secondary"; // Bleu
-                case "RGC/AGC":
-                case "AGC":
-                  return "border-l-8 border-l-primary"; // Rouge
-                default:
-                  return ""; // Pas de bordure pour les autres niveaux
-              }
-            }
-
-            // Si c'est un encaissement DFC (encaissementStatut === 7) avec validationLevel DR
-            if (encaissementStatut === 7) {
-              const validationLevel = validationEncaissement?.validationLevel;
-
-
-              if (validationLevel && validationLevel.toUpperCase() === "DR") {
-                return "border-l-8 border-l-warning"; // Jaune
-              }
-            }
-
-            return "";
-          };
-
-          return (
-            <div className={`absolute inset-0 ${getBorderColor()}`}>
-              <div className="cursor-pointer font-semibold text-primary underline hover:no-underline pl-4 h-full flex items-center">
-                {numeroBordereau && numeroBordereau.trim() !== ""
-                  ? `#${numeroBordereau}`
-                  : "Non renseigné"}
-              </div>
-            </div>
-          );
-        },
-      },
-      {
-        accessor: "journeeCaisse",
-        title: "Journée caisse",
-        sortable: true,
-        render: ({ journeeCaisse }: DataReverse) => (
+        render: ({ libelleExpl }: DataReverse) => (
           <div>
-            <p className="text-sm ">{journeeCaisse}</p>
+            <div className="font-medium">{libelleExpl} </div>
           </div>
         ),
       },
-      {
-        accessor: "codeCaisse",
-        title: "Code Caisse",
-        sortable: true,
-        render: ({ codeCaisse }: DataReverse) => (
-          <div className="text-sm text-secondary">
-            {codeCaisse && codeCaisse.toString().trim() !== ""
-              ? codeCaisse
-              : "Non renseigné"}
-          </div>
-        ),
-      },
+      { accessor: "Date Encais", title: "Date Encaissement", sortable: true },
+      { accessor: "Produit", title: "Produit", sortable: true },
       {
         accessor: "matriculeCaissiere",
         title: "Matricule Caissière",
@@ -964,6 +878,65 @@ const ComponentsDatatablesColumnChooser: React.FC<
         ),
       },
       {
+        accessor: "journeeCaisse",
+        title: "Journée caisse",
+        sortable: true,
+        render: ({ journeeCaisse, numeroCaisse, validationEncaissement, observationRejete, statutValidation: encaissementStatut }: DataReverse) => {
+          const getBorderColor = () => {
+            if (encaissementStatut === 1) {
+              const validationLevel = validationEncaissement?.validationLevel;
+              if (validationLevel) {
+                switch (validationLevel.toUpperCase()) {
+                  case "AGC":
+                    return "border-l-8 border-l-primary";
+                  case "DR":
+                    return "border-l-8 border-l-warning";
+                  case "DFC":
+                    return "border-l-8 border-l-success";
+                  default:
+                    return "border-l-8 border-l-red-500";
+                }
+              }
+              return "border-l-8 border-l-red-500";
+            }
+            if (encaissementStatut === 2 && observationRejete && observationRejete.trim() !== "") {
+              return "border-l-8 border-l-secondary";
+            }
+            if (encaissementStatut === 3 && observationRejete && observationRejete.trim() !== "") {
+              const validationLevel = validationEncaissement?.validationLevel;
+              if (!validationLevel) {
+                return "border-l-8 border-l-gray-400";
+              }
+              switch (validationLevel.toUpperCase()) {
+                case "COMPTABLE":
+                  return "border-l-8 border-l-secondary";
+                case "RGC/AGC":
+                case "AGC":
+                  return "border-l-8 border-l-primary";
+                default:
+                  return "";
+              }
+            }
+            if (encaissementStatut === 7) {
+              const validationLevel = validationEncaissement?.validationLevel;
+              if (validationLevel && validationLevel.toUpperCase() === "DR") {
+                return "border-l-8 border-l-warning";
+              }
+            }
+            return "";
+          };
+
+          return (
+            <div className="relative">
+              <div className={`absolute inset-0 ${getBorderColor()}`}></div>
+              <div>
+                <p className="text-sm pl-4">{`${numeroCaisse ? `${numeroCaisse} - ` : ""}${journeeCaisse || ""}`}</p>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
         accessor: "modeReglement",
         title: "Mode de réglement ",
         sortable: true,
@@ -973,47 +946,16 @@ const ComponentsDatatablesColumnChooser: React.FC<
           </div>
         ),
       },
-      { accessor: "banque", title: "Banque", sortable: true },
       {
-        accessor: "compteBanque",
-        title: "Code banque",
+        accessor: "Montant caisse (A)",
+        title: "Montant Restitution Caisse (A)",
         sortable: true,
-        render: ({ compteBanque }: DataReverse) => (
-          <div className=" text-primary  hover:no-underline">
-            {`${compteBanque || ""}`}
-          </div>
-        ),
+        render: (row: DataReverse) => {
+          const montant =
+            row.montantRestitutionCaisse || row["Montant caisse (A)"] || 0;
+          return `${formatNumber(montant)} F CFA`;
+        },
       },
-
-      {
-        accessor: "codeBanque",
-        title: "Compte banque",
-        sortable: true,
-        render: ({ codeBanque }: DataReverse) => (
-          <div className=" text-primary  hover:no-underline">
-            {codeBanque && codeBanque.toString().trim() !== "" ? codeBanque : "Non renseigné"}
-          </div>
-        ),
-      },
-
-      { accessor: "DR", title: "DR", sortable: true },
-
-      {
-        accessor: "EXP",
-        title: "Exploitation",
-        sortable: true,
-        render: ({ libelleExpl }: DataReverse) => (
-          <div>
-            <div className="font-medium">{libelleExpl} </div>
-          </div>
-        ),
-      },
-
-      // Nouvelle colonne: Compte banque (affiche le code banque)
-
-
-      { accessor: "Produit", title: "Produit", sortable: true },
-      { accessor: "Date Encais", title: "Date Encaissement", sortable: true },
       {
         accessor: "dateFermeture",
         title: "Date Clôture",
@@ -1026,17 +968,6 @@ const ComponentsDatatablesColumnChooser: React.FC<
           </div>
         ),
       },
-
-      {
-        accessor: "Montant caisse (A)",
-        title: "Montant Restitution Caisse (A)",
-        sortable: true,
-        render: (row: DataReverse) => {
-          const montant =
-            row.montantRestitutionCaisse || row["Montant caisse (A)"] || 0;
-          return `${formatNumber(montant)} F CFA`;
-        },
-      },
       {
         accessor: "Montant bordereau (B)",
         title: "Montant Bordereau Banque (B)",
@@ -1048,11 +979,20 @@ const ComponentsDatatablesColumnChooser: React.FC<
         },
       },
       {
+        accessor: "codeBanque",
+        title: "Compte banque",
+        sortable: true,
+        render: ({ codeBanque }: DataReverse) => (
+          <div className=" text-primary  hover:no-underline">
+            {codeBanque && codeBanque.toString().trim() !== "" ? codeBanque : "Non renseigné"}
+          </div>
+        ),
+      },
+      {
         accessor: "Ecart(A-B)",
         title: "Ecart (A-B)",
         sortable: true,
         render: (row: DataReverse) => {
-          // Calculer l'écart en utilisant les propriétés disponibles
           const ecart =
             row.ecartCaisseBanque !== undefined
               ? row.ecartCaisseBanque
