@@ -16,6 +16,8 @@ interface FilterData {
   page?: number;
   search?: string;
   limit?: number;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
 }
 
 const DEFAULT_FILTERS: FilterData = {
@@ -34,6 +36,8 @@ const DEFAULT_FILTERS: FilterData = {
   page: 1,
   search: "",
   limit: 10,
+  sortBy: undefined,
+  sortDirection: undefined,
 };
 
 export const useFilterPersistence = (statutValidation: number) => {

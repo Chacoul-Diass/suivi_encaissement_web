@@ -320,6 +320,8 @@ const ComponentsDashboardValider = () => {
           ? formatArray(filtersToUse.modeReglement)
           : undefined,
         status: filtersToUse?.status ? JSON.stringify(filtersToUse.status) : undefined,
+        sortBy: filtersToUse?.sortBy || undefined,
+        sortDirection: filtersToUse?.sortDirection || undefined,
       };
 
       Object.entries(params).forEach(([key, value]) => {

@@ -20,6 +20,8 @@ export const fetchDataReleve = createAsyncThunk(
       page,
       limit,
       status,
+      sortBy,
+      sortDirection,
     }: {
       id: any;
       directionRegional?: string[];
@@ -35,6 +37,8 @@ export const fetchDataReleve = createAsyncThunk(
       page?: any;
       limit?: any;
       status?: number[];
+      sortBy?: string;
+      sortDirection?: "asc" | "desc";
     },
     { rejectWithValue }
   ) => {
@@ -66,6 +70,8 @@ export const fetchDataReleve = createAsyncThunk(
       if (produit) params["produit"] = formatArray(produit);
       if (modeReglement) params["modeReglement"] = formatArray(modeReglement);
       if (status && status.length > 0) params["status"] = status.join(",");
+      if (sortBy) params["sortBy"] = sortBy;
+      if (sortDirection) params["sortDirection"] = sortDirection;
 
       Object.keys(params).forEach((key) => {
         if (params[key] === undefined) {

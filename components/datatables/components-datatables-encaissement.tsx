@@ -25,16 +25,13 @@ import Swal from "sweetalert2";
 import "tippy.js/dist/tippy.css";
 import ExportBtn from "../actionBtn/exportBtn";
 import RefreshBtn from "../actionBtn/refreshBtn";
-import GlobalFiltre from "../filtre/globalFiltre";
 import ConfirmationModal from "../modales/confirmationModal";
 import EditModal from "../modales/editModal";
 import { useFilterPersistence } from "@/hooks/useFilterPersistence";
-import { FilterIndicator } from "../filtre/FilterIndicator";
 import EmailModal from "../modales/emailModal";
 import PreuvePhotoModal from "../modales/preuvePhotoModal";
 import ViewModal from "../modales/viewModal";
 import { fetchDirectionRegionales } from "@/store/reducers/select/dr.slice";
-import EncaissementTutorial from "../tutorial/TutorialTable-encaissement";
 import { handleApiError } from "@/utils/apiErrorHandler";
 import { toast } from "react-toastify";
 
@@ -140,7 +137,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
     const user = useSelector((state: TRootState) => state.auth?.user);
 
     // Hook de persistance des filtres
-    const { getCurrentFilters, savePagination } = useFilterPersistence(statutValidation);
+    const { getCurrentFilters, savePagination, saveFilters } = useFilterPersistence(statutValidation);
 
     const [search, setSearch] = useState("");
     const [hideCols, setHideCols] = useState<string[]>([]);
@@ -302,6 +299,16 @@ const ComponentsDatatablesColumnChooser: React.FC<
       columnAccessor: "Date Encais",
       direction: "asc",
     });
+
+    const serverSortableColumns: Record<string, string> = {
+      "Date Encais": "dateEncaissement",
+      "dateFermeture": "dateFermeture",
+      "Montant caisse (A)": "montantRestitutionCaisse",
+      "Montant bordereau (B)": "montantBordereauBanque",
+      "Ecart(A-B)": "ecartCaisseBanque",
+      "Montant relevé (C°": "montantReleve",
+      "Ecart (B-C)": "ecartReleve",
+    };
 
     const [rasChecked1, setRasChecked1] = useState(false);
     const [rasChecked2, setRasChecked2] = useState(false);
@@ -1894,7 +1901,22 @@ const ComponentsDatatablesColumnChooser: React.FC<
                     handleLimitChange && handleLimitChange(size);
                   }}
                   sortStatus={sortStatus}
-                  onSortStatusChange={setSortStatus}
+                  onSortStatusChange={(status) => {
+                    setSortStatus(status);
+                    const serverField = serverSortableColumns[status.columnAccessor];
+                    if (serverField) {
+                      const current = getCurrentFilters?.() || {};
+                      const newFilters = {
+                        ...current,
+                        sortBy: serverField,
+                        sortDirection: status.direction === 'desc' ? 'desc' : 'asc',
+                      } as any;
+                      // Persister via le hook déjà initialisé
+                      saveFilters({ sortBy: newFilters.sortBy, sortDirection: newFilters.sortDirection });
+                      // Rafraîchir via parent
+                      refreshTableData();
+                    }
+                  }}
                   minHeight={200}
                   paginationText={({ from, to, totalRecords }) =>
                     `Affichage de ${from} à ${to} sur ${totalRecords} entrées`
