@@ -964,7 +964,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
           <div className="text-sm">
             {dateFermeture && dateFermeture.toString().trim() !== ""
               ? dateFermeture
-              : "Non renseignée"}
+              : "N/A"}
           </div>
         ),
       },
@@ -984,7 +984,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
         sortable: true,
         render: ({ codeBanque }: DataReverse) => (
           <div className=" text-primary  hover:no-underline">
-            {codeBanque && codeBanque.toString().trim() !== "" ? codeBanque : "Non renseigné"}
+            {codeBanque && codeBanque.toString().trim() !== "" ? codeBanque : "N/A"}
           </div>
         ),
       },
