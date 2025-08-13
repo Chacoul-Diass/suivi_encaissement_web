@@ -52,6 +52,7 @@ export interface DataReverse {
   codeCaisse?: string;
   numeroCaisse?: string;
   dateFermeture?: string;
+  statutSession?: string;
   numeroBordereau: string;
   journeeCaisse: string;
   modeReglement: string;
@@ -102,7 +103,7 @@ interface DocumentType {
 }
 
 const formatNumber = (num: number | undefined): string => {
-  if (num === undefined) return "N/A";
+  if (num === undefined) return "";
   const formatted = new Intl.NumberFormat("fr-FR", {
     minimumFractionDigits: 0,
     useGrouping: true,
@@ -209,6 +210,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             item?.dateRemiseBanque ||
             item?.dateFermeture ||
             "",
+          statutSession: item?.statutSession || "",
           "Montant caisse (A)": item.montantRestitutionCaisse || 0,
           "Montant bordereau (B)": item.montantBordereauBanque || 0,
           "Montant relevé (C)":
@@ -854,34 +856,11 @@ const ComponentsDatatablesColumnChooser: React.FC<
     >([]);
 
     const baseCols = [
-      { accessor: "DR", title: "DR", sortable: true },
       {
-        accessor: "EXP",
-        title: "Exploitation",
+        accessor: "DR",
+        title: "DR",
         sortable: true,
-        render: ({ libelleExpl }: DataReverse) => (
-          <div>
-            <div className="font-medium">{libelleExpl} </div>
-          </div>
-        ),
-      },
-      { accessor: "Date Encais", title: "Date Encaissement", sortable: true },
-      { accessor: "Produit", title: "Produit", sortable: true },
-      {
-        accessor: "matriculeCaissiere",
-        title: "Matricule Caissière",
-        sortable: true,
-        render: ({ matriculeCaissiere }: DataReverse) => (
-          <div className="cursor-pointer font-semibold text-secondary ">
-            {matriculeCaissiere || "N/A"}
-          </div>
-        ),
-      },
-      {
-        accessor: "journeeCaisse",
-        title: "Journée caisse",
-        sortable: true,
-        render: ({ journeeCaisse, numeroCaisse, validationEncaissement, observationRejete, statutValidation: encaissementStatut }: DataReverse) => {
+        render: ({ DR, validationEncaissement, observationRejete, statutValidation: encaissementStatut }: DataReverse) => {
           const getBorderColor = () => {
             if (encaissementStatut === 1) {
               const validationLevel = validationEncaissement?.validationLevel;
@@ -930,11 +909,43 @@ const ComponentsDatatablesColumnChooser: React.FC<
             <div className="relative">
               <div className={`absolute inset-0 ${getBorderColor()}`}></div>
               <div>
-                <p className="text-sm pl-4">{`${numeroCaisse ? `${numeroCaisse} - ` : ""}${journeeCaisse || ""}`}</p>
+                <p className="text-sm pl-4">{DR || ""}</p>
               </div>
             </div>
           );
         },
+      },
+      {
+        accessor: "EXP",
+        title: "Exploitation",
+        sortable: true,
+        render: ({ libelleExpl }: DataReverse) => (
+          <div>
+            <div className="font-medium">{libelleExpl} </div>
+          </div>
+        ),
+      },
+      { accessor: "Date Encais", title: "Date Encaissement", sortable: true },
+      { accessor: "Produit", title: "Produit", sortable: true },
+      {
+        accessor: "matriculeCaissiere",
+        title: "Matricule Caissière",
+        sortable: true,
+        render: ({ matriculeCaissiere }: DataReverse) => (
+          <div className="cursor-pointer font-semibold text-secondary ">
+            {matriculeCaissiere || ""}
+          </div>
+        ),
+      },
+      {
+        accessor: "journeeCaisse",
+        title: "Caisse",
+        sortable: true,
+        render: ({ journeeCaisse, numeroCaisse }: DataReverse) => (
+          <div>
+            <p className="text-sm">{`${numeroCaisse ? `${numeroCaisse} - ` : ""}${journeeCaisse || ""}`}</p>
+          </div>
+        ),
       },
       {
         accessor: "modeReglement",
@@ -964,7 +975,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
           <div className="text-sm">
             {dateFermeture && dateFermeture.toString().trim() !== ""
               ? dateFermeture
-              : "N/A"}
+              : ""}
           </div>
         ),
       },
@@ -980,11 +991,11 @@ const ComponentsDatatablesColumnChooser: React.FC<
       },
       {
         accessor: "codeBanque",
-        title: "Compte banque",
+        title: "Compte Banque",
         sortable: true,
         render: ({ codeBanque }: DataReverse) => (
           <div className=" text-primary  hover:no-underline">
-            {codeBanque && codeBanque.toString().trim() !== "" ? codeBanque : "N/A"}
+            {codeBanque && codeBanque.toString().trim() !== "" ? codeBanque : ""}
           </div>
         ),
       },
@@ -1014,6 +1025,21 @@ const ComponentsDatatablesColumnChooser: React.FC<
               {formatNumber(ecart)} F CFA
             </div>
           );
+        },
+      },
+      {
+        accessor: "statutSession",
+        title: "Statut Session",
+        sortable: true,
+        render: ({ statutSession }: DataReverse) => {
+          const normalized = (statutSession || "").toString().trim().toLowerCase();
+          const colorClass =
+            normalized === "cloturée" || normalized === "cloturee"
+              ? "text-success"
+              : normalized === "fermée" || normalized === "fermee"
+                ? "text-danger"
+                : "";
+          return <div className={`text-sm ${colorClass}`}>{statutSession || ""}</div>;
         },
       },
     ];
@@ -1064,7 +1090,7 @@ const ComponentsDatatablesColumnChooser: React.FC<
             title: "Date Validation",
             sortable: true,
             render: (row: DataReverse) =>
-              formatDateData(row["Date Validation"]) || "N/A",
+              formatDateData(row["Date Validation"]) || "",
           },
           {
             accessor: "observationReleve",
