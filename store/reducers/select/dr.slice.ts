@@ -3,7 +3,7 @@ import axiosInstance from "@/utils/axios";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 export const fetchDirectionRegionales = createAsyncThunk(
-  "directionRegionales/fetchDirectionRegionales",
+  "dr/fetchDirectionRegionales",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(
@@ -21,7 +21,7 @@ export const fetchDirectionRegionales = createAsyncThunk(
 );
 
 const directionRegionalesSlice = createSlice({
-  name: "directionRegionales",
+  name: "dr",
   initialState: {
     data: [],
     loading: false,
@@ -36,7 +36,7 @@ const directionRegionalesSlice = createSlice({
       })
       .addCase(fetchDirectionRegionales.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
+        state.data = action.payload.data || action.payload;
       })
       .addCase(fetchDirectionRegionales.rejected, (state, action) => {
         state.loading = false;

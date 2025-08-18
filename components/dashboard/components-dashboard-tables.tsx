@@ -144,11 +144,10 @@ const TableAB: React.FC<TableProps> = ({
               </td>
               <td className="whitespace-nowrap px-6 py-4">
                 <div
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${
-                    (item.ecartAB ?? 0) >= 0
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${(item.ecartAB ?? 0) >= 0
                       ? "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400"
                       : "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400"
-                  }`}
+                    }`}
                 >
                   {(item.ecartAB ?? 0) >= 0 ? (
                     <svg
@@ -334,11 +333,10 @@ const TableBC: React.FC<TableProps> = ({
               </td>
               <td className="whitespace-nowrap px-6 py-4">
                 <div
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${
-                    (item.ecartBC ?? 0) >= 0
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${(item.ecartBC ?? 0) >= 0
                       ? "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400"
                       : "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400"
-                  }`}
+                    }`}
                 >
                   {(item.ecartBC ?? 0) >= 0 ? (
                     <svg

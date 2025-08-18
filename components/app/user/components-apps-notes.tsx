@@ -592,7 +592,7 @@ const ComponentsAppsUsers: React.FC = () => {
 
   return (
     <>
-      <div>
+      <div className="ml-4">
         {/* Section des filtres */}
         <div className="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100 dark:bg-gray-800 dark:ring-gray-700">
           {/* En-tête avec titre et bouton d'action */}
@@ -1633,7 +1633,7 @@ const ComponentsAppsUsers: React.FC = () => {
                                         value: "all",
                                         label:
                                           editUserData?.directionRegionales
-                                            ?.length === drData.length
+                                            ?.length === drData?.length
                                             ? "Tout désélectionner"
                                             : "Tout sélectionner",
                                       },
@@ -1668,19 +1668,19 @@ const ComponentsAppsUsers: React.FC = () => {
                                           ...editUserData,
                                           directionRegionales: selectedDRs,
                                           secteurs:
-                                            selectedDRs.length === 0
+                                            selectedDRs?.length === 0
                                               ? []
-                                              : editUserData.secteurs,
+                                              : editUserData?.secteurs,
                                         });
 
-                                        if (selectedDRs.length > 0) {
-                                          const drIds = selectedDRs.map(
+                                        if (selectedDRs?.length > 0) {
+                                          const drIds = selectedDRs?.map(
                                             (dr) => dr.id
                                           );
                                           dispatch(fetchSecteurs(drIds))
                                             .unwrap()
                                             .then((secteurs) => {
-                                              const secteurOptions = secteurs.map(
+                                              const secteurOptions = secteurs?.map(
                                                 (secteur: any) => ({
                                                   value: secteur.id,
                                                   label: secteur.name,

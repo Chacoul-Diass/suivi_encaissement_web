@@ -205,7 +205,7 @@ export default function Litige() {
         </ol>
       </div> */}
 
-      <div className="panel mb-5">
+      <div className="panel mb-5 ml-4">
         {isMounted && (
           <Tab.Group onChange={(index) => setActiveTab(filteredTabs[index].id)}>
             <Tab.List className="mt-3 flex flex-wrap border-b border-white-light dark:border-[#191e3a]">

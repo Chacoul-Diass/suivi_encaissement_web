@@ -1,0 +1,348 @@
+{
+  "endpoints": [
+    {
+      "name": "KPIs",
+      "url": "/dashboard/kpis",
+      "method": "GET",
+      "parameters": {
+        "year": {
+          "type": "number",
+          "required": false,
+          "description": "Année pour filtrer les données"
+        },
+        "directionRegional": {
+          "type": "string",
+          "required": false,
+          "description": "Tableau JSON des IDs des directions régionales sélectionnées"
+        }
+      },
+      "response_format": {
+        "charges": { "total": 2100, "rejetes": 0 },
+        "verifies": { "total": 1800, "rejetes": 0 },
+        "traites": { "total": 1500, "rejetes": 0 },
+        "valides": { "total": 1200, "rejetes": 0 },
+        "rejetes": { "total": 300, "rejetes": 300 },
+        "reclamations": { "total": 50, "rejetes": 0 }
+      }
+    },
+    {
+      "name": "Histogramme Mensuel",
+      "url": "/dashboard/histogramme-mensuel",
+      "method": "GET",
+      "parameters": {
+        "year": {
+          "type": "number",
+          "required": false,
+          "description": "Année pour filtrer les données"
+        },
+        "directionRegional": {
+          "type": "string",
+          "required": false,
+          "description": "Tableau JSON des IDs des directions régionales sélectionnées"
+        }
+      },
+      "response_format": {
+        "2024": {
+          "janvier": 1500,
+          "fevrier": 1800,
+          "mars": 2200,
+          "avril": 1900,
+          "mai": 2100,
+          "juin": 2400,
+          "juillet": 2000,
+          "aout": 1800,
+          "septembre": 2200,
+          "octobre": 2500,
+          "novembre": 2300,
+          "decembre": 2800
+        }
+      }
+    },
+    {
+      "name": "Histogramme Hebdomadaire",
+      "url": "/dashboard/histogramme-hebdomadaire",
+      "method": "GET",
+      "parameters": {
+        "year": {
+          "type": "number",
+          "required": false,
+          "description": "Année pour filtrer les données"
+        },
+        "directionRegional": {
+          "type": "string",
+          "required": false,
+          "description": "Tableau JSON des IDs des directions régionales sélectionnées"
+        }
+      },
+      "response_format": {
+        "2024": {
+          "semaine1": 350,
+          "semaine2": 420,
+          "semaine3": 380,
+          "semaine4": 450,
+          "semaine5": 520,
+          "semaine6": 480,
+          "semaine7": 550,
+          "semaine8": 600,
+          "semaine9": 580,
+          "semaine10": 650,
+          "semaine11": 620,
+          "semaine12": 700,
+          "semaine13": 680,
+          "semaine14": 750,
+          "semaine15": 720,
+          "semaine16": 800,
+          "semaine17": 780,
+          "semaine18": 850,
+          "semaine19": 820,
+          "semaine20": 900,
+          "semaine21": 880,
+          "semaine22": 950,
+          "semaine23": 920,
+          "semaine24": 1000,
+          "semaine25": 980,
+          "semaine26": 1050,
+          "semaine27": 1020,
+          "semaine28": 1100,
+          "semaine29": 1080,
+          "semaine30": 1150,
+          "semaine31": 1120,
+          "semaine32": 1200,
+          "semaine33": 1180,
+          "semaine34": 1250,
+          "semaine35": 1220,
+          "semaine36": 1300,
+          "semaine37": 1280,
+          "semaine38": 1350,
+          "semaine39": 1320,
+          "semaine40": 1400,
+          "semaine41": 1380,
+          "semaine42": 1450,
+          "semaine43": 1420,
+          "semaine44": 1500,
+          "semaine45": 1480,
+          "semaine46": 1550,
+          "semaine47": 1520,
+          "semaine48": 1600,
+          "semaine49": 1580,
+          "semaine50": 1650,
+          "semaine51": 1620,
+          "semaine52": 1700
+        }
+      }
+    },
+    {
+      "name": "Top Agences",
+      "url": "/dashboard/top-agences",
+      "method": "GET",
+      "parameters": {
+        "year": {
+          "type": "number",
+          "required": false,
+          "description": "Année pour filtrer les données"
+        },
+        "limit": {
+          "type": "number",
+          "required": false,
+          "description": "Nombre d'agences à retourner (défaut: 5)"
+        },
+        "directionRegional": {
+          "type": "string",
+          "required": false,
+          "description": "Tableau JSON des IDs des directions régionales sélectionnées"
+        }
+      },
+      "response_format": [
+        {
+          "name": "Agence Abidjan Centre",
+          "performance": 95.2,
+          "encaissements": 1250,
+          "tauxReussite": 98.5
+        },
+        {
+          "name": "Agence Yamoussoukro",
+          "performance": 92.8,
+          "encaissements": 980,
+          "tauxReussite": 96.2
+        },
+        {
+          "name": "Agence Bouaké",
+          "performance": 89.5,
+          "encaissements": 850,
+          "tauxReussite": 94.1
+        },
+        {
+          "name": "Agence San-Pédro",
+          "performance": 87.3,
+          "encaissements": 720,
+          "tauxReussite": 92.8
+        },
+        {
+          "name": "Agence Korhogo",
+          "performance": 85.1,
+          "encaissements": 680,
+          "tauxReussite": 91.5
+        }
+      ]
+    },
+    {
+      "name": "Performance par Région",
+      "url": "/dashboard/performance-regions",
+      "method": "GET",
+      "parameters": {
+        "year": {
+          "type": "number",
+          "required": false,
+          "description": "Année pour filtrer les données"
+        },
+        "directionRegional": {
+          "type": "string",
+          "required": false,
+          "description": "Tableau JSON des IDs des directions régionales sélectionnées"
+        }
+      },
+      "response_format": [
+        {
+          "name": "DRAN",
+          "tauxCloture": 94.2,
+          "encaissements": 1850,
+          "evolution": 2.1
+        },
+        {
+          "name": "DRAS",
+          "tauxCloture": 92.8,
+          "encaissements": 1620,
+          "evolution": 1.8
+        },
+        {
+          "name": "DRCN",
+          "tauxCloture": 91.5,
+          "encaissements": 1480,
+          "evolution": 1.5
+        },
+        {
+          "name": "DRCO",
+          "tauxCloture": 89.7,
+          "encaissements": 1350,
+          "evolution": 1.2
+        },
+        {
+          "name": "DRNO",
+          "tauxCloture": 87.3,
+          "encaissements": 1180,
+          "evolution": 0.9
+        }
+      ]
+    },
+    {
+      "name": "Taux d'Erreurs",
+      "url": "/dashboard/taux-erreurs",
+      "method": "GET",
+      "parameters": {
+        "year": {
+          "type": "number",
+          "required": false,
+          "description": "Année pour filtrer les données"
+        },
+        "directionRegional": {
+          "type": "string",
+          "required": false,
+          "description": "Tableau JSON des IDs des directions régionales sélectionnées"
+        }
+      },
+      "response_format": [
+        {
+          "region": "DRAN",
+          "valides": 1850,
+          "rejetes": 115,
+          "tauxErreur": 5.8
+        },
+        {
+          "region": "DRAS",
+          "valides": 1620,
+          "rejetes": 125,
+          "tauxErreur": 7.2
+        },
+        {
+          "region": "DRCN",
+          "valides": 1480,
+          "rejetes": 135,
+          "tauxErreur": 8.4
+        },
+        {
+          "region": "DRCO",
+          "valides": 1350,
+          "rejetes": 145,
+          "tauxErreur": 9.7
+        },
+        {
+          "region": "DRNO",
+          "valides": 1180,
+          "rejetes": 155,
+          "tauxErreur": 11.6
+        }
+      ]
+    },
+    {
+      "name": "Positionnement Banques",
+      "url": "/dashboard/positionnement-banques",
+      "method": "GET",
+      "parameters": {
+        "year": {
+          "type": "number",
+          "required": false,
+          "description": "Année pour filtrer les données"
+        },
+        "directionRegional": {
+          "type": "string",
+          "required": false,
+          "description": "Tableau JSON des IDs des directions régionales sélectionnées"
+        }
+      },
+      "response_format": [
+        {
+          "bank": "SGBCI",
+          "encaissements": 2850,
+          "position": 1
+        },
+        {
+          "bank": "SIB",
+          "encaissements": 2650,
+          "position": 2
+        },
+        {
+          "bank": "NSIA",
+          "encaissements": 2450,
+          "position": 3
+        },
+        {
+          "bank": "ATTIJARIWAFA",
+          "encaissements": 2250,
+          "position": 4
+        },
+        {
+          "bank": "ECOBANK",
+          "encaissements": 2050,
+          "position": 5
+        },
+        {
+          "bank": "BOA",
+          "encaissements": 1850,
+          "position": 6
+        },
+        {
+          "bank": "BACI",
+          "encaissements": 1650,
+          "position": 7
+        }
+      ]
+    }
+  ],
+  "notes_implementation": {
+    "parametres": "Tous les paramètres sont optionnels. Si directionRegional n'est pas fourni, les données de toutes les DR sont retournées.",
+    "format_directionRegional": "Le paramètre directionRegional doit être un tableau JSON stringifié (ex: '[1,2,3]')",
+    "reponse": "Toutes les réponses sont au format JSON avec les structures définies ci-dessus.",
+    "erreurs": "En cas d'erreur, retourner un objet avec 'error' et 'message'.",
+    "pagination": "Non applicable pour ces endpoints de dashboard."
+  }
+}

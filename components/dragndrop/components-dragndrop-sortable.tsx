@@ -117,7 +117,7 @@ const ComponentsDragndropSortable = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="panel rounded-2xl bg-white p-6 shadow-lg"
+      className="panel rounded-2xl bg-white p-6 shadow-lg ml-4"
     >
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-3">

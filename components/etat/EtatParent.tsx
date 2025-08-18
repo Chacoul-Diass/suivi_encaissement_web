@@ -157,7 +157,7 @@ const EtatParent = ({ onSearch, searchTerm = "" }: EtatParentProps) => {
 
 
   return (
-    <div className="mb-5">
+    <div className="mb-5 ml-4">
       {/* En-tête intégré avec filtres */}
       <div className="mb-5 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         {/* En-tête avec fil d'Ariane et recherche */}

@@ -17,7 +17,7 @@ const Saphir = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 ml-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
         <Filtre />
       </div>
@@ -30,8 +30,8 @@ const Saphir = () => {
                 {({ selected }) => (
                   <button
                     className={`${selected
-                        ? "text-primary !outline-none before:!w-full"
-                        : ""
+                      ? "text-primary !outline-none before:!w-full"
+                      : ""
                       } relative -mb-[1px] flex items-center px-4 py-2.5 before:absolute before:bottom-0 before:left-0 before:right-0 before:m-auto before:inline-block before:h-[1px] before:w-0 before:bg-primary before:transition-all before:duration-700 hover:text-primary hover:before:w-full`}
                   >
                     <IconDollarSignCircle className="w-4 h-4 ltr:mr-2 rtl:ml-2" />
@@ -43,8 +43,8 @@ const Saphir = () => {
                 {({ selected }) => (
                   <button
                     className={`${selected
-                        ? "text-primary !outline-none before:!w-full"
-                        : ""
+                      ? "text-primary !outline-none before:!w-full"
+                      : ""
                       } relative -mb-[1px] flex items-center px-4 py-2.5 before:absolute before:bottom-0 before:left-0 before:right-0 before:m-auto before:inline-block before:h-[1px] before:w-0 before:bg-primary before:transition-all before:duration-700 hover:text-primary hover:before:w-full`}
                   >
                     <IconTag className="w-4 h-4 ltr:mr-2 rtl:ml-2" />

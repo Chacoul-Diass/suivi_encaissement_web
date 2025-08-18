@@ -389,7 +389,7 @@ const Parametre = () => {
   }, [showModal]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 ml-4">
       <div className="flex flex-col gap-6">
         <div className="dark:bg-navy-800 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-white p-6 shadow-sm">
           <div>
