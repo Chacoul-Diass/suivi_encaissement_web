@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDashboardData } from "../../hooks/useDashboardData";
 import DashboardFilters from "./DashboardFilters";
 import KPICard from "./KPICard";
@@ -55,6 +55,8 @@ const DashboardEncaissement: React.FC = () => {
   const handleRefresh = () => {
     refreshAllData();
   };
+
+
 
 
   return (

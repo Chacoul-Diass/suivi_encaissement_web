@@ -105,6 +105,23 @@ export interface ErrorRateData {
   tauxErreur: number;
 }
 
+// Interface pour la réponse de l'API taux d'erreurs (structure réelle)
+export interface ErrorRateApiResponse {
+  tauxErreur: number;
+  valides: number;
+  rejetes: number;
+  totalReference: number;
+  details: Array<{
+    region: string;
+    valides: number;
+    rejetes: number;
+    verifies: number;
+    traites: number;
+    tauxErreur: number;
+    totalReference: number;
+  }>;
+}
+
 export interface BankData {
   bank: string;
   encaissements: number;

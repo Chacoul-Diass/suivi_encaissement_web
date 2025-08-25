@@ -48,7 +48,8 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
     // Calculer le total pour le camembert
     const totalValides = errorRateData.reduce((sum, item) => sum + item.encaissementsValides, 0);
     const totalRejetes = errorRateData.reduce((sum, item) => sum + item.encaissementsRejetes, 0);
-    const tauxErreurGlobal = totalValides > 0 ? (totalRejetes / totalValides) * 100 : 0;
+    const total = totalValides + totalRejetes;
+    const tauxErreurGlobal = total > 0 ? (totalRejetes / total) * 100 : 0;
 
     // Couleurs pour les régions (couleurs sombres avec effet miroir)
     const colors = [
@@ -203,55 +204,65 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
 
             {/* Statistiques par région */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {displayedData.map((item, index) => (
-                    <div key={item.region} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300 group">
-                        {/* Header sobre */}
-                        <div className="p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-semibold text-gray-800 dark:text-white text-sm">
-                                    {item.region}
-                                </h4>
-                                <div className="text-right">
-                                    <div className="text-lg font-bold" style={{ color: colors[index] }}>
-                                        {item.tauxErreur}%
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Contenu compact */}
-                        <div className="p-3">
-                            {/* Statistiques compactes */}
-                            <div className="grid grid-cols-2 gap-2 mb-3">
-                                <div className="text-center p-2 bg-green-50 dark:bg-green-900/10 rounded border border-green-200 dark:border-green-800">
-                                    <div className="text-sm font-bold text-green-700 dark:text-green-400">
-                                        {safeToLocaleString(item.encaissementsValides)}
-                                    </div>
-                                    <div className="text-xs text-green-600 dark:text-green-300">Validés</div>
-                                </div>
-                                <div className="text-center p-2 bg-red-50 dark:bg-red-900/10 rounded border border-red-200 dark:border-red-800">
-                                    <div className="text-sm font-bold text-red-700 dark:text-red-400">
-                                        {safeToLocaleString(item.encaissementsRejetes)}
-                                    </div>
-                                    <div className="text-xs text-red-600 dark:text-red-300">Rejetés</div>
-                                </div>
-                            </div>
-
-                            {/* Indicateur de performance simple */}
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="text-gray-500 dark:text-gray-400">Performance:</span>
-                                <span className={`font-medium ${item.tauxErreur <= 5 ? 'text-green-600' :
-                                    item.tauxErreur <= 10 ? 'text-yellow-600' :
-                                        item.tauxErreur <= 15 ? 'text-orange-600' : 'text-red-600'
-                                    }`}>
-                                    {item.tauxErreur <= 5 ? 'Excellent' :
-                                        item.tauxErreur <= 10 ? 'Bon' :
-                                            item.tauxErreur <= 15 ? 'Moyen' : 'Faible'}
-                                </span>
-                            </div>
+                {displayedData.length === 0 ? (
+                    <div className="col-span-full text-center py-8">
+                        <div className="text-gray-500 dark:text-gray-400">
+                            <IconAlertTriangle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                            <p className="text-lg font-medium">Aucune donnée disponible</p>
+                            <p className="text-sm">Aucun taux d'erreur à afficher pour les critères sélectionnés.</p>
                         </div>
                     </div>
-                ))}
+                ) : (
+                    displayedData.map((item, index) => (
+                        <div key={item.region} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300 group">
+                            {/* Header sobre */}
+                            <div className="p-3 border-b border-gray-100 dark:border-gray-700">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-semibold text-gray-800 dark:text-white text-sm">
+                                        {item.region}
+                                    </h4>
+                                    <div className="text-right">
+                                        <div className="text-lg font-bold" style={{ color: colors[index] }}>
+                                            {item.tauxErreur}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Contenu compact */}
+                            <div className="p-3">
+                                {/* Statistiques compactes */}
+                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                    <div className="text-center p-2 bg-green-50 dark:bg-green-900/10 rounded border border-green-200 dark:border-green-800">
+                                        <div className="text-sm font-bold text-green-700 dark:text-green-400">
+                                            {safeToLocaleString(item.encaissementsValides)}
+                                        </div>
+                                        <div className="text-xs text-green-600 dark:text-green-300">Validés</div>
+                                    </div>
+                                    <div className="text-center p-2 bg-red-50 dark:bg-red-900/10 rounded border border-red-200 dark:border-red-800">
+                                        <div className="text-sm font-bold text-red-700 dark:text-red-400">
+                                            {safeToLocaleString(item.encaissementsRejetes)}
+                                        </div>
+                                        <div className="text-xs text-red-600 dark:text-red-300">Rejetés</div>
+                                    </div>
+                                </div>
+
+                                {/* Indicateur de performance simple */}
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-500 dark:text-gray-400">Performance:</span>
+                                    <span className={`font-medium ${item.tauxErreur <= 5 ? 'text-green-600' :
+                                        item.tauxErreur <= 10 ? 'text-yellow-600' :
+                                            item.tauxErreur <= 15 ? 'text-orange-600' : 'text-red-600'
+                                        }`}>
+                                        {item.tauxErreur <= 5 ? 'Excellent' :
+                                            item.tauxErreur <= 10 ? 'Bon' :
+                                                item.tauxErreur <= 15 ? 'Moyen' : 'Faible'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Modal Plein Écran */}

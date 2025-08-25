@@ -7,6 +7,7 @@ import {
   RegionalData,
   ErrorRateData,
   BankData,
+  ErrorRateApiResponse,
 } from "../types/dashboard.types";
 
 // Fonction utilitaire pour formater les tableaux comme dans les slices
@@ -186,14 +187,27 @@ class DashboardService {
     // Cache-busting pour éviter les 304
     params["_t"] = Date.now();
 
-    const response = await axios.get("/dashboard/taux-erreurs", { params });
+    const response = await axios.get<ErrorRateApiResponse>(
+      "/dashboard/taux-erreurs",
+      { params }
+    );
 
-    // Extraire les données de la réponse API
-    if (response.data && response.data.data) {
-      return response.data.data;
+    // Extraire et transformer les données de la réponse API
+    // L'API retourne directement les données sans enveloppe 'data'
+    if (response.data && response.data.details) {
+      // Transformer les données pour correspondre à l'interface ErrorRateData
+      const transformedData = response.data.details.map((item) => ({
+        region: item.region,
+        encaissementsValides: item.valides || 0,
+        encaissementsRejetes: item.rejetes || 0,
+        tauxErreur: item.tauxErreur || 0,
+      }));
+
+      return transformedData;
     }
 
-    return response.data;
+    // Si pas de details, retourner un tableau vide
+    return [];
   }
 
   // Positionnement banques
