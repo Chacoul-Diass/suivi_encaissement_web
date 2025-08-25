@@ -40,8 +40,16 @@ class DashboardService {
     }
     if (startDate) params["startDate"] = formatDate(startDate);
     if (endDate) params["endDate"] = formatDate(endDate);
+    // Cache-busting pour éviter les 304
+    params["_t"] = Date.now();
 
     const response = await axios.get("/dashboard/kpis", { params });
+
+    // Extraire les données de la réponse API
+    if (response.data && response.data.data) {
+      return response.data.data;
+    }
+
     return response.data;
   }
 
@@ -59,10 +67,18 @@ class DashboardService {
     }
     if (startDate) params["startDate"] = formatDate(startDate);
     if (endDate) params["endDate"] = formatDate(endDate);
+    // Cache-busting pour éviter les 304
+    params["_t"] = Date.now();
 
     const response = await axios.get("/dashboard/histogramme-mensuel", {
       params,
     });
+
+    // Extraire les données de la réponse API
+    if (response.data && response.data.data) {
+      return response.data.data;
+    }
+
     return response.data;
   }
 
@@ -80,10 +96,18 @@ class DashboardService {
     }
     if (startDate) params["startDate"] = formatDate(startDate);
     if (endDate) params["endDate"] = formatDate(endDate);
+    // Cache-busting pour éviter les 304
+    params["_t"] = Date.now();
 
     const response = await axios.get("/dashboard/histogramme-hebdomadaire", {
       params,
     });
+
+    // Extraire les données de la réponse API
+    if (response.data && response.data.data) {
+      return response.data.data;
+    }
+
     return response.data;
   }
 
@@ -103,8 +127,16 @@ class DashboardService {
     }
     if (startDate) params["startDate"] = formatDate(startDate);
     if (endDate) params["endDate"] = formatDate(endDate);
+    // Cache-busting pour éviter les 304
+    params["_t"] = Date.now();
 
     const response = await axios.get("/dashboard/top-agences", { params });
+
+    // Extraire les données de la réponse API
+    if (response.data && response.data.data) {
+      return response.data.data;
+    }
+
     return response.data;
   }
 
@@ -122,10 +154,18 @@ class DashboardService {
     }
     if (startDate) params["startDate"] = formatDate(startDate);
     if (endDate) params["endDate"] = formatDate(endDate);
+    // Cache-busting pour éviter les 304
+    params["_t"] = Date.now();
 
     const response = await axios.get("/dashboard/performance-regions", {
       params,
     });
+
+    // Extraire les données de la réponse API
+    if (response.data && response.data.data) {
+      return response.data.data;
+    }
+
     return response.data;
   }
 
@@ -143,8 +183,16 @@ class DashboardService {
     }
     if (startDate) params["startDate"] = formatDate(startDate);
     if (endDate) params["endDate"] = formatDate(endDate);
+    // Cache-busting pour éviter les 304
+    params["_t"] = Date.now();
 
     const response = await axios.get("/dashboard/taux-erreurs", { params });
+
+    // Extraire les données de la réponse API
+    if (response.data && response.data.data) {
+      return response.data.data;
+    }
+
     return response.data;
   }
 
@@ -162,10 +210,18 @@ class DashboardService {
     }
     if (startDate) params["startDate"] = formatDate(startDate);
     if (endDate) params["endDate"] = formatDate(endDate);
+    // Cache-busting pour éviter les 304
+    params["_t"] = Date.now();
 
     const response = await axios.get("/dashboard/positionnement-banques", {
       params,
     });
+
+    // Extraire les données de la réponse API
+    if (response.data && response.data.data) {
+      return response.data.data;
+    }
+
     return response.data;
   }
 }

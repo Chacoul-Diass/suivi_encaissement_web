@@ -41,7 +41,7 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
         }
     };
 
-    const errorRateData = data || [];
+    const errorRateData = Array.isArray(data) ? data : [];
     const displayedData = showAll ? errorRateData : errorRateData.slice(0, 3);
     const availableYears = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2];
 
@@ -77,6 +77,14 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
         return "text-red-600 bg-red-100 dark:bg-red-900/20";
     };
 
+    // Fonction helper pour sécuriser l'appel à toLocaleString()
+    const safeToLocaleString = (value: number | null | undefined): string => {
+        if (value === null || value === undefined || isNaN(value)) {
+            return '0';
+        }
+        return value.toLocaleString();
+    };
+
     if (loading) {
         return (
             <div className="panel">
@@ -103,15 +111,18 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
                         Taux d'erreurs détectées
                     </h3>
                 </div>
-                <button
-                    onClick={() => setIsFullScreen(true)}
-                    className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
-                    title="Afficher en plein écran"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                    </svg>
-                </button>
+                <div className="flex items-center gap-2">
+
+                    <button
+                        onClick={() => setIsFullScreen(true)}
+                        className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                        title="Afficher en plein écran"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             {/* Taux d'erreur global dans un graphique circulaire */}
@@ -162,10 +173,10 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
                         <div className="w-4 h-4 bg-green-500 rounded-full"></div>
                         <div>
                             <div className="text-lg font-bold text-gray-800 dark:text-white">
-                                {totalValides.toLocaleString()}
+                                {safeToLocaleString(totalValides)}
                             </div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
-                                Encaissements validés
+                                Encaissements vérifiés
                             </div>
                         </div>
                     </div>
@@ -174,7 +185,7 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
                         <div className="w-4 h-4 bg-red-500 rounded-full"></div>
                         <div>
                             <div className="text-lg font-bold text-gray-800 dark:text-white">
-                                {totalRejetes.toLocaleString()}
+                                {safeToLocaleString(totalRejetes)}
                             </div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                                 Encaissements rejetés
@@ -184,7 +195,7 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
 
                     <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                         <div className="text-sm text-gray-600 dark:text-gray-400">
-                            Total: {(totalValides + totalRejetes).toLocaleString()}
+                            Total: {safeToLocaleString(totalValides + totalRejetes)}
                         </div>
                     </div>
                 </div>
@@ -214,13 +225,13 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
                             <div className="grid grid-cols-2 gap-2 mb-3">
                                 <div className="text-center p-2 bg-green-50 dark:bg-green-900/10 rounded border border-green-200 dark:border-green-800">
                                     <div className="text-sm font-bold text-green-700 dark:text-green-400">
-                                        {item.encaissementsValides.toLocaleString()}
+                                        {safeToLocaleString(item.encaissementsValides)}
                                     </div>
                                     <div className="text-xs text-green-600 dark:text-green-300">Validés</div>
                                 </div>
                                 <div className="text-center p-2 bg-red-50 dark:bg-red-900/10 rounded border border-red-200 dark:border-red-800">
                                     <div className="text-sm font-bold text-red-700 dark:text-red-400">
-                                        {item.encaissementsRejetes.toLocaleString()}
+                                        {safeToLocaleString(item.encaissementsRejetes)}
                                     </div>
                                     <div className="text-xs text-red-600 dark:text-red-300">Rejetés</div>
                                 </div>
@@ -316,7 +327,7 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
                                         <div className="w-6 h-6 bg-green-500 rounded-full"></div>
                                         <div>
                                             <div className="text-2xl font-bold text-gray-800 dark:text-white">
-                                                {totalValides.toLocaleString()}
+                                                {safeToLocaleString(totalValides)}
                                             </div>
                                             <div className="text-lg text-gray-600 dark:text-gray-400">
                                                 Encaissements validés
@@ -328,7 +339,7 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
                                         <div className="w-6 h-6 bg-red-500 rounded-full"></div>
                                         <div>
                                             <div className="text-2xl font-bold text-gray-800 dark:text-white">
-                                                {totalRejetes.toLocaleString()}
+                                                {safeToLocaleString(totalRejetes)}
                                             </div>
                                             <div className="text-lg text-gray-600 dark:text-gray-400">
                                                 Encaissements rejetés
@@ -338,7 +349,7 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
 
                                     <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                                         <div className="text-xl font-bold text-gray-800 dark:text-white">
-                                            Total: {(totalValides + totalRejetes).toLocaleString()}
+                                            Total: {safeToLocaleString(totalValides + totalRejetes)}
                                         </div>
                                     </div>
                                 </div>
@@ -346,7 +357,7 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
 
                             {/* Toutes les DR en grille */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                {errorRateData.map((item, index) => (
+                                {errorRateData?.map((item, index) => (
                                     <div key={item.region} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300 group">
                                         {/* Header sobre */}
                                         <div className="p-3 border-b border-gray-100 dark:border-gray-700">
@@ -368,13 +379,13 @@ const ErrorRatePieChart: React.FC<ErrorRatePieChartProps> = ({
                                             <div className="grid grid-cols-2 gap-2 mb-3">
                                                 <div className="text-center p-2 bg-green-50 dark:bg-green-900/10 rounded border border-green-200 dark:border-green-800">
                                                     <div className="text-sm font-bold text-green-700 dark:text-green-400">
-                                                        {item.encaissementsValides.toLocaleString()}
+                                                        {safeToLocaleString(item.encaissementsValides)}
                                                     </div>
                                                     <div className="text-xs text-green-600 dark:text-green-300">Validés</div>
                                                 </div>
                                                 <div className="text-center p-2 bg-red-50 dark:bg-red-900/10 rounded border border-red-200 dark:border-red-800">
                                                     <div className="text-sm font-bold text-red-700 dark:text-red-400">
-                                                        {item.encaissementsRejetes.toLocaleString()}
+                                                        {safeToLocaleString(item.encaissementsRejetes)}
                                                     </div>
                                                     <div className="text-xs text-red-600 dark:text-red-300">Rejetés</div>
                                                 </div>

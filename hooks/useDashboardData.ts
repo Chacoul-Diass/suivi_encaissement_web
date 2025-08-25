@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { TAppDispatch, TRootState } from "../store";
 import { dashboardService } from "../services/dashboardService";
@@ -13,13 +13,14 @@ import {
 } from "../types/dashboard.types";
 
 export const useDashboardData = (
+  selectedYear?: number,
   selectedDRNames?: string[],
   startDate?: string,
   endDate?: string
 ) => {
   const dispatch = useDispatch<TAppDispatch>();
-  const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear()
+  const [internalSelectedYear, setInternalSelectedYear] = useState<number>(
+    selectedYear || new Date().getFullYear()
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,20 +51,37 @@ export const useDashboardData = (
   const [bankLoading, setBankLoading] = useState(false);
 
   // Fonction pour charger les KPIs
-  const loadKPIs = async () => {
+  const loadKPIs = useCallback(async () => {
     try {
       setKpiLoading(true);
       setError(null);
       const data = await dashboardService.getKPIs(
-        selectedYear,
+        internalSelectedYear,
         selectedDRNames,
         startDate,
         endDate
       );
-      setKpiData(data);
-    } catch (err) {
-      setError("Erreur lors du chargement des KPIs");
+
+      // Vérifier que les données sont valides
+      if (data && typeof data === "object") {
+        setKpiData(data);
+      } else {
+        throw new Error("Données invalides reçues");
+      }
+    } catch (err: any) {
       console.error("Erreur KPIs:", err);
+
+      // Gérer les différents types d'erreurs
+      if (err?.response?.status === 500) {
+        setError("Erreur serveur lors du chargement des KPIs");
+      } else if (err?.response?.status === 401) {
+        setError("Session expirée");
+      } else if (err?.message) {
+        setError(`Erreur lors du chargement des KPIs: ${err.message}`);
+      } else {
+        setError("Erreur lors du chargement des KPIs");
+      }
+
       // Mettre à 0 en cas d'échec
       setKpiData({
         charges: { total: 0, rejetes: 0 },
@@ -76,15 +94,15 @@ export const useDashboardData = (
     } finally {
       setKpiLoading(false);
     }
-  };
+  }, [internalSelectedYear, selectedDRNames, startDate, endDate]);
 
   // Fonction pour charger l'histogramme mensuel
-  const loadMonthlyHistogram = async () => {
+  const loadMonthlyHistogram = useCallback(async () => {
     try {
       setHistogramLoading(true);
       setError(null);
       const data = await dashboardService.getMonthlyHistogram(
-        selectedYear,
+        internalSelectedYear,
         selectedDRNames,
         startDate,
         endDate
@@ -95,7 +113,7 @@ export const useDashboardData = (
       console.error("Erreur histogramme mensuel:", err);
       // Mettre à 0 en cas d'échec
       setHistogramData({
-        [selectedYear]: {
+        [internalSelectedYear]: {
           janvier: 0,
           fevrier: 0,
           mars: 0,
@@ -113,15 +131,15 @@ export const useDashboardData = (
     } finally {
       setHistogramLoading(false);
     }
-  };
+  }, [internalSelectedYear, selectedDRNames, startDate, endDate]);
 
   // Fonction pour charger l'histogramme hebdomadaire
-  const loadWeeklyHistogram = async () => {
+  const loadWeeklyHistogram = useCallback(async () => {
     try {
       setWeeklyHistogramLoading(true);
       setError(null);
       const data = await dashboardService.getWeeklyHistogram(
-        selectedYear,
+        internalSelectedYear,
         selectedDRNames,
         startDate,
         endDate
@@ -135,19 +153,19 @@ export const useDashboardData = (
       for (let i = 1; i <= 52; i++) {
         weeks[`semaine${i}`] = 0;
       }
-      setWeeklyHistogramData({ [selectedYear]: weeks });
+      setWeeklyHistogramData({ [internalSelectedYear]: weeks });
     } finally {
       setWeeklyHistogramLoading(false);
     }
-  };
+  }, [internalSelectedYear, selectedDRNames, startDate, endDate]);
 
   // Fonction pour charger les top agences
-  const loadTopAgencies = async () => {
+  const loadTopAgencies = useCallback(async () => {
     try {
       setTopAgenciesLoading(true);
       setError(null);
       const data = await dashboardService.getTopAgencies(
-        selectedYear,
+        internalSelectedYear,
         5,
         selectedDRNames,
         startDate,
@@ -162,15 +180,15 @@ export const useDashboardData = (
     } finally {
       setTopAgenciesLoading(false);
     }
-  };
+  }, [internalSelectedYear, selectedDRNames, startDate, endDate]);
 
   // Fonction pour charger la performance par région
-  const loadRegionalPerformance = async () => {
+  const loadRegionalPerformance = useCallback(async () => {
     try {
       setRegionalLoading(true);
       setError(null);
       const data = await dashboardService.getRegionalPerformance(
-        selectedYear,
+        internalSelectedYear,
         selectedDRNames,
         startDate,
         endDate
@@ -184,15 +202,15 @@ export const useDashboardData = (
     } finally {
       setRegionalLoading(false);
     }
-  };
+  }, [internalSelectedYear, selectedDRNames, startDate, endDate]);
 
   // Fonction pour charger les taux d'erreurs
-  const loadErrorRates = async () => {
+  const loadErrorRates = useCallback(async () => {
     try {
       setErrorRateLoading(true);
       setError(null);
       const data = await dashboardService.getErrorRates(
-        selectedYear,
+        internalSelectedYear,
         selectedDRNames,
         startDate,
         endDate
@@ -206,15 +224,15 @@ export const useDashboardData = (
     } finally {
       setErrorRateLoading(false);
     }
-  };
+  }, [internalSelectedYear, selectedDRNames, startDate, endDate]);
 
   // Fonction pour charger le positionnement des banques
-  const loadBankPositioning = async () => {
+  const loadBankPositioning = useCallback(async () => {
     try {
       setBankLoading(true);
       setError(null);
       const data = await dashboardService.getBankPositioning(
-        selectedYear,
+        internalSelectedYear,
         selectedDRNames,
         startDate,
         endDate
@@ -228,35 +246,66 @@ export const useDashboardData = (
     } finally {
       setBankLoading(false);
     }
-  };
+  }, [internalSelectedYear, selectedDRNames, startDate, endDate]);
 
-  // Fonction pour recharger toutes les données
-  const refreshAllData = async () => {
+  // Fonction pour recharger toutes les données de façon séquentielle
+  const refreshAllData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      await Promise.all([
-        loadKPIs(),
-        loadMonthlyHistogram(),
-        loadWeeklyHistogram(),
-        loadTopAgencies(),
-        loadRegionalPerformance(),
-        loadErrorRates(),
-        loadBankPositioning(),
-      ]);
+      // Chargement séquentiel dans l'ordre
+      console.log("🔄 Début du chargement séquentiel des données...");
+
+      console.log("📊 Chargement des KPIs...");
+      await loadKPIs();
+
+      console.log("📈 Chargement de l'histogramme mensuel...");
+      await loadMonthlyHistogram();
+
+      console.log("📅 Chargement de l'histogramme hebdomadaire...");
+      await loadWeeklyHistogram();
+
+      console.log("🏢 Chargement des top agences...");
+      await loadTopAgencies();
+
+      console.log("🌍 Chargement de la performance par région...");
+      await loadRegionalPerformance();
+
+      console.log("❌ Chargement des taux d'erreurs...");
+      await loadErrorRates();
+
+      console.log("🏦 Chargement du positionnement des banques...");
+      await loadBankPositioning();
+
+      console.log("✅ Toutes les données ont été chargées avec succès !");
     } catch (err) {
       setError("Erreur lors du rechargement des données");
-      console.error("Erreur rechargement:", err);
+      console.error("❌ Erreur rechargement:", err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [
+    loadKPIs,
+    loadMonthlyHistogram,
+    loadWeeklyHistogram,
+    loadTopAgencies,
+    loadRegionalPerformance,
+    loadErrorRates,
+    loadBankPositioning,
+  ]);
+
+  // Synchroniser internalSelectedYear avec selectedYear
+  useEffect(() => {
+    if (selectedYear && selectedYear !== internalSelectedYear) {
+      setInternalSelectedYear(selectedYear);
+    }
+  }, [selectedYear]);
 
   // Charger les données au montage et quand l'année, les DR ou les dates changent
   useEffect(() => {
     refreshAllData();
-  }, [selectedYear, selectedDRNames, startDate, endDate]);
+  }, [refreshAllData]);
 
   return {
     // Données
@@ -279,8 +328,8 @@ export const useDashboardData = (
     bankLoading,
 
     // États
-    selectedYear,
-    setSelectedYear,
+    selectedYear: internalSelectedYear,
+    setSelectedYear: setInternalSelectedYear,
     error,
 
     // Fonctions

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import IconBarChart from "../icon/icon-bar-chart";
 import IconCalendar from "../icon/icon-calendar";
 
@@ -35,6 +36,7 @@ const HistogramChart: React.FC<HistogramChartProps> = ({
     onYearChange
 }) => {
     const [selectedYear, setSelectedYear] = useState<number>(propSelectedYear || new Date().getFullYear());
+    const [isFullScreen, setIsFullScreen] = useState(false);
 
     // Synchroniser avec la prop externe
     React.useEffect(() => {
@@ -105,65 +107,26 @@ const HistogramChart: React.FC<HistogramChartProps> = ({
     const currentMonth = new Date().getMonth(); // 0-11
     const displayMonths = selectedYear === currentYear
         ? months.slice(0, currentMonth + 1)
-        : months;
+        : months; // Afficher tous les mois pour les autres années
 
-    if (loading) {
-        return (
-            <div className="panel">
-                <div className="flex items-center gap-2 mb-6">
-                    <div className="h-6 w-6 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
-                    <div className="h-6 w-32 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
-                </div>
-                <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse"></div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="panel">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                    <IconBarChart className="h-6 w-6 text-primary" />
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                        Total de tous les encaissements par mois
-                    </h3>
-                </div>
-            </div>
-
-            <div className="h-80 flex items-end justify-between gap-4 px-8">
+    const renderHistogramContent = () => (
+        <>
+            <div className="h-80 flex items-end gap-4 px-8 overflow-x-auto">
                 {displayMonths.map((month) => {
                     const value = data?.[selectedYear]?.[month.key as keyof HistogramData[number]] || 0;
                     const barHeight = getBarHeight(value);
                     const barColor = getBarColor(value);
 
                     return (
-                        <div key={month.key} className="flex flex-col items-center flex-1">
+                        <div key={month.key} className="flex flex-col items-center flex-shrink-0 min-w-[60px]">
                             <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 {formatNumber(value)}
                             </div>
                             <div
-                                className={`w-3 rounded-t-lg transition-all duration-500 ${barColor} border border-gray-300 dark:border-gray-600 shadow-sm cursor-pointer group relative`}
+                                className={`w-3 rounded-t-lg transition-all duration-500 ${barColor} border border-gray-300 dark:border-gray-600 shadow-sm`}
                                 style={{ height: `${barHeight}px` }}
-                                title={`${month.label}: ${formatNumber(value)} encaissements`}
                             >
                                 <div className="h-full w-full bg-gradient-to-t from-black/20 to-transparent rounded-t-lg"></div>
-
-                                {/* Tooltip */}
-                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-[99999]">
-                                    <div className="font-semibold mb-1">{month.key.charAt(0).toUpperCase() + month.key.slice(1)}</div>
-                                    <div className="space-y-1">
-                                        <div>• En attente: {formatNumber(Math.floor(value * 0.25))}</div>
-                                        <div>• Traités: {formatNumber(Math.floor(value * 0.20))}</div>
-                                        <div>• Validés: {formatNumber(Math.floor(value * 0.15))}</div>
-                                        <div>• Rejetés: {formatNumber(Math.floor(value * 0.10))}</div>
-                                        <div>• Clôturés: {formatNumber(Math.floor(value * 0.20))}</div>
-                                        <div>• Réclamations: {formatNumber(Math.floor(value * 0.10))}</div>
-                                    </div>
-                                    <div className="mt-1 pt-1 border-t border-gray-700">
-                                        <div className="font-semibold">Total: {formatNumber(value)}</div>
-                                    </div>
-                                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                                </div>
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
                                 {month.label}
@@ -188,6 +151,110 @@ const HistogramChart: React.FC<HistogramChartProps> = ({
                     <span className="text-sm text-gray-600 dark:text-gray-400">Autres valeurs</span>
                 </div>
             </div>
+        </>
+    );
+
+    if (loading) {
+        return (
+            <div className="panel">
+                <div className="flex items-center gap-2 mb-6">
+                    <div className="h-6 w-6 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+                    <div className="h-6 w-32 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+                </div>
+                <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="panel relative z-10">
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                    <IconBarChart className="h-6 w-6 text-primary" />
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                        Total de tous les encaissements par mois
+                    </h3>
+                </div>
+                <button
+                    onClick={() => setIsFullScreen(true)}
+                    className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                    title="Afficher en plein écran"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                </button>
+            </div>
+
+            {renderHistogramContent()}
+
+            {/* Modal plein écran */}
+            {isFullScreen && typeof window !== 'undefined' && createPortal(
+                <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[999999]">
+                    <div className="h-full flex flex-col">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                            <div className="flex items-center gap-2">
+                                <IconBarChart className="h-6 w-6 text-primary" />
+                                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                                    Total de tous les encaissements par mois - {selectedYear}
+                                </h2>
+                            </div>
+                            <button
+                                onClick={() => setIsFullScreen(false)}
+                                className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                                title="Fermer"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="flex-1 p-6 flex flex-col">
+                            <div className="flex-1 flex items-end justify-between gap-6 px-8">
+                                {displayMonths.map((month) => {
+                                    const value = data?.[selectedYear]?.[month.key as keyof HistogramData[number]] || 0;
+                                    const barHeight = getBarHeight(value);
+                                    const barColor = getBarColor(value);
+
+                                    return (
+                                        <div key={month.key} className="flex flex-col items-center flex-1">
+                                            <div className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-4">
+                                                {formatNumber(value)}
+                                            </div>
+                                            <div
+                                                className={`w-6 rounded-t-lg transition-all duration-500 ${barColor} border border-gray-300 dark:border-gray-600 shadow-sm`}
+                                                style={{ height: `${barHeight}px` }}
+                                            >
+                                                <div className="h-full w-full bg-gradient-to-t from-black/20 to-transparent rounded-t-lg"></div>
+                                            </div>
+                                            <div className="text-lg text-gray-500 dark:text-gray-400 mt-4 text-center">
+                                                {month.key.charAt(0).toUpperCase() + month.key.slice(1)}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Légende */}
+                            <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 bg-red-500 rounded"></div>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Plus haut pic</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 bg-warning rounded"></div>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Deuxième pic</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 bg-success rounded"></div>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Autres valeurs</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };

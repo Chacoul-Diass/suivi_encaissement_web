@@ -7,19 +7,21 @@ import { fetchDirectionRegionales } from "../../store/reducers/select/dr.slice";
 
 interface DashboardFiltersProps {
     onApplyFilters: (filters: {
-        selectedYear: number | 0;
+        selectedYear: number;
         selectedDRNames: string[];
         startDate: string;
         endDate: string;
     }) => void;
     onRefresh: () => void;
     isLoading: boolean;
+    currentYear?: number;
 }
 
 const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     onApplyFilters,
     onRefresh,
-    isLoading
+    isLoading,
+    currentYear
 }) => {
     const dispatch = useDispatch<TAppDispatch>();
     const drData = useSelector((state: TRootState) => state.dr?.data || []);
@@ -31,11 +33,18 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     const [tempSelectedDRNames, setTempSelectedDRNames] = useState<string[]>([]);
     const [tempStartDate, setTempStartDate] = useState<string>("");
     const [tempEndDate, setTempEndDate] = useState<string>("");
-    const [tempSelectedYear, setTempSelectedYear] = useState<number | 0>(0);
+    const [tempSelectedYear, setTempSelectedYear] = useState<number>(currentYear || new Date().getFullYear());
 
     useEffect(() => {
         dispatch(fetchDirectionRegionales());
     }, [dispatch]);
+
+    // Synchroniser tempSelectedYear avec currentYear
+    useEffect(() => {
+        if (currentYear && currentYear !== tempSelectedYear) {
+            setTempSelectedYear(currentYear);
+        }
+    }, [currentYear]);
 
     // Réinitialiser les dates quand l'année change
     useEffect(() => {
@@ -105,11 +114,10 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                     </label>
                     <div className="relative group">
                         <select
-                            value={tempSelectedYear || ""}
-                            onChange={(e) => setTempSelectedYear(e.target.value ? Number(e.target.value) : 0)}
+                            value={tempSelectedYear}
+                            onChange={(e) => setTempSelectedYear(Number(e.target.value))}
                             className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 appearance-none cursor-pointer hover:border-gray-400 dark:hover:border-gray-500"
                         >
-                            <option value="">Année en cours</option>
                             {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
                                 <option key={year} value={year}>
                                     {year}

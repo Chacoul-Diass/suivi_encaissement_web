@@ -77,7 +77,7 @@ const WeeklyHistogramChart: React.FC<WeeklyHistogramChartProps> = ({
 }) => {
     const [selectedYear, setSelectedYear] = useState<number>(propSelectedYear || new Date().getFullYear());
     const [isFullScreen, setIsFullScreen] = useState(false);
-    const [hoveredWeek, setHoveredWeek] = useState<string | null>(null);
+    // const [hoveredWeek, setHoveredWeek] = useState<string | null>(null);
 
     // Synchroniser avec la prop externe
     React.useEffect(() => {
@@ -201,14 +201,8 @@ const WeeklyHistogramChart: React.FC<WeeklyHistogramChartProps> = ({
                                 {formatNumber(value)}
                             </div>
                             <div
-                                className={`w-2 rounded-t-lg transition-all duration-500 ${barColor} border border-gray-300 dark:border-gray-600 shadow-sm cursor-pointer group relative`}
+                                className={`w-2 rounded-t-lg transition-all duration-500 ${barColor} border border-gray-300 dark:border-gray-600 shadow-sm`}
                                 style={{ height: `${barHeight}px` }}
-                                title={`${week.label}: ${formatNumber(value)} encaissements`}
-                                onMouseEnter={(e) => {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    setHoveredWeek(week.label);
-                                }}
-                                onMouseLeave={() => setHoveredWeek(null)}
                             >
                                 <div className="h-full w-full bg-gradient-to-t from-black/20 to-transparent rounded-t-lg"></div>
                             </div>
@@ -260,7 +254,7 @@ const WeeklyHistogramChart: React.FC<WeeklyHistogramChartProps> = ({
 
             {renderHistogramContent()}
 
-            {/* Tooltip Portal */}
+            {/* Tooltip Portal - Désactivé pour le moment
             {hoveredWeek && typeof window !== 'undefined' && createPortal(
                 <div
                     className="fixed px-3 py-2 bg-gray-900 text-white text-xs rounded-lg pointer-events-none whitespace-nowrap z-[999999] min-w-[200px]"
@@ -307,6 +301,7 @@ const WeeklyHistogramChart: React.FC<WeeklyHistogramChartProps> = ({
                 </div>,
                 document.body
             )}
+            */}
 
             {/* Modal Plein Écran */}
             {isFullScreen && typeof window !== 'undefined' && createPortal(
@@ -351,13 +346,8 @@ const WeeklyHistogramChart: React.FC<WeeklyHistogramChartProps> = ({
                                                     {formatNumber(value)}
                                                 </div>
                                                 <div
-                                                    className={`w-4 rounded-t-lg transition-all duration-500 ${barColor} border border-gray-300 dark:border-gray-600 shadow-sm cursor-pointer group relative`}
+                                                    className={`w-4 rounded-t-lg transition-all duration-500 ${barColor} border border-gray-300 dark:border-gray-600 shadow-sm`}
                                                     style={{ height: `${barHeight * 1.5}px` }}
-                                                    title={`${week.label}: ${formatNumber(value)} encaissements`}
-                                                    onMouseEnter={(e) => {
-                                                        setHoveredWeek(week.label);
-                                                    }}
-                                                    onMouseLeave={() => setHoveredWeek(null)}
                                                 >
                                                     <div className="h-full w-full bg-gradient-to-t from-black/20 to-transparent rounded-t-lg"></div>
                                                 </div>

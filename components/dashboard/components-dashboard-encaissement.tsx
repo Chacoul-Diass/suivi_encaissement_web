@@ -16,7 +16,7 @@ const DashboardEncaissement: React.FC = () => {
   const [selectedDRNames, setSelectedDRNames] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [selectedYear, setSelectedYear] = useState<number | 0>(0);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   // Utiliser le hook pour les données du dashboard avec les filtres appliqués
   const {
@@ -37,10 +37,10 @@ const DashboardEncaissement: React.FC = () => {
     bankLoading,
     error,
     refreshAllData
-  } = useDashboardData(selectedDRNames, startDate, endDate);
+  } = useDashboardData(selectedYear, selectedDRNames, startDate, endDate);
 
   const handleApplyFilters = (filters: {
-    selectedYear: number | 0;
+    selectedYear: number;
     selectedDRNames: string[];
     startDate: string;
     endDate: string;
@@ -56,6 +56,7 @@ const DashboardEncaissement: React.FC = () => {
     refreshAllData();
   };
 
+
   return (
     <div className="space-y-6 ml-6 mr-6">
       <div>
@@ -64,6 +65,7 @@ const DashboardEncaissement: React.FC = () => {
           onApplyFilters={handleApplyFilters}
           onRefresh={handleRefresh}
           isLoading={isLoading}
+          currentYear={selectedYear}
         />
       </div>
 
@@ -74,6 +76,7 @@ const DashboardEncaissement: React.FC = () => {
         </div>
       )}
 
+      {/* Dashboard avec affichage séquentiel des données */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-6 gap-6">
         {/* KPIs */}
         <div className="xl:col-span-6">
