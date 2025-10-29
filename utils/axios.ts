@@ -9,7 +9,7 @@ import { createRoot } from "react-dom/client";
 import SessionExpiredModal from "@/components/modales/SessionExpiredModal";
 
 const axiosInstance = axios.create({
-  baseURL: "http://68.221.121.191:2402/api/v1",
+  baseURL: "https://suivi-encaissement-api.dctd-cie.com/api/v1",
   headers: {
     "Content-Type": "application/json",
   },

@@ -299,7 +299,7 @@ enum EStatutEncaissement {
 
 ### **APIs externes :**
 
-- **Base URL :** `http://68.221.121.191:2402/api/v1`
+
 - **Endpoints** RESTful structurés
 - **Gestion d'erreurs** centralisée
 
